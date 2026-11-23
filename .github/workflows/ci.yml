@@ -183,6 +183,8 @@ jobs:
       - name: Kotlin tests and lint
         working-directory: mobile/android
         run: |
+          # gradlew and its wrapper jar are made by Flutter, not kept in git: --config-only writes them, and builds nothing
+          (cd .. && flutter build apk --config-only --debug)
           JAVA_HOME="$JAVA_HOME_17_X64" ./gradlew --dependency-verification strict \
             :app:testDebugUnitTest :app:lintDebug :credential_transfer:testDebugUnitTest
 
