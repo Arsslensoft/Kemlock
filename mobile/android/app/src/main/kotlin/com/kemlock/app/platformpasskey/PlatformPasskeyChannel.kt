@@ -95,7 +95,8 @@ class PlatformPasskeyChannel(private val activity: Activity, messenger: BinaryMe
             result.error("failed", "no request", null)
             return
         }
-        if (!PlatformPasskey.supported(Build.VERSION.SDK_INT)) {
+        // The SDK test is spelled out, not left to supported(), so lint sees getCredential below runs on 34 and later
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !PlatformPasskey.supported(Build.VERSION.SDK_INT)) {
             result.error("unsupported", "Credential Manager needs Android 14", null)
             return
         }
