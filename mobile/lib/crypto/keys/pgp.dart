@@ -12,7 +12,6 @@
 // key, with its passphrase when it keeps one, to sign or decrypt.
 
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'key_error.dart';
@@ -25,9 +24,11 @@ import 'openpgp/modes.dart';
 import 'openpgp/opened_key.dart';
 import 'openpgp/packets.dart';
 import 'openpgp/pgp_error.dart';
+import 'openpgp/pgp_files.dart';
 import 'openpgp/s2k.dart';
 import 'openpgp/secret_key.dart';
 import 'openpgp/stream.dart';
+import 'openpgp/stream_files.dart';
 import 'openpgp/usable_keys.dart';
 
 export 'openpgp/data_signature.dart' show SignatureResult, SignatureVerdict;
@@ -53,7 +54,7 @@ class PgpData {
   final Uint8List? bytes;
   final String? path;
 
-  int get length => bytes?.length ?? File(path!).lengthSync();
+  int get length => bytes?.length ?? pgpFileLength(path!);
 }
 
 /// A secret key to sign or decrypt with: the binary transferable secret
@@ -95,20 +96,7 @@ _Input _open(PgpData data, {void Function(int read)? onRead}) {
     if (sniff.type == pgpSignedMessageBlock) return _Input(BytesSource(bytes), sniff.type, bytes.length, null);
     return _Input(ArmorReader.open(PgpReader.bytes(bytes)), sniff.type, bytes.length, null);
   }
-  final file = File(data.path!);
-  final int length;
-  final Uint8List head;
-  try {
-    length = file.lengthSync();
-    final handle = file.openSync();
-    try {
-      head = handle.readSync(pgpPieceSize);
-    } finally {
-      handle.closeSync();
-    }
-  } on FileSystemException catch (e) {
-    throw PgpException(PgpProblem.damaged, detail: e.message);
-  }
+  final (:length, :head) = pgpFileHead(data.path!);
   final sniff = sniffArmor(head);
   final source = FileSource(data.path!, onRead: onRead);
   if (sniff.type == null || sniff.type == pgpSignedMessageBlock) return _Input(source, sniff.type, length, source);
@@ -129,8 +117,10 @@ Future<T> _guard<T>(Future<T> Function() body) async {
     rethrow;
   } on KeyFormatException catch (e) {
     throw pgpErrorOf(e);
-  } on FileSystemException catch (e) {
-    throw PgpException(PgpProblem.outOfSpace, detail: e.message);
+  } on Object catch (e) {
+    final fileError = pgpFileError(e);
+    if (fileError == null) rethrow;
+    throw fileError;
   }
 }
 
@@ -436,18 +426,11 @@ Future<Uint8List?> encrypt({
   // A message ending in SEIPD version 2 is armored without the CRC-24 line
   final result = text ? Uint8List.fromList(latin1.encode(writeArmor(pgpMessageBlock, bytes, checksum: !aead))) : bytes;
   if (outputPath == null) return result;
-  File(outputPath).writeAsBytesSync(result, flush: true);
+  pgpWriteFile(outputPath, result);
   return null;
 });
 
-void _delete(String path) {
-  try {
-    final file = File(path);
-    if (file.existsSync()) file.deleteSync();
-  } on FileSystemException {
-    // The job's directory is deleted whole afterwards
-  }
-}
+void _delete(String path) => pgpDeleteFile(path);
 
 // ─── Decrypting ───────────────────────────────────────────────────────────────
 
@@ -575,7 +558,7 @@ Future<PgpDecrypted> decrypt({
   void Function(int read)? onRead,
 }) => _guard(() async {
   final input = _open(data, onRead: onRead);
-  final partPath = outputDirectory == null ? null : '$outputDirectory${Platform.pathSeparator}decrypting.part';
+  final partPath = outputDirectory == null ? null : pgpJoinPath(outputDirectory, 'decrypting.part');
   final sink = _SpillSink(maxInMemory, partPath);
   try {
     if (input.armorType == pgpSignedMessageBlock) {
@@ -620,8 +603,8 @@ Future<PgpDecrypted> decrypt({
     final file = sink.file;
     if (file != null) {
       file.close();
-      path = '$outputDirectory${Platform.pathSeparator}$name';
-      File(partPath!).renameSync(path);
+      path = pgpJoinPath(outputDirectory!, name);
+      pgpRenameFile(partPath!, path);
     }
     final opened = read.openedWith;
     return PgpDecrypted(

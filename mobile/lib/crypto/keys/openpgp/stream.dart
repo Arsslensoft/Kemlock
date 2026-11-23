@@ -4,11 +4,10 @@
 // emits a definite length or partial pieces of 64 KiB.
 //
 // Everything here is synchronous: it runs in the PGP job's isolate, where
-// a file is read with `RandomAccessFile`'s blocking calls. Layers stack by
-// wrapping one [ByteSource] in another (armor, packets, decryption,
-// decompression, packets again).
+// a file is read with `RandomAccessFile`'s blocking calls (`stream_files.dart`).
+// Layers stack by wrapping one [ByteSource] in another (armor, packets,
+// decryption, decompression, packets again).
 
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'packets.dart';
@@ -47,33 +46,6 @@ class BytesSource implements ByteSource {
   }
 }
 
-/// A file read by path, [pgpPieceSize] at a time. [onRead] is told how
-/// many bytes have been read so far. [close] it when done.
-class FileSource implements ByteSource {
-  FileSource(String path, {this.onRead}) : _file = File(path).openSync();
-
-  final RandomAccessFile _file;
-  final void Function(int read)? onRead;
-  int _read = 0;
-  bool _closed = false;
-
-  @override
-  Uint8List? next() {
-    if (_closed) return null;
-    final piece = _file.readSync(pgpPieceSize);
-    if (piece.isEmpty) return null;
-    _read += piece.length;
-    onRead?.call(_read);
-    return piece;
-  }
-
-  void close() {
-    if (_closed) return;
-    _closed = true;
-    _file.closeSync();
-  }
-}
-
 /// Collects what it is given in memory.
 class BytesSink implements ByteSink {
   final _builder = BytesBuilder(copy: true);
@@ -84,38 +56,6 @@ class BytesSink implements ByteSink {
   int get length => _builder.length;
 
   Uint8List takeBytes() => _builder.takeBytes();
-}
-
-/// Writes what it is given to a file. A full disk is
-/// [PgpProblem.outOfSpace].
-class FileSink implements ByteSink {
-  FileSink(String path) : _file = File(path).openSync(mode: FileMode.writeOnly);
-
-  final RandomAccessFile _file;
-  int length = 0;
-  bool _closed = false;
-
-  @override
-  void add(Uint8List data) {
-    try {
-      _file.writeFromSync(data);
-    } on FileSystemException catch (e) {
-      throw PgpException(PgpProblem.outOfSpace, detail: e.message);
-    }
-    length += data.length;
-  }
-
-  void close() {
-    if (_closed) return;
-    _closed = true;
-    try {
-      _file.flushSync();
-    } on FileSystemException catch (e) {
-      throw PgpException(PgpProblem.outOfSpace, detail: e.message);
-    } finally {
-      _file.closeSync();
-    }
-  }
 }
 
 /// Reads a [ByteSource] by counts: "the next n bytes" and "the rest, in

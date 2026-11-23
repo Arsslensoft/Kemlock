@@ -17,17 +17,18 @@
 // uncompressed.
 
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 
 import '../../bytes.dart';
 import 'data_signature.dart';
+import 'inflate.dart';
 import 'key_info.dart';
 import 'modes.dart';
 import 'packets.dart';
 import 'pgp_error.dart';
+import 'pgp_files.dart';
 import 's2k.dart';
 import 'secret_key.dart';
 import 'session_key.dart';
@@ -145,9 +146,9 @@ Future<MessageRead> readMessage(
     );
   } on PgpException {
     rethrow;
-  } on FileSystemException catch (e) {
-    throw PgpException(PgpProblem.outOfSpace, detail: e.message);
   } on Object catch (e) {
+    final fileError = pgpFileError(e);
+    if (fileError != null) throw fileError;
     // Anything else is a reader tripping over bytes it did not expect
     throw PgpException(PgpProblem.damaged, detail: '$e');
   }
@@ -432,8 +433,8 @@ class _Inner {
 
   ByteSource _decompress(int algorithm, PgpReader body) => switch (algorithm) {
     0 => body,
-    1 => _Bounded(_Inflate(body, raw: true), _maxUnpacked),
-    2 => _Bounded(_Inflate(body, raw: false), _maxUnpacked),
+    1 => _Bounded(StreamInflate(body, raw: true), _maxUnpacked),
+    2 => _Bounded(StreamInflate(body, raw: false), _maxUnpacked),
     3 => _bzip2(body),
     _ => throw PgpException(PgpProblem.unsupported, detail: 'compression $algorithm'),
   };
@@ -451,46 +452,6 @@ class _Inner {
     }
     pgpCheck(ok, 'BZip2');
     return BytesSource(out.getBytes());
-  }
-}
-
-/// ZIP (raw DEFLATE) and ZLIB through `dart:io`, a piece at a time.
-class _Inflate implements ByteSource {
-  _Inflate(this._in, {required bool raw}) : _filter = RawZLibFilter.inflateFilter(raw: raw);
-
-  final PgpReader _in;
-  final RawZLibFilter _filter;
-  bool _inEnded = false;
-  bool _done = false;
-
-  @override
-  Uint8List? next() {
-    while (!_done) {
-      final List<int>? out;
-      try {
-        out = _filter.processed(flush: false, end: _inEnded);
-      } on PgpException {
-        rethrow;
-      } on Object catch (e) {
-        throw PgpException(PgpProblem.damaged, detail: 'compressed data: $e');
-      }
-      if (out != null && out.isNotEmpty) return out is Uint8List ? out : Uint8List.fromList(out);
-      if (_inEnded) {
-        _done = true;
-        break;
-      }
-      final piece = _in.some();
-      if (piece == null) {
-        _inEnded = true;
-        continue;
-      }
-      try {
-        _filter.process(piece, 0, piece.length);
-      } on Object catch (e) {
-        throw PgpException(PgpProblem.damaged, detail: 'compressed data: $e');
-      }
-    }
-    return null;
   }
 }
 
@@ -596,8 +557,8 @@ MessageOutline outlineMessage(ByteSource input) {
         final algorithm = body.byte();
         final ByteSource inside = switch (algorithm) {
           0 => body,
-          1 => _Inflate(body, raw: true),
-          2 => _Inflate(body, raw: false),
+          1 => StreamInflate(body, raw: true),
+          2 => StreamInflate(body, raw: false),
           // BZip2 is decoded whole: not for a look
           _ => BytesSource(Uint8List(0)),
         };
