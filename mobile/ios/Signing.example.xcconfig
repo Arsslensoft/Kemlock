@@ -1,0 +1,7 @@
+// The Apple team that signs the app and its two extensions. Copy this file
+// to Signing.xcconfig, which git ignores, and put in your team's ID: the ten
+// characters under Membership details at developer.apple.com/account.
+// Flutter/Debug.xcconfig, Flutter/Release.xcconfig, AutoFill.xcconfig and
+// Share.xcconfig include it. Without it a simulator build still works, and a
+// build for a phone or the App Store stops for want of a team.
+DEVELOPMENT_TEAM = ABCDE12345

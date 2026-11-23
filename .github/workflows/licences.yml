@@ -1,0 +1,70 @@
+name: Licences
+
+# Two checks that Kemlock, a GPL-3.0-or-later program, carries only what its licence allows, and
+# says so for every file. Neither has a path filter, so the main branch's ruleset can require both.
+#
+#   Licences  every Dart package the app depends on, for the store build and for the free build,
+#             has a licence a GPL-3.0-or-later program may use (tool/ci/check_licenses.mjs; the
+#             list is in its header, and reviewed exceptions in tool/ci/license-overrides.json).
+#             The Android side (Gradle dependencies) has no licence check of its own: adding a
+#             Gradle licence plugin would add a build dependency, so dependency review's licence
+#             check (dependency-review.yml) is the one for those.
+#   REUSE     every file has its licence and copyright declared (REUSE.toml, LICENSES/) and every
+#             licence used has its text in LICENSES/ (https://reuse.software).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions: {}
+
+jobs:
+  licences:
+    name: Licences
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Dart packages of the store build
+        run: node tool/ci/check_licenses.mjs --project mobile
+
+      - name: Dart packages of the free build
+        working-directory: mobile
+        run: |
+          tool/build/use_free.sh
+          flutter pub get --enforce-lockfile
+          cd ..
+          node tool/ci/check_licenses.mjs --project mobile
+
+  reuse:
+    name: REUSE
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # LICENSES/ holds the texts of GPL-3.0-or-later, Apache-2.0, BSD-3-Clause, CC0-1.0, MIT and OFL-1.1, copied
+      # from files the repository already holds (and two LicenseRef-* notices for NIST and FIDO). The texts of MPL-2.0, CC-BY-4.0 and CC-BY-3.0-US
+      # are not committed yet: this fetches whatever LICENSES/ lacks from the SPDX list.
+      # TODO(owner): run `reuse download --all` once, commit LICENSES/, and drop this step.
+      - name: Fetch the licence texts LICENSES/ lacks
+        run: pipx run "reuse>=5,<7" download --all
+
+      - name: reuse lint
+        run: pipx run "reuse>=5,<7" lint

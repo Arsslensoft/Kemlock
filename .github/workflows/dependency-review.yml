@@ -1,0 +1,51 @@
+name: Dependency review
+
+# Looks at what a pull request adds to the dependency graph (pubspec.lock, the Gradle files, the
+# workflows' actions) and fails it for a dependency with a known vulnerability of high severity or
+# above, or with a licence that isn't one a GPL-3.0-or-later program may use.
+#
+# What it sees: the Dart packages of pubspec.lock, and the Gradle dependencies where the dependency
+# graph reads them. For the Android side this is the only licence check: no Gradle licence plugin
+# is added to the build. The Dart packages' licences are also read from their own files by
+# tool/ci/check_licenses.mjs (licences.yml), for both lockfiles, because the dependency graph
+# doesn't read pubspec.free.lock.
+#
+# In the merge queue (merge_group) the job is skipped, which a required check counts as passing: the
+# review is of the pull request's own diff, and was done on it.
+#
+# It needs the dependency graph, which public repositories have. A private repository needs GitHub
+# Advanced Security; set the repository variable GHAS_ENABLED to "true" when it has it.
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+
+permissions: {}
+
+jobs:
+  review:
+    name: Dependency review
+    if: ${{ github.event_name != 'merge_group' && (!github.event.repository.private || vars.GHAS_ENABLED == 'true') }}
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      pull-requests: write # the summary comment
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/dependency-review-action@v4 # TODO: pin to SHA
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
+          # The licences of tool/ci/check_licenses.mjs, as SPDX identifiers. GPL-2.0-only is not
+          # here: it can't be combined with GPL-3.0 code. A dependency whose licence is missing
+          # or not listed fails; after reading its licence, add it to allow-dependencies-licenses
+          # here as a package URL, and to tool/ci/license-overrides.json.
+          allow-licenses: >-
+            MIT, MIT-0, BSD-2-Clause, BSD-3-Clause, 0BSD, Apache-2.0, ISC, Zlib, MPL-2.0,
+            LGPL-2.1-only, LGPL-2.1-or-later, LGPL-3.0-only, LGPL-3.0-or-later,
+            GPL-2.0-or-later, GPL-3.0-only, GPL-3.0-or-later, CC0-1.0, Unlicense, BSL-1.0,
+            Python-2.0, BlueOak-1.0.0

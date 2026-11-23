@@ -1,0 +1,45 @@
+name: Commit messages
+
+# Every commit of a pull request, and the pull request's title (a squash merge makes it the commit's
+# subject, and release-please writes CHANGELOG.md from it), must be a Conventional Commit with the
+# types and scopes CLAUDE.md lists: `type(scope): what the change does`. tool/ci/lint_commits.mjs
+# does the checking. See CONTRIBUTING.md.
+#
+# The job is called Conventional Commits, and it runs on every pull request with no path filter, so
+# the main branch's ruleset can require it.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  lint:
+    name: Conventional Commits
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    steps:
+      - name: Merge queue
+        if: github.event_name == 'merge_group'
+        run: echo "The commits and the title of this pull request were checked when it was opened and updated."
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event_name == 'pull_request'
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Lint the messages
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: node tool/ci/lint_commits.mjs --base "$BASE" --head "$HEAD"

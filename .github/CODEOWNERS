@@ -1,0 +1,59 @@
+# Who reviews what. GitHub requests a review from the owners of every file a pull request changes,
+# and the main branch's ruleset can require their approval. The last matching pattern wins.
+#
+# There is one maintainer for now, so the sensitive paths below name the same owner as the rest: they
+# are listed so that a second reviewer (a person or a team) is added to them, and only to them, first.
+
+# Everything.
+*                                                       @Arsslensoft
+
+# The cryptography, the vault and the formats other versions read: a change here can lock people out
+# of vaults already on their phones. Byte for byte (CLAUDE.md, CONTRIBUTING.md).
+/mobile/lib/crypto/                                     @Arsslensoft
+/mobile/lib/vault/                                      @Arsslensoft
+/mobile/lib/features/export/                            @Arsslensoft
+/mobile/lib/features/import/                            @Arsslensoft
+/mobile/lib/features/backup/                            @Arsslensoft
+/mobile/lib/features/recovery/                          @Arsslensoft
+/mobile/lib/features/sync/                              @Arsslensoft
+/mobile/lib/features/share/                             @Arsslensoft
+/mobile/lib/features/sends/                             @Arsslensoft
+/mobile/lib/features/keys/                              @Arsslensoft
+/mobile/lib/features/pgp/                               @Arsslensoft
+/mobile/lib/features/passkeys/                          @Arsslensoft
+/mobile/lib/security_key/                               @Arsslensoft
+
+# The fixtures other apps wrote, and the tools that copy the server's: never regenerated.
+/mobile/test/fixtures/                                  @Arsslensoft
+/mobile/tool/server/                                    @Arsslensoft
+
+# Native code that handles secrets: AutoFill, the extensions, the manifests and entitlements.
+/mobile/android/                                        @Arsslensoft
+/mobile/ios/                                            @Arsslensoft
+/mobile/packages/                                       @Arsslensoft
+
+# Dependencies and what they are checked against.
+/mobile/pubspec.yaml                                    @Arsslensoft
+/mobile/pubspec.lock                                    @Arsslensoft
+/mobile/pubspec.free.lock                               @Arsslensoft
+/mobile/android/gradle/verification-metadata.xml        @Arsslensoft
+
+# Builds and releases: the reproducible release, the signing scripts and its keys' fingerprints.
+/mobile/tool/release/                                   @Arsslensoft
+/mobile/tool/build/                                     @Arsslensoft
+/mobile/tool/fdroid/                                    @Arsslensoft
+/docs/reproducible-builds.md                            @Arsslensoft
+
+# CI, repository settings, and the policies.
+/.github/                                               @Arsslensoft
+/tool/ci/                                               @Arsslensoft
+/tool/github/                                           @Arsslensoft
+/.coderabbit.yaml                                       @Arsslensoft
+/.gitleaks.toml                                         @Arsslensoft
+/REUSE.toml                                             @Arsslensoft
+/LICENSE                                                @Arsslensoft
+/LICENSES/                                              @Arsslensoft
+/CLAUDE.md                                              @Arsslensoft
+/CONTRIBUTING.md                                        @Arsslensoft
+/GOVERNANCE.md                                          @Arsslensoft
+/CODE_OF_CONDUCT.md                                     @Arsslensoft

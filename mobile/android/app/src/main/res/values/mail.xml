@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kemlock as an OpenPGP app for mail apps (KemlockPgpService). The French is in values-fr. -->
+<resources>
+    <!-- The name mail apps list it under, among the phone's OpenPGP apps. -->
+    <string name="pgp_service_label">Kemlock</string>
+    <string name="pgp_error_not_ready">Kemlock isn’t ready yet. Try again.</string>
+    <string name="pgp_error_failed">Kemlock couldn’t answer this request.</string>
+    <!-- An app Kemlock can't pin to one package and one signer, or Kemlock itself (PgpCaller). -->
+    <string name="pgp_error_refused">Kemlock can’t tell which app this is, so it won’t answer it.</string>
+    <!-- An app with four requests under way already. -->
+    <string name="pgp_error_busy">Kemlock is still answering this app’s other requests. Try again.</string>
+    <!-- The output didn't reach the app whole: what came of it is not to be shown. -->
+    <string name="pgp_error_output">Kemlock couldn’t hand over the whole result, so none of it counts. Try again.</string>
+</resources>

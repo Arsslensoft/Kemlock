@@ -1,0 +1,73 @@
+name: Dependabot auto-merge
+
+# Turns on auto-merge (squash) for a Dependabot pull request that is a patch or minor update and a
+# security update, so it merges by itself once the main branch's required checks pass, which
+# includes the lockfile refresh of dependabot-lockfiles.yml having been pushed and CI having run on
+# it. A major update is never merged here. Repository variable AUTOMERGE_ALL_UPDATES, set to
+# "true", extends this to every patch and minor update, security or not.
+#
+# The main branch's ruleset asks for one approving review, so this also approves the pull request,
+# as github-actions. That works only with the repository setting "Allow GitHub Actions to create and
+# approve pull requests" (tool/github/apply_settings.sh turns it on) and "Allow auto-merge".
+# Remove the approve step to keep a person's approval in the loop.
+#
+# The merge has to be armed with a token that starts workflows. A pull request merged by auto-merge that
+# was armed with the workflow's own token (GITHUB_TOKEN) is merged without the workflows that run on a
+# push to main (the release PR, the labels sync, the CodeQL and Scorecard runs) starting for the merge
+# commit. So when the secret AUTOMERGE_TOKEN is set (a GitHub App token or a fine-grained personal
+# access token with Contents and Pull requests: read and write, as an Actions secret, and as a Dependabot
+# secret, which is what a run for a Dependabot pull request reads) auto-merge is armed with it; without
+# it, the workflow's token is used, and those push workflows are started by hand when it matters.
+#
+# fetch-metadata's alert lookup names the advisory (ghsa-id) of a security update; for a grouped
+# update, which dependabot.yml limits to minor and patch, it names the group.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  automerge:
+    name: Auto-merge
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@v2 # TODO: pin to SHA
+        with:
+          github-token: ${{ github.token }}
+          alert-lookup: true
+
+      # Both steps run only when the user who started this run is Dependabot too, not just the author
+      # of the pull request: a person who pushes to a Dependabot branch or reruns the workflow is not.
+      - name: Approve
+        if: >-
+          github.actor == 'dependabot[bot]' &&
+          (steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+           steps.meta.outputs.update-type == 'version-update:semver-minor' ||
+           steps.meta.outputs.dependency-group != '') &&
+          (steps.meta.outputs.ghsa-id != '' || vars.AUTOMERGE_ALL_UPDATES == 'true')
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr review --approve "$PR_URL"
+
+      # Armed with AUTOMERGE_TOKEN when it is set, else with the workflow's token (see the header).
+      - name: Enable auto-merge
+        if: >-
+          github.actor == 'dependabot[bot]' &&
+          (steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+           steps.meta.outputs.update-type == 'version-update:semver-minor' ||
+           steps.meta.outputs.dependency-group != '') &&
+          (steps.meta.outputs.ghsa-id != '' || vars.AUTOMERGE_ALL_UPDATES == 'true')
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.AUTOMERGE_TOKEN || github.token }}
+        run: gh pr merge --auto --squash "$PR_URL"

@@ -1,0 +1,6 @@
+// The AutoFill extension's build settings beside its target's: Flutter's
+// generated settings, for the app's version name and build number, which the
+// extension must share. Not Flutter/Debug.xcconfig or Release.xcconfig,
+// which bring in the Runner's pods.
+#include? "../Flutter/Generated.xcconfig"
+#include? "../Signing.xcconfig"

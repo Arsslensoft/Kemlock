@@ -1,0 +1,11 @@
+FIDO Alliance specification notice (a pointer, not the notice's own text)
+
+The example payload in mobile/test/fixtures/import/cxf/fido-example.json is Appendix A, "Example
+Payload", of the FIDO Alliance's Credential Exchange Format 1.0 specification, errata of
+9 March 2026 (https://fidoalliance.org/specs/cx/cxf-v1.0-ps-errata-20260309.html). It is
+copyright of the FIDO Alliance, and is published under the copyright and IPR terms of the
+specification, which are printed on the page above. It is kept here, byte for byte, as a test
+fixture, with the attribution of this file.
+
+TODO(owner): replace this file with the copyright notice and licence text printed on the page
+above, once you have read them and know that they let a GPL-3.0-or-later repository carry it.

@@ -1,0 +1,33 @@
+Kemlock garde vos codes à usage unique, codes de secours, clés, notes et clés d’accès dans un coffre sur votre téléphone, chiffré avec votre mot de passe principal et une cryptographie post-quantique (ML-KEM-1024 et AES-256-GCM). Il n’y a ni compte Kemlock ni serveur Kemlock.
+
+<b>Ce qu’il fait</b>
+<ul>
+<li>Codes de double authentification (TOTP et HOTP), ajoutés en scannant un code QR, depuis une image ou à la main</li>
+<li>Codes de secours pour chaque service, barrés à mesure que vous les utilisez</li>
+<li>Clés SSH et OpenPGP, notes sécurisées avec fichiers joints, et clés d’accès</li>
+<li>Exports chiffrés, transfert par QR vers un autre téléphone, et un kit de récupération que vous pouvez partager entre personnes de confiance</li>
+<li>Synchronisation par votre propre dossier WebDAV ou votre propre Vaultwarden, et espaces partagés pour la famille ou une équipe</li>
+<li>Plusieurs coffres, déverrouillage biométrique ou par clé de sécurité, remplissage automatique et fournisseur de clés d’accès</li>
+<li>Mode hors ligne, qui arrête toute requête réseau</li>
+</ul>
+
+<b>Libre et open source</b>
+Kemlock est un logiciel libre sous licence GPLv3, et toutes ses fonctionnalités sont gratuites pour tout le monde : ni abonnement, ni achats intégrés, ni publicité. Cette version n’est faite que de logiciels libres, et F-Droid la compile depuis les sources. Elle diffère de la version de l’App Store et de Google Play sur trois points :
+<ul>
+<li>Les codes QR sont scannés avec le module caméra de Flutter et ZXing, et non Google ML Kit.</li>
+<li>Les codes de secours se lisent dans des fichiers texte, se collent ou se tapent. Les lire dans des images ou des PDF demande des bibliothèques qui ne sont pas des logiciels libres ; cette version ne le fait donc pas.</li>
+<li>Il n’y a pas de services Google Play, donc ni transfert d’identifiants par Google Play ni notifications push.</li>
+</ul>
+Chaque version peut être recompilée depuis son étiquette en un fichier identique ; le fichier docs/reproducible-builds.md du dépôt explique comment.
+
+<b>Ce qui passe par le réseau, et vers qui</b>
+Rien, sauf si vous l’activez :
+<ul>
+<li>La synchronisation ne parle qu’au serveur WebDAV ou Vaultwarden que vous indiquez, et lui envoie votre coffre chiffré.</li>
+<li>Les alertes de fuites et la vérification de mot de passe interrogent Have I Been Pwned, un service dont le logiciel n’est pas libre. Les deux restent désactivées tant que vous ne les activez pas ; la vérification envoie cinq caractères d’une empreinte du nouveau mot de passe principal, jamais le mot de passe.</li>
+<li>Chercher la clé OpenPGP de quelqu’un par son adresse interroge son domaine, puis keys.openpgp.org après votre accord.</li>
+</ul>
+Il n’y a ni publicité, ni statistiques, ni rapports de plantage.
+
+<b>Passer de la version de l’App Store ou de Google Play</b>
+Les deux versions sont signées avec des clés différentes : l’une ne peut pas s’installer par-dessus l’autre. Faites un export chiffré dans l’autre version, désinstallez-la, installez celle-ci et importez le fichier : chaque compte, code de secours, clé, note et clé d’accès revient.

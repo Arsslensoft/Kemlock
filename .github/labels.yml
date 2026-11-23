@@ -1,0 +1,93 @@
+# The repository's labels. .github/workflows/labels.yml creates and updates them from this list when
+# it changes on main (tool/ci/sync_labels.sh). It never deletes a label that isn't here: remove one by
+# hand once nothing uses it. GitHub's own default labels are kept below, with their usual colours.
+# Labels the tools make for themselves (release-please's "autorelease: ...") are left alone.
+
+# Kind
+- name: bug
+  color: d73a4a
+  description: Something doesn't work as it should
+- name: enhancement
+  color: a2eeef
+  description: A new feature or an improvement
+- name: documentation
+  color: 0075ca
+  description: An improvement or fix to the documentation
+- name: question
+  color: d876e3
+  description: A question about using Kemlock
+- name: security
+  color: b60205
+  description: A security matter (vulnerabilities are reported privately, never as an issue)
+- name: breaking-change
+  color: e11d21
+  description: Changes something people or other versions rely on
+- name: formats
+  color: 5319e7
+  description: Touches a released format (vault, exports, sync files, QR, invites, Recovery Kit)
+- name: crypto
+  color: 5319e7
+  description: Touches the cryptography
+
+# State
+- name: needs-triage
+  color: ededed
+  description: Not looked at yet
+- name: confirmed
+  color: 0e8a16
+  description: Reproduced, or agreed to be wanted
+- name: needs-info
+  color: fbca04
+  description: Waiting for more details from the reporter
+- name: good first issue
+  color: 7057ff
+  description: A good place to start
+- name: help wanted
+  color: 008672
+  description: Extra attention is welcome
+- name: pinned
+  color: 1d76db
+  description: Never marked stale or closed for inactivity
+- name: stale
+  color: eeeeee
+  description: No activity for a long time; closes soon unless something happens
+- name: duplicate
+  color: cfd3d7
+  description: This already exists
+- name: invalid
+  color: e4e669
+  description: This doesn't seem right
+- name: wontfix
+  color: ffffff
+  description: This will not be worked on
+
+# Area
+- name: android
+  color: 3ddc84
+  description: The Android app, its Kotlin code or its build
+- name: ios
+  color: 000000
+  description: The iOS app, its Swift code or its build
+- name: free-build
+  color: 0e8a16
+  description: The free build (F-Droid and the releases page)
+- name: autofill
+  color: c5def5
+  description: AutoFill of codes and logins
+- name: sync
+  color: c5def5
+  description: Sync (WebDAV, Vaultwarden, Kemlock Server)
+- name: i18n
+  color: c5def5
+  description: Languages and translations
+
+# Dependencies and automation
+- name: dependencies
+  color: 0366d6
+  description: Updates a dependency
+- name: dart
+  color: 00b4ab
+  description: Updates or concerns a Dart (pub) package
+- name: github-actions
+  color: 000000
+  description: Updates or concerns a GitHub Actions workflow

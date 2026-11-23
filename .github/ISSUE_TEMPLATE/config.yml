@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Arsslensoft/Kemlock/security/advisories/new
+    about: "A way to read a vault, leak a secret or break a format. This is private, so don't open an issue for it."
+  - name: Ask a question or get help
+    url: https://github.com/Arsslensoft/Kemlock/blob/main/SUPPORT.md
+    about: "How to use Kemlock, and where to ask."
+  - name: Kemlock Server
+    url: https://github.com/Arsslensoft/Kemlock-Server/issues
+    about: "Problems with the sync server belong in its repository."
+  - name: Browser extension
+    url: https://github.com/Arsslensoft/Kemlock-browser/issues
+    about: "Problems with the browser extension belong in its repository."

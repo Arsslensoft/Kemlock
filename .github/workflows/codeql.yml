@@ -1,0 +1,151 @@
+name: CodeQL
+
+# Static analysis with CodeQL: GitHub Actions workflows and the Python tools (no build), the
+# Kotlin and Java of the Android app and the credential transfer plugin (a Gradle build CodeQL
+# traces), and the Swift of the iOS app, AutoFill extension and tests (an Xcode build, on pushes
+# and the weekly run only). Dart, the app's main language, is not supported by CodeQL.
+#
+# Results go to the repository's code scanning page, which is free for public repositories. On a
+# private repository code scanning needs GitHub Advanced Security: set the repository variable
+# GHAS_ENABLED to "true" when it has it, and until then these jobs are skipped.
+#
+# In the merge queue (merge_group) the jobs are skipped, which a required check counts as passing: the
+# commits were analyzed on the pull request, and the queue only has to hear that they were.
+#
+# The job names are the ones the main branch's ruleset requires ("Analyze (java-kotlin)",
+# "Analyze (actions)", "Analyze (python)"), so every language is its own job rather than a matrix
+# entry, and none has a path filter.
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions: {}
+
+jobs:
+  actions:
+    name: Analyze (actions)
+    if: ${{ github.event_name != 'merge_group' && (!github.event.repository.private || vars.GHAS_ENABLED == 'true') }}
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: github/codeql-action/init@v4 # TODO: pin to SHA
+        with:
+          languages: actions
+          build-mode: none
+          queries: security-extended
+
+      - uses: github/codeql-action/analyze@v4 # TODO: pin to SHA
+        with:
+          category: /language:actions
+
+  python:
+    name: Analyze (python)
+    if: ${{ github.event_name != 'merge_group' && (!github.event.repository.private || vars.GHAS_ENABLED == 'true') }}
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: github/codeql-action/init@v4 # TODO: pin to SHA
+        with:
+          languages: python
+          build-mode: none
+          queries: security-extended
+
+      - uses: github/codeql-action/analyze@v4 # TODO: pin to SHA
+        with:
+          category: /language:python
+
+  java-kotlin:
+    name: Analyze (java-kotlin)
+    if: ${{ github.event_name != 'merge_group' && (!github.event.repository.private || vars.GHAS_ENABLED == 'true') }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Flutter writes android/local.properties and the plugin list the Gradle build reads.
+      - uses: ./.github/actions/setup-flutter
+
+      - uses: github/codeql-action/init@v4 # TODO: pin to SHA
+        with:
+          languages: java-kotlin
+          build-mode: manual
+          queries: security-extended
+
+      # Compiles all the Kotlin and Java: the app (with the OpenPGP interface classes) and the
+      # credential transfer plugin. No Dart is built. The Gradle daemon is off, because CodeQL
+      # traces the compilers of the process it starts, and dependency verification stays on.
+      - name: Build the Kotlin and Java
+        working-directory: mobile/android
+        run: |
+          JAVA_HOME="$JAVA_HOME_17_X64" ./gradlew --no-daemon --no-build-cache --dependency-verification strict \
+            :app:compileDebugKotlin :app:compileDebugJavaWithJavac :credential_transfer:compileDebugKotlin
+
+      - uses: github/codeql-action/analyze@v4 # TODO: pin to SHA
+        with:
+          category: /language:java-kotlin
+
+  swift:
+    name: Analyze (swift)
+    # Not on pull requests: a macOS runner and a full Xcode build of the app take too long for
+    # every one. It runs on every push to main and weekly, so it is not a required check.
+    if: ${{ github.event_name != 'pull_request' && github.event_name != 'merge_group' && (!github.event.repository.private || vars.GHAS_ENABLED == 'true') }}
+    runs-on: macos-26
+    timeout-minutes: 90
+    # CodeQL's Swift tracing of a Flutter build is the part most likely to need a change; until it
+    # has run clean on this repository, its failure does not fail the workflow.
+    continue-on-error: true
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-flutter
+
+      - uses: github/codeql-action/init@v4 # TODO: pin to SHA
+        with:
+          languages: swift
+          build-mode: manual
+          queries: security-extended
+
+      - name: Build the iOS app for the simulator
+        working-directory: mobile
+        run: flutter build ios --simulator --debug --no-codesign
+
+      - uses: github/codeql-action/analyze@v4 # TODO: pin to SHA
+        with:
+          category: /language:swift

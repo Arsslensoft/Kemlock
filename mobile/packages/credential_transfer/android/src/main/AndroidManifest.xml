@@ -1,0 +1,34 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- The activity looks up the selector's package to check that it is a system app (ExportCheck), which
+         Android 11's package visibility allows only for a package named here -->
+    <queries>
+        <package android:name="com.google.android.gms" />
+    </queries>
+    <application>
+        <!-- What the system's selector opens when the person picks Kemlock in another app's import
+             (task 8.4). Exported, because the selector is another app's process; so it is off
+             (credential_export_enabled) until the security review passes, refuses any caller but the
+             selector and any entry id Kemlock didn't register before it does anything, and on Android
+             15 and later (API 35, where the attribute was added) the system also checks that the caller can write
+             the content URI it passes; before that the attribute is ignored and the activity's own checks are all
+             there is, including that it refuses a URI of Kemlock's own providers.
+             No screen of its own, out of the recent apps. -->
+        <activity
+            android:name="com.kemlock.credential_transfer.ExportActivity"
+            android:enabled="@bool/credential_export_enabled"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:requireContentUriPermissionFromCaller="write"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|uiMode|density"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            tools:targetApi="35">
+            <intent-filter>
+                <!-- Required for Credential Manager to start this activity -->
+                <action android:name="androidx.identitycredentials.action.IMPORT_CREDENTIALS" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

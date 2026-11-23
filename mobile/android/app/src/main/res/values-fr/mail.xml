@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pgp_service_label">Kemlock</string>
+    <string name="pgp_error_not_ready">Kemlock n’est pas encore prêt. Réessayez.</string>
+    <string name="pgp_error_failed">Kemlock n’a pas pu répondre à cette demande.</string>
+    <string name="pgp_error_refused">Kemlock ne peut pas savoir de quelle application il s’agit, et ne lui répond donc pas.</string>
+    <string name="pgp_error_busy">Kemlock répond encore aux autres demandes de cette application. Réessayez.</string>
+    <string name="pgp_error_output">Kemlock n’a pas pu transmettre le résultat en entier, aucune partie n’en est donc valable. Réessayez.</string>
+</resources>

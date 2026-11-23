@@ -1,0 +1,6 @@
+/* L’extension de partage de Kemlock, en français. */
+"saving" = "Enregistrement pour Kemlock…";
+"openApp" = "Ouvrez Kemlock pour continuer";
+"done" = "OK";
+"oneItem" = "Kemlock prend un élément à la fois";
+"unreadable" = "Kemlock n’a pas pu lire ce fichier";

@@ -1,0 +1,37 @@
+name: Labels
+
+# Creates and updates the repository's labels from .github/labels.yml when it changes on main, or
+# when started by hand. Labels that aren't in the file are never deleted.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/labels.yml"
+      - ".github/workflows/labels.yml"
+      - "tool/ci/sync_labels.sh"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  sync:
+    name: Sync labels
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      issues: write # labels are managed through the issues API
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Create and update the labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: tool/ci/sync_labels.sh .github/labels.yml

@@ -1,0 +1,13 @@
+NIST public domain notice (a summary, not the notice's own text)
+
+The ACVP-Server vectors (https://github.com/usnistgov/ACVP-Server) were developed by employees
+of the National Institute of Standards and Technology (NIST), an agency of the United States
+Federal Government, and are made available as a public service. Pursuant to title 17 United
+States Code Section 105, works of NIST employees are not subject to copyright protection in the
+United States and are considered to be in the public domain. Permission to freely use, copy,
+modify, and distribute the vectors for any purpose is hereby granted. They are provided "as is",
+without warranty of any kind, and NIST does not assume responsibility for their use.
+
+TODO(owner): replace this file with the notice as the ACVP-Server repository's LICENSE states it
+(copy it from the commit named in the "source" field of each file under
+mobile/test/fixtures/keys/acvp), once you have read it.

@@ -1,0 +1,113 @@
+name: Release
+
+# Builds a release of the free build twice and drafts it (openspec:
+# add-fdroid-release, design decision 8). Started by a v* tag: two jobs on
+# separate runners build the tag in the release container
+# (mobile/tool/release), a third compares their six APKs byte for byte and,
+# only if they are the same, drafts a GitHub release with the unsigned APKs
+# and SHA256SUMS. If they differ it fails with diffoscope's report.
+#
+# No job holds a signing key. The owner downloads the draft's APKs, signs
+# them with mobile/tool/release/sign.sh away from any build machine, uploads
+# the signed files and their sums, and publishes the draft.
+#
+# release-please (release-please.yml) writes CHANGELOG.md and, when its pull
+# request is merged, drafts the GitHub release with the changelog as its notes
+# and creates the tag. That tag starts this workflow only if release-please
+# made it with the RELEASE_PLEASE_TOKEN secret: a tag made with the workflow's
+# own token starts nothing. Without the secret, run this workflow from the
+# Actions tab, choosing the tag as the ref. The draft job adds the APKs to the
+# draft release-please made, or drafts a release if there is none.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        run: [first, second]
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Build the release container
+        run: docker build -t kemlock-release -f mobile/tool/release/Containerfile mobile/tool/release
+
+      - name: Build the tag
+        run: |
+          mkdir -m 777 out
+          docker run --rm -v "$PWD:/repo:ro" -v "$PWD/out:/out" kemlock-release \
+            /home/vagrant/tools/build.sh "$GITHUB_REF_NAME" /repo
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: apks-${{ matrix.run }}
+          path: out/
+          if-no-files-found: error
+
+  compare:
+    needs: build
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: builds
+
+      - name: Compare the two builds
+        run: |
+          cd builds
+          if cmp apks-first/SHA256SUMS apks-second/SHA256SUMS && (cd apks-second && sha256sum -c SHA256SUMS); then
+            echo "The two builds are the same, byte for byte."
+            exit 0
+          fi
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends diffoscope-minimal
+          for apk in apks-first/*.apk; do
+            diffoscope --text - "$apk" "apks-second/$(basename "$apk")" || true
+          done
+          echo "The two builds differ: this release is not published." >&2
+          exit 1
+
+  draft:
+    needs: compare
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: apks-first
+          path: out
+
+      - name: Draft the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          case "$GITHUB_REF" in
+            refs/tags/v*) ;;
+            *) echo "::error::Run this workflow on a tag (v*), not on $GITHUB_REF"; exit 1 ;;
+          esac
+          drafted="$(gh release list --repo "$REPO" --limit 100 --json tagName,isDraft \
+            --jq ".[] | select(.isDraft and .tagName == \"$GITHUB_REF_NAME\") | .tagName")"
+          if [ -n "$drafted" ]; then
+            # release-please drafted it, with the changelog as its notes: add the unsigned APKs.
+            gh release upload "$GITHUB_REF_NAME" --repo "$REPO" --clobber out/*.apk out/SHA256SUMS
+          else
+            gh release create "$GITHUB_REF_NAME" --repo "$REPO" --draft --verify-tag \
+              --title "Kemlock $GITHUB_REF_NAME" \
+              --notes "Unsigned APKs of the free build, built twice and found the same. To be signed with tool/release/sign.sh before publishing." \
+              out/*.apk out/SHA256SUMS
+          fi

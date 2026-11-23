@@ -1,0 +1,30 @@
+# The store build's parts (openspec: add-fdroid-release, design decision 1):
+# the QR scanner and text recognition of Google's ML Kit, PDFium through
+# pdfrx. These are the libraries the free build leaves out, so nothing else in
+# the app imports them.
+name: kemlock_parts
+description: "Kemlock's store build parts: ML Kit's scanner and text recognition, and pdfrx."
+publish_to: "none"
+version: 1.0.0
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  kemlock_ports:
+    path: ../kemlock_ports
+  # Android's Play services credential transfer; nothing else depends on it, so the free build has none.
+  credential_transfer:
+    path: ../credential_transfer
+  path_provider: ^2.1.6
+  mobile_scanner: ^7.4.2
+  google_mlkit_text_recognition: ^0.17.1
+  pdfrx: ^2.6.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  pdf: ^3.13.1

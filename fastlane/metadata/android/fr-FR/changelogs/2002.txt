@@ -1,0 +1,1 @@
+La première version libre : Kemlock fait uniquement de logiciels libres, toutes les fonctionnalités ouvertes, les codes QR scannés avec ZXing et les codes de secours lus dans des fichiers texte.

@@ -1,0 +1,13 @@
+# The tools the release container installs, one SHA-256 per tree, as
+# tree_sum.sh prints them. Recorded from the first build of the Containerfile;
+# a later build that installs anything else stops at the check.
+e022ee5c0bf75036b3c52296ac166da67b7e38802030ac9b1b74553aec93892f  android-sdk/platforms/android-37.0
+1baa0e55778c387e16a8f76e8ae24d44bf0f8b7a2a9e3b1565264954dc9583d1  android-sdk/platforms/android-36
+a3d7b40db3e015779632a926587961fdf63b266f09208a831b0478c6939dab3b  android-sdk/platforms/android-35
+29fc4c4e6a12cacfa92c29185ead672ffe7e60b6e3d42fb527eca3f64b82a2f9  android-sdk/platforms/android-34
+2c6f79f018403930c5d924e3fcb2178f72d29d7106f0e3c6d796642e08255f1e  android-sdk/build-tools/36.0.0
+1c917ce834fc159269b9b6c2ecd4b04ecb626fc354c50bf0a2005f20a48f9d05  android-sdk/build-tools/34.0.0
+a4fa7f54a7590a183140c4b4c8050e81bc49cfeab5732b8543165460b7ebc2ff  android-sdk/ndk/28.2.13676358
+ad41424373aa7223b9adc4fa8f94b54ec2e4d917c4f3760fc362bbeb8257b1c7  android-sdk/cmake/3.22.1
+3d381620b742eaeb7ed875235ab43040d451769cb9606a4404850b73348d834a  flutter/bin/cache/artifacts
+459e56e9ff541a0a4f1230cf646fe4dec4e6323d77c1e9b354d1e81c11486957  android-sdk/platform-tools

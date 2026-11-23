@@ -1,0 +1,14 @@
+name: kemlock_ports
+description: "The interfaces Kemlock reads its closed or replaceable parts through: the QR scanner, the code readers and the credential transfer."
+publish_to: "none"
+version: 1.0.0
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^6.0.0

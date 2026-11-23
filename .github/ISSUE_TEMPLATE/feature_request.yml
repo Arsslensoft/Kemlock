@@ -1,0 +1,70 @@
+name: Feature request
+description: An idea for something Kemlock could do, or do better.
+title: "feat: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the idea. Kemlock keeps people's codes and passwords, so a feature is judged by
+        what it does to their safety and to the vaults already on their phones as much as by its use.
+        Features that touch the crypto or a format (the vault, exports, sync files, QR transfers) need
+        a plan before code: see [CONTRIBUTING.md](https://github.com/Arsslensoft/Kemlock/blob/main/CONTRIBUTING.md).
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you post
+      options:
+        - label: I searched the existing issues and the README, and this isn't there already.
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do, and what stops you?
+      description: The problem first, not the solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like Kemlock to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What have you tried instead?
+      description: Other apps, a workaround, other designs.
+
+  - type: dropdown
+    id: touches
+    attributes:
+      label: Would it change what is stored, exported or synced?
+      description: A new format must leave the existing ones as they are, byte for byte.
+      options:
+        - "No, it is only on the screen"
+        - "Yes, it adds something new to a format"
+        - "Yes, it would change an existing format"
+        - "I don't know"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      multiple: true
+      options:
+        - Android
+        - iOS
+
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Can you help?
+      options:
+        - label: I would like to write it (I'll wait for a maintainer's answer on the design first).

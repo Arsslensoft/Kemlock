@@ -1,0 +1,27 @@
+# The fixtures are files other apps and versions wrote, and the tests
+# compare them byte for byte: never convert their line endings, even
+# in a checkout with core.autocrlf set.
+mobile/test/fixtures/** -text
+
+# Scripts and lockfiles the release build reads on Linux: a Windows line
+# ending in them would change the build or stop it (openspec:
+# add-fdroid-release).
+mobile/tool/build/** text eol=lf
+mobile/tool/release/** text eol=lf
+mobile/tool/fdroid/** text eol=lf
+mobile/pubspec.free.lock text eol=lf
+
+# Lists bundled byte for byte as their publisher serves them, which their
+# refresh scripts compare with a fresh download (openspec: add-passwords).
+mobile/assets/data/public_suffix_list.dat -text
+mobile/assets/data/eff_large_wordlist.txt -text
+mobile/android/app/src/main/assets/password-manager-resources/** -text
+mobile/tool/autofill/** text eol=lf
+
+# The server-vector script runs on Linux and macOS.
+mobile/tool/server/** text eol=lf
+
+# The repository's own CI and settings scripts run on Linux runners and are run by the owner on
+# Linux or macOS: no Windows line endings in them, or in the workflows.
+tool/** text eol=lf
+.github/** text eol=lf

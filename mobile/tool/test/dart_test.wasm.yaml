@@ -1,0 +1,17 @@
+# The browser settings of the pure-Dart crypto tests under dart2wasm (docs/plans/add-account-crypto.md, task 6.4).
+# flutter test rejects a browser platform in dart_test.yaml, so this file sits here and the run copies it in:
+#
+#   cp tool/test/dart_test.wasm.yaml dart_test.yaml && dart test -p chrome -c dart2wasm -t wasm; rm dart_test.yaml
+#
+# The tests it runs carry @Tags(['wasm']). Windows runs them in Edge, Linux and macOS in Chrome.
+tags:
+  wasm:
+override_platforms:
+  chrome:
+    settings:
+      headless: false
+      executable:
+        windows: C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
+        linux: google-chrome
+        mac_os: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+      arguments: --headless=new --disable-gpu --no-first-run --no-default-browser-check --no-sandbox --disable-features=msEdgeStartupBoost --disable-background-mode

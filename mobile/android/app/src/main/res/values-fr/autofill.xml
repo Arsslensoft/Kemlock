@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="autofill_fill_code">Remplir un code</string>
+    <string name="autofill_suggestion_description">%1$s, de Kemlock</string>
+    <string name="autofill_prompt_title">Remplir un code avec Kemlock</string>
+    <string name="autofill_prompt_for">Pour %1$s</string>
+    <string name="autofill_this_app">cette app</string>
+    <string name="autofill_cancel">Annuler</string>
+    <string name="autofill_close">Fermer</string>
+    <string name="autofill_search">Rechercher un compte</string>
+    <string name="autofill_choose">Choisissez le compte pour %1$s.</string>
+    <string name="autofill_choose_any">Choisissez un compte.</string>
+    <string name="autofill_unknown">Aucun compte n’est connu pour %1$s. Vérifiez l’adresse ou l’app avant de remplir un code.</string>
+    <string name="autofill_remember">Proposer ce compte ici la prochaine fois</string>
+    <string name="autofill_reopen">La biométrie de ce téléphone a changé : le remplissage des codes est désactivé pour l’instant. Ouvrez Kemlock et déverrouillez votre coffre pour le réactiver.</string>
+    <string name="autofill_no_codes">Aucun code à remplir pour l’instant. Activez le remplissage pour un coffre dans les réglages de Kemlock.</string>
+    <string name="autofill_failed">Kemlock n’a pas pu ouvrir ses codes. Réessayez.</string>
+    <string name="autofill_another_login">Un autre identifiant</string>
+    <string name="autofill_prompt_login_title">Remplir un mot de passe avec Kemlock</string>
+    <string name="autofill_search_logins">Rechercher un identifiant</string>
+    <string name="autofill_choose_login">Choisissez l’identifiant pour %1$s.</string>
+    <string name="autofill_choose_any_login">Choisissez un identifiant.</string>
+    <string name="autofill_unknown_login">Aucun identifiant n’est connu pour %1$s. Vérifiez l’adresse ou l’app avant de remplir un mot de passe.</string>
+    <string name="autofill_remember_login">Proposer cet identifiant ici la prochaine fois</string>
+    <string name="autofill_reopen_logins">La biométrie de ce téléphone a changé : le remplissage des mots de passe est désactivé pour l’instant. Ouvrez Kemlock et déverrouillez votre coffre pour le réactiver.</string>
+    <string name="autofill_no_logins">Aucun mot de passe à remplir pour l’instant. Activez les mots de passe pour un coffre dans les réglages de remplissage automatique de Kemlock.</string>
+    <string name="autofill_failed_logins">Kemlock n’a pas pu ouvrir ses identifiants. Réessayez.</string>
+</resources>

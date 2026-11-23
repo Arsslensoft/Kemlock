@@ -1,0 +1,267 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- CredentialDependency: androidx.credentials is here for the passkey provider, from Android 14; the app
+         never asks Credential Manager for credentials, so it needs no Play services fallback for older phones. -->
+    <application
+        android:label="Kemlock"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:supportsRtl="true"
+        tools:ignore="CredentialDependency">
+        <!-- singleTask: a share or a set-up link from another app comes to Kemlock's own task, through
+             onNewIntent when it runs, never into the other app's task, where that app holds the screens
+             around it. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <!-- The theme shown while Flutter starts, and behind the Flutter UI after. -->
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Set-up links: a site's otpauth:// link, or a Google Authenticator export (SetupLinksChannel). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="otpauth" />
+                <data android:scheme="otpauth-migration" />
+            </intent-filter>
+            <!-- The SSO redirect, kemlock://sso?code=...&state=...: BrowserAuthChannel takes it only with the state of the
+                 sign-in that waits for it. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="kemlock" android:host="sso" />
+            </intent-filter>
+            <!-- Sharing to Kemlock: a piece of text, or one file of any type (ShareChannel). Several files at once
+                 (SEND_MULTIPLE) are not taken. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <!-- Links go to SetupLinksChannel whole; Flutter's deep linking would hand the router only their path. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+        </activity>
+        <!-- Fills one-time codes into other apps and websites (openspec: add-passwords, the code-autofill spec). -->
+        <service
+            android:name=".autofill.KemlockAutofillService"
+            android:enabled="@bool/autofill_supported"
+            android:exported="true"
+            android:label="@string/autofill_app_name"
+            android:permission="android.permission.BIND_AUTOFILL_SERVICE"
+            tools:targetApi="o">
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.autofill"
+                android:resource="@xml/autofill_service" />
+        </service>
+        <!-- What a suggestion opens: biometrics, then the code. Kept out of the recent apps. -->
+        <activity
+            android:name=".autofill.AutofillUnlockActivity"
+            android:enabled="@bool/autofill_supported"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|uiMode|density"
+            android:theme="@style/AutofillTheme"
+            tools:targetApi="o" />
+        <!-- What "Suggest a strong password" opens: a password for the sign-up form, no biometrics. -->
+        <activity
+            android:name=".passwords.PasswordSuggestActivity"
+            android:enabled="@bool/autofill_supported"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|uiMode|density"
+            android:theme="@style/AutofillTheme"
+            tools:targetApi="o" />
+        <!-- Saves passkeys to a vault and signs in with them (openspec: add-vault-items, the passkeys spec), from Android 14. -->
+        <service
+            android:name=".passkeys.KemlockCredentialService"
+            android:enabled="@bool/passkeys_supported"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/autofill_app_name"
+            android:permission="android.permission.BIND_CREDENTIAL_PROVIDER_SERVICE"
+            tools:targetApi="34">
+            <intent-filter>
+                <action android:name="android.service.credentials.CredentialProviderService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.credentials.provider"
+                android:resource="@xml/credential_provider" />
+        </service>
+        <!-- What the passkey provider's entries open: biometrics, then a passkey saved to a vault,
+             or a sign-in signed (openspec: add-vault-items, the passkeys spec). Android 14 and up; kept out of the recent apps. -->
+        <activity
+            android:name=".passkeys.PasskeyCreateActivity"
+            android:enabled="@bool/passkeys_supported"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|uiMode|density"
+            android:theme="@style/AutofillTheme"
+            tools:targetApi="34" />
+        <activity
+            android:name=".passkeys.PasskeyGetActivity"
+            android:enabled="@bool/passkeys_supported"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|uiMode|density"
+            android:theme="@style/AutofillTheme"
+            tools:targetApi="34" />
+        <!-- Answers mail apps' OpenPGP requests (Thunderbird, K-9 Mail, FairEmail) with the open vault's keys
+             (openspec: add-pgp-mail-provider). Exported with no permission, as OpenKeychain's is: the check is
+             the person's approval of each app, pinned to its certificate. -->
+        <service
+            android:name=".pgp.KemlockPgpService"
+            android:exported="true"
+            android:label="@string/pgp_service_label"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="org.openintents.openpgp.IOpenPgpService2" />
+            </intent-filter>
+        </service>
+        <!-- What a mail app's request opens: the unlock screen, the approval, a key to pick. Only the mail app,
+             in front, starts it; it stays out of the recent apps. -->
+        <activity
+            android:name=".pgp.MailRequestActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+        </activity>
+        <!-- The screen of an export to another app (plan add-credential-exchange, task 8.4): the store build's
+             exported activity, which checks the caller and the entry first, starts it for a result, in the
+             importing app's task. Not exported, so nothing else can; the free build has no such activity, so
+             nothing starts it there. Kept out of the recent apps. -->
+        <activity
+            android:name=".exchange.ExportRequestActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+        </activity>
+        <!-- Key reminders (flutter_local_notifications): shows a scheduled notification, and schedules
+             them again after a restart or an update, which clear the phone's alarms. -->
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
+
+        <!-- Google's usage-log transport, which ML Kit brings with it, uploads on its own schedule and has
+             no off switch. Kemlock has no use for that log, so the service that finds the upload backend, the
+             job that uploads and the alarm that retries are taken out of the merged manifest, for every
+             user and not only while offline mode is on (openspec: add-offline-mode, decision 8). The free build
+             has no ML Kit and so none of them, which lint is told (openspec: add-fdroid-release). -->
+        <service
+            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+            tools:ignore="MissingClass"
+            tools:node="remove" />
+        <service
+            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+            tools:ignore="MissingClass"
+            tools:node="remove" />
+        <receiver
+            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+            tools:ignore="MissingClass"
+            tools:node="remove" />
+        <!-- Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+
+    <!-- Sync with a server. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Camera: scanning account, transfer, invite and Recovery Kit QR codes, and photos of backup codes. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!-- Fingerprint and face unlock. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
+    <!-- Other apps' overlays are hidden over Kemlock's screens, from Android 12 (ObscuredTouches). Granted
+         at install, with no prompt. -->
+    <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
+
+    <!-- Key reminders: a notification before a PGP key expires, once the person turns them on. They are
+         scheduled inexactly, so no exact-alarm permission; the second permission schedules them again
+         after a restart. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Security keys, held to the phone (NFC) or plugged in (USB). Neither is required, so phones without them still install the app. -->
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+
+    <!-- Autofill: the app asking for a code, to check the certificate it is signed with before a
+         remembered pick is offered there again (apps the autofill service fills aren't visible to it
+         otherwise), and Chrome, to tell whether it asks other services or fills with its own passwords. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <package android:name="com.android.chrome" />
+    </queries>
+
+    <!-- Apps the app hands work to: text processing, and links to services' pages. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+</manifest>

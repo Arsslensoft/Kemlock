@@ -1,0 +1,1 @@
+The first release of the free build: Kemlock made only of free software, with every feature open, QR codes scanned with ZXing, and backup codes read from text files.

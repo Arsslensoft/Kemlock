@@ -1,0 +1,149 @@
+# The licence of every file in this repository, in the REUSE format (https://reuse.software, spec 3.3).
+# `reuse lint` (the REUSE job of .github/workflows/licences.yml) checks that no file is left out.
+# The licences' texts are in LICENSES/.
+#
+# Kemlock's own files are under the GNU GPL v3 or later, as LICENSE and the README say. They carry no
+# header of their own, so this file covers them. The files of other people that the repository
+# holds keep their own licence: the annotations after the first one replace it for their paths.
+# A file that holds an SPDX header of its own keeps it (precedence "closest").
+#
+# When a new third-party file is added, give it an annotation here, a credit in the README's
+# "Bundled data and assets", and (if it is a new licence) its text in LICENSES/ with
+# `reuse download <id>`.
+
+version = 1
+SPDX-PackageName = "Kemlock"
+SPDX-PackageDownloadLocation = "https://github.com/Arsslensoft/Kemlock"
+
+[[annotations]]
+path = "**"
+precedence = "closest"
+SPDX-FileCopyrightText = "Kemlock contributors"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# Fonts: Geist and Geist Mono, under the SIL Open Font License, with their own copy of it (OFL.txt).
+[[annotations]]
+path = "mobile/assets/fonts/**"
+precedence = "override"
+SPDX-FileCopyrightText = "2024 The Geist Project Authors (https://github.com/vercel/geist-font)"
+SPDX-License-Identifier = "OFL-1.1"
+
+# The Kemlock server's test vectors, copied by mobile/tool/server/copy_vectors.sh: dedicated to the
+# public domain by kemlock-server (its test-vectors/LICENSE). SOURCE.json and SHA256SUMS here are
+# written by that script from them.
+[[annotations]]
+path = "mobile/test/fixtures/server/**"
+precedence = "override"
+SPDX-FileCopyrightText = "Kemlock Server contributors"
+SPDX-License-Identifier = "CC0-1.0"
+
+# AES-GCM test vectors of Project Wycheproof, kept with their field names.
+[[annotations]]
+path = "mobile/test/fixtures/account/aes-gcm-aad-wycheproof.json"
+precedence = "override"
+SPDX-FileCopyrightText = "The Wycheproof authors (https://github.com/C2SP/wycheproof)"
+SPDX-License-Identifier = "Apache-2.0"
+
+# Vectors copied from standards bodies, byte for byte (their own READMEs and "source" fields name where).
+#
+# NIST's ACVP-Server vectors (ML-KEM, ML-DSA), trimmed with NIST's field names and test case ids: a
+# work of NIST employees, in the public domain in the United States.
+[[annotations]]
+path = "mobile/test/fixtures/keys/acvp/**"
+precedence = "override"
+SPDX-FileCopyrightText = "National Institute of Standards and Technology (https://github.com/usnistgov/ACVP-Server)"
+SPDX-License-Identifier = "LicenseRef-NIST-PD"
+
+# Test vectors and sample keys of RFCs 9380, 9496, 9497, 9580, 9807 and 9980 and of the X-Wing draft,
+# copied out of their text by script. The IETF Trust's Legal Provisions license the code components
+# of an RFC or draft under the Revised BSD licence.
+[[annotations]]
+path = [
+  "mobile/test/fixtures/account/rfc/**",
+  "mobile/test/fixtures/keys/rfc9580/**",
+  "mobile/test/fixtures/keys/rfc9980/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "The IETF Trust and the persons identified as the authors of the document (https://trustee.ietf.org/license-info)"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+# The notes beside the RFC 9980 vectors are Kemlock's own.
+[[annotations]]
+path = "mobile/test/fixtures/keys/rfc9980/README.md"
+precedence = "override"
+SPDX-FileCopyrightText = "Kemlock contributors"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# The example payload of the FIDO Alliance's Credential Exchange Format 1.0 (errata of 9 March 2026).
+[[annotations]]
+path = "mobile/test/fixtures/import/cxf/fido-example.json"
+precedence = "override"
+SPDX-FileCopyrightText = "FIDO Alliance (https://fidoalliance.org)"
+SPDX-License-Identifier = "LicenseRef-FIDO-Alliance-CXF"
+
+# The OpenPGP API's interface files, copied from open-keychain/openpgp-api (their README says what).
+[[annotations]]
+path = [
+  "mobile/android/app/src/main/java/org/openintents/openpgp/**",
+  "mobile/android/app/src/main/aidl/org/openintents/openpgp/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2014-2015 Dominik Schürmann and the OpenKeychain contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+# The README beside the copied OpenPGP classes is Kemlock's own text (and holds the licence's).
+[[annotations]]
+path = "mobile/android/app/src/main/java/org/openintents/openpgp/README.md"
+precedence = "override"
+SPDX-FileCopyrightText = "Kemlock contributors"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# Apple's password-manager-resources list of sites' password rules, byte for byte.
+[[annotations]]
+path = "mobile/android/app/src/main/assets/password-manager-resources/**"
+precedence = "override"
+SPDX-FileCopyrightText = "2020-2026 Apple Inc."
+SPDX-License-Identifier = "MIT"
+
+# The Public Suffix List, byte for byte, under the MPL 2.0 as its header says.
+[[annotations]]
+path = "mobile/assets/data/public_suffix_list.dat"
+precedence = "override"
+SPDX-FileCopyrightText = "The Public Suffix List authors (https://publicsuffix.org)"
+SPDX-License-Identifier = "MPL-2.0"
+
+# A trimmed copy of 2fa.directory, with its MIT licence inside.
+[[annotations]]
+path = "mobile/assets/data/two_factor_directory.json"
+precedence = "override"
+SPDX-FileCopyrightText = "2021 2factorauth and Contributors (https://2fa.directory)"
+SPDX-License-Identifier = "MIT"
+
+# Have I Been Pwned's list of data breaches, trimmed, with its attribution inside.
+[[annotations]]
+path = "mobile/assets/data/breaches.json"
+precedence = "override"
+SPDX-FileCopyrightText = "Have I Been Pwned (https://haveibeenpwned.com)"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+# The EFF's large word list, byte for byte.
+[[annotations]]
+path = "mobile/assets/data/eff_large_wordlist.txt"
+precedence = "override"
+SPDX-FileCopyrightText = "Electronic Frontier Foundation (https://www.eff.org/dice)"
+SPDX-License-Identifier = "CC-BY-3.0-US"
+
+# The SVG paths of the service logos come from Simple Icons (CC0); the file around them is Kemlock's.
+# The brands stay their owners' trademarks.
+[[annotations]]
+path = "mobile/assets/data/service_icons.json"
+precedence = "override"
+SPDX-FileCopyrightText = ["Kemlock contributors", "Simple Icons contributors (https://simpleicons.org)"]
+SPDX-License-Identifier = "GPL-3.0-or-later AND CC0-1.0"
+
+# The Contributor Covenant, adapted only in its contact line.
+[[annotations]]
+path = "CODE_OF_CONDUCT.md"
+precedence = "override"
+SPDX-FileCopyrightText = "Organization for Ethical Source (https://www.contributor-covenant.org)"
+SPDX-License-Identifier = "CC-BY-4.0"

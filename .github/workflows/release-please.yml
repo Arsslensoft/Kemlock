@@ -1,0 +1,43 @@
+name: Release PR
+
+# Keeps a pull request open on main that proposes the next version and writes CHANGELOG.md from the
+# Conventional Commits merged since the last release (release-please-config.json). Merging it creates
+# the tag and drafts the GitHub release with the changelog as its notes; the tag starts release.yml,
+# which builds the free build twice, compares the APKs and adds them, unsigned, to the draft. The
+# owner signs them away from any build machine and publishes the draft: nothing here holds a signing
+# key.
+#
+# Secret RELEASE_PLEASE_TOKEN (optional but recommended): a fine-grained personal access token for this
+# repository with Contents, Pull requests and Issues: read and write. Without it the workflow's own
+# token is used, which works, but a pull request or tag made with that token starts no other workflow:
+# CI wouldn't run on the release pull request, and release.yml would have to be started by hand on the
+# tag from the Actions tab.
+#
+# The version in mobile/pubspec.yaml (and its build number, which the stores need to grow) is the
+# owner's to set in the release pull request; see its header.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  release-please:
+    name: Release PR
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write # the tag and the draft release
+      pull-requests: write
+      issues: write # its labels
+    steps:
+      - uses: googleapis/release-please-action@v4 # TODO: pin to SHA
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

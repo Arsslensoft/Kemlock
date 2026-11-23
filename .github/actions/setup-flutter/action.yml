@@ -1,0 +1,41 @@
+name: Set up Flutter
+description: >
+  Installs the Flutter SDK Kemlock is built with, caches it and the pub cache, and
+  resolves mobile/'s packages against a committed lockfile (--enforce-lockfile), for the
+  store build (pubspec.lock) or the free build (pubspec.free.lock, swapped in by
+  mobile/tool/build/use_free.sh).
+
+inputs:
+  build:
+    description: "store (pubspec.lock as checked out) or free (pubspec.free.lock, with the free build's parts)"
+    required: false
+    default: store
+  packages:
+    description: "Run flutter pub get --enforce-lockfile: true or false"
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    # The one place the Flutter version is named for CI. Keep it equal to
+    # mobile/tool/docker/flutter.sh and mobile/tool/release/Containerfile.
+    - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+      with:
+        channel: stable
+        flutter-version: 3.47.7
+        cache: true
+
+    - name: Packages (store build)
+      if: inputs.packages == 'true' && inputs.build == 'store'
+      shell: bash
+      working-directory: mobile
+      run: flutter pub get --enforce-lockfile
+
+    - name: Packages (free build)
+      if: inputs.packages == 'true' && inputs.build == 'free'
+      shell: bash
+      working-directory: mobile
+      run: |
+        tool/build/use_free.sh
+        flutter pub get --enforce-lockfile

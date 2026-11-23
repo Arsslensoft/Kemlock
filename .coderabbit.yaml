@@ -1,0 +1,174 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit reviews every pull request to main. Its comments come first; a maintainer decides.
+# The path instructions say what this repository holds itself to: CLAUDE.md and CONTRIBUTING.md.
+language: en-US
+
+# CodeRabbit has no severity threshold of its own: request_changes_workflow makes it request changes
+# until its comments are resolved, and the instructions below say which findings are blocking.
+early_access: false
+
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  high_level_summary: true
+  review_status: true
+  collapse_walkthrough: false
+  poem: false
+  sequence_diagrams: false
+  estimate_code_review_effort: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+    ignore_title_keywords:
+      - "WIP"
+      - "chore(release):"
+    ignore_usernames:
+      - dependabot[bot]
+      - github-actions[bot]
+
+  # Not reviewed: lockfiles, generated files, data copied byte for byte from others, images and
+  # fonts, and the test fixtures (files other apps wrote, which are never edited or regenerated: a
+  # change to one is caught by the rule below and by CODEOWNERS, not by reading the file).
+  path_filters:
+    - "!**/pubspec.lock"
+    - "!**/pubspec.free.lock"
+    - "!**/Podfile.lock"
+    - "!mobile/android/gradle/verification-metadata.xml"
+    - "!**/*.g.dart"
+    - "!**/*.freezed.dart"
+    - "!**/GeneratedPluginRegistrant.*"
+    - "!mobile/test/fixtures/**"
+    - "!mobile/assets/data/**"
+    - "!mobile/assets/fonts/**"
+    - "!mobile/android/app/src/main/assets/password-manager-resources/**"
+    - "!fastlane/metadata/**/images/**"
+    - "!**/*.png"
+    - "!**/*.jpg"
+    - "!**/*.jpeg"
+    - "!**/*.gif"
+    - "!**/*.webp"
+    - "!**/*.svg"
+    - "!**/*.ttf"
+    - "!**/*.otf"
+    - "!LICENSE"
+    - "!LICENSES/**"
+    - "!CHANGELOG.md"
+
+  path_instructions:
+    - path: "**"
+      instructions: |
+        Kemlock is a post-quantum encrypted authenticator and password manager. Treat as HIGH severity,
+        and say so first, anything that could leak a secret (a key, a password, a code, a vault's
+        plaintext, a token) to a log, the clipboard, a screenshot, a backup, the network or a
+        crash report; weaken or skip a check of the crypto; or change a released format (below).
+        Everything else is medium or low. Don't comment on formatting: `dart format` decides it,
+        with a page width of 140 set in analysis_options.yaml.
+        Commits follow Conventional Commits with the types and scopes of CLAUDE.md, one change per
+        commit, and an `Assisted-by: <model> via <tool>` footer (never `Co-Authored-By`) for AI work.
+        If a pull request mixes unrelated changes, ask for it to be split.
+
+    - path: "mobile/lib/crypto/**"
+      instructions: |
+        Cryptography. The byte output of every function here (ML-KEM-1024, ML-DSA, AES-256-GCM,
+        scrypt, PBKDF2, Argon2id, OPAQUE, Keccak, HKDF, the key formats) must stay byte for byte what
+        it is now: vaults, exports and sync files already on people's phones depend on it. Flag any
+        change of a constant, a parameter, an encoding, a byte order, a domain-separation string or
+        a nonce handling as HIGH severity unless the pull request says it is a new format version
+        that the old one still opens. Check for constant-time comparisons of secrets, a nonce never
+        used twice with a key, randomness only from a secure source, keys and plaintext zeroed or
+        short-lived, and no secret in an exception message. Code here that runs under dart2wasm
+        (account, opaque) must not import dart:io, dart:ffi, dart:isolate or Flutter.
+
+    - path: "mobile/lib/vault/**"
+      instructions: |
+        The vault and its formats (the vault file, exports, QR transfers, attachments, key unlock).
+        What is written must stay byte for byte what past versions wrote and what the TypeScript app
+        wrote; reading must keep accepting every version. A change of what is stored, or of a
+        storage key (the `backmycodes_` keys keep their name), needs a migration and a test that
+        opens an old file.
+
+    - path: "mobile/lib/features/{export,import,backup,recovery,sync,share,sends}/**"
+      instructions: |
+        Formats other versions or people read: exports, imports, the Recovery Kit, sync files
+        (`backmycodes-sync.json`, `backmycodes-space-<id>.json`), invites, shares and Sends. Names
+        keep the old app name where the file or key carries it (`"app": "BackMyCodes"`, `BMCKIT1-`,
+        `bmc-space:`). Flag any change to what is written, to a field name, an ordering or an
+        encoding as HIGH severity, and ask for a test against the existing fixture.
+
+    - path: "mobile/lib/features/{autofill,passkeys,security_keys,keys,pgp}/**"
+      instructions: |
+        Security-sensitive features. Check what is shown, copied or sent where: a code or login must
+        reach another app only after the user's unlock, and only for a site or app that matches.
+        Check passkey, FIDO2, OpenPGP and SSH handling against its specification, and that nothing
+        about a security key's PIN is stored.
+
+    - path: "mobile/test/**"
+      instructions: |
+        Tests. A fix has its regression test in the same commit; other tests are their own
+        `test(scope)` commit. Files under mobile/test/fixtures were written by earlier apps or copied
+        from the server's vectors, and are NEVER regenerated or edited, `legacy-v0.1.0.json` above
+        all. If a diff touches a fixture, or makes a test pass by changing what it expects from one,
+        flag it as HIGH severity: the code is what should change. Tests run the real crypto; don't
+        suggest mocking it.
+
+    - path: "mobile/pubspec.yaml"
+      instructions: |
+        A dependency change must come with both lockfiles, mobile/pubspec.lock and
+        mobile/pubspec.free.lock (the free build), and with android/gradle/verification-metadata.xml
+        if an Android dependency changed. The free build (F-Droid) may hold no closed or store-only
+        package; those belong in packages/parts_store. The licence must be one GPL-3.0-or-later can
+        carry.
+
+    - path: "mobile/packages/parts_free/**"
+      instructions: |
+        The free build's parts. Nothing here may depend on Google Play services, ML Kit, a store's
+        billing, or any closed library: tool/release/check_free.dart checks the APK for them.
+
+    - path: "mobile/android/**"
+      instructions: |
+        Android. Dependency checksums are verified (gradle/verification-metadata.xml): a new
+        dependency must be justified, and the free build must stay free of Play services. Check
+        exported components, intent filters, permissions, backups (allowBackup) and
+        FLAG_SECURE for vault screens.
+
+    - path: "mobile/ios/**"
+      instructions: |
+        iOS. Check entitlements, keychain access groups and accessibility, the AutoFill extension's
+        handling of secrets, and App Transport Security. The extension builds against the iOS 26.2 SDK.
+
+    - path: ".github/**"
+      instructions: |
+        CI and repository settings. Workflows keep least-privilege `permissions:`, pin third-party
+        actions to a full commit SHA with the version in a comment, never pass a secret to code from a
+        pull request, and never use `pull_request_target` with a checkout of the pull request's code
+        and a write token together. release.yml holds no signing key: releases are signed by hand.
+
+    - path: "docs/**"
+      instructions: |
+        Documentation. Check that what it says matches the code, and that plans under docs/plans keep
+        their format.
+
+  tools:
+    gitleaks:
+      enabled: true
+    actionlint:
+      enabled: true
+    markdownlint:
+      enabled: false
+    yamllint:
+      enabled: true
+    shellcheck:
+      enabled: true
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  learnings:
+    scope: local
+  pull_requests:
+    scope: local

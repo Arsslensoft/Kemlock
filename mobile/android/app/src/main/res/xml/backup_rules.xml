@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  What Android 11 and earlier take into a backup: the vault's storage alone, as
+  data_extraction_rules.xml says for Android 12 and later. Each include needs every flag it
+  names, so the two say "an end-to-end encrypted cloud backup, or a move to a new phone".
+  Android 7 and 8 know neither flag and back the file up as before.
+-->
+<full-backup-content>
+    <include domain="sharedpref" path="CapacitorStorage.xml" requireFlags="clientSideEncryption" />
+    <include domain="sharedpref" path="CapacitorStorage.xml" requireFlags="deviceToDeviceTransfer" />
+</full-backup-content>

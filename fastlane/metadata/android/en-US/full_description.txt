@@ -1,0 +1,33 @@
+Kemlock keeps your one-time codes, backup codes, keys, notes and passkeys in a vault on your phone, encrypted with your master password and post-quantum cryptography (ML-KEM-1024 and AES-256-GCM). There is no Kemlock account and no Kemlock server.
+
+<b>What it does</b>
+<ul>
+<li>Two-factor codes (TOTP and HOTP), added by scanning a QR code, from a picture, or by hand</li>
+<li>Backup codes for each service, crossed off as you use them</li>
+<li>SSH and OpenPGP keys, secure notes with attached files, and passkeys</li>
+<li>Encrypted exports, a QR transfer to another phone, and a Recovery Kit you can split between trusted people</li>
+<li>Sync through your own WebDAV folder or your own Vaultwarden, and shared spaces for family or a team</li>
+<li>Several vaults, biometric unlock, a security key to unlock, autofill and a passkey provider</li>
+<li>Offline mode, which stops every network request</li>
+</ul>
+
+<b>Free and open source</b>
+Kemlock is free software under the GPLv3, and every feature is free for everyone: no subscription, no in-app purchases, no ads. This build is made only of free software, and F-Droid builds it from source. It differs from the App Store and Google Play build in three ways:
+<ul>
+<li>QR codes are scanned with Flutter's camera plugin and ZXing, not Google ML Kit.</li>
+<li>Backup codes are read from text files, pasted or typed. Reading them from pictures and PDFs needs libraries that are not free software, so this build leaves it out.</li>
+<li>There are no Google Play services, so no Google Play credential transfer and no push notifications.</li>
+</ul>
+Each release can be rebuilt from its tag to the same file; the repo's docs/reproducible-builds.md says how.
+
+<b>What goes over the network, and to whom</b>
+Nothing, unless you turn it on:
+<ul>
+<li>Sync talks only to the WebDAV or Vaultwarden server you name, and sends it your vault encrypted.</li>
+<li>The breach alerts and the password leak check ask Have I Been Pwned, a service whose software is not free. Both are off until you turn them on; the leak check sends five characters of a hash of the new master password, never the password.</li>
+<li>Finding someone's OpenPGP key by email asks their domain, then keys.openpgp.org after you agree.</li>
+</ul>
+There are no ads, no analytics and no crash reports.
+
+<b>Moving from the App Store or Google Play build</b>
+The two builds are signed with different keys, so one cannot be installed over the other. Make an encrypted export in the other build, uninstall it, install this one and import the file: every account, backup code, key, note and passkey comes back.

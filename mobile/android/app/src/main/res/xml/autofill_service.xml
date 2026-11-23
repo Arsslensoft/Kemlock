@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kemlock's autofill service (KemlockAutofillService): fills one-time codes, saves nothing.
+     Inline suggestions go in the keyboard's strip from Android 11. -->
+<autofill-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="com.kemlock.app.MainActivity"
+    android:supportsInlineSuggestions="true" />

@@ -1,0 +1,94 @@
+# Kemlock's recipe for F-Droid, kept here for reference (openspec:
+# add-fdroid-release, design decision 11). The one F-Droid builds from lives
+# in fdroiddata as metadata/com.kemlock.app.yml; the merge request that adds
+# it is the owner's step, once the repo is public.
+#
+# It builds what mobile/tool/release/build.sh builds, in the same paths: the
+# app at /home/vagrant/build/com.kemlock.app, Flutter at
+# /home/vagrant/build/srclib/flutter, OpenJDK 17 and NDK r28c. F-Droid then
+# copies the signature of the APK on the releases page onto its own build and
+# publishes that APK only if they match (binary, AllowedAPKSigningKeys).
+# The addresses are placeholders until the repo is public, and the key's
+# fingerprint is the owner's to fill in (mobile/tool/release/release-key.sha256).
+Categories:
+  - Security
+License: GPL-3.0-or-later
+WebSite: https://github.com/kemlock/kemlock
+SourceCode: https://github.com/kemlock/kemlock
+IssueTracker: https://github.com/kemlock/kemlock/issues
+Changelog: https://github.com/kemlock/kemlock/releases
+
+AutoName: Kemlock
+
+RepoType: git
+Repo: https://github.com/kemlock/kemlock.git
+
+Builds:
+  - versionName: 1.1.0
+    versionCode: 1002
+    commit: v1.1.0
+    subdir: mobile
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-17-jdk-headless
+      - update-alternatives --auto java
+    output: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+    binary: https://github.com/kemlock/kemlock/releases/download/v%v/kemlock-%v-armeabi-v7a.apk
+    srclibs:
+      - flutter@3.47.7
+    prebuild:
+      - bash tool/build/use_free.sh
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get --enforce-lockfile
+    build: $$flutter$$/bin/flutter build apk --release --split-per-abi
+    ndk: r28c
+
+  - versionName: 1.1.0
+    versionCode: 2002
+    commit: v1.1.0
+    subdir: mobile
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-17-jdk-headless
+      - update-alternatives --auto java
+    output: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+    binary: https://github.com/kemlock/kemlock/releases/download/v%v/kemlock-%v-arm64-v8a.apk
+    srclibs:
+      - flutter@3.47.7
+    prebuild:
+      - bash tool/build/use_free.sh
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get --enforce-lockfile
+    build: $$flutter$$/bin/flutter build apk --release --split-per-abi
+    ndk: r28c
+
+  - versionName: 1.1.0
+    versionCode: 4002
+    commit: v1.1.0
+    subdir: mobile
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-17-jdk-headless
+      - update-alternatives --auto java
+    output: build/app/outputs/flutter-apk/app-x86_64-release.apk
+    binary: https://github.com/kemlock/kemlock/releases/download/v%v/kemlock-%v-x86_64.apk
+    srclibs:
+      - flutter@3.47.7
+    prebuild:
+      - bash tool/build/use_free.sh
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get --enforce-lockfile
+    build: $$flutter$$/bin/flutter build apk --release --split-per-abi
+    ndk: r28c
+
+AllowedAPKSigningKeys: '0000000000000000000000000000000000000000000000000000000000000000'
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[0-9.]+$
+VercodeOperation:
+  - 1000 + %c
+  - 2000 + %c
+  - 4000 + %c
+UpdateCheckData: mobile/pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
+CurrentVersion: 1.1.0
+CurrentVersionCode: 4002

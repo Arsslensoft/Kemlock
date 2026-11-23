@@ -1,0 +1,54 @@
+name: DCO
+
+# Every commit of a pull request must be signed off by its author (`git commit -s`), certifying the
+# Developer Certificate of Origin, https://developercertificate.org. tool/ci/check_dco.mjs reads the
+# commits; it needs no app, no secret and no third-party action. See CONTRIBUTING.md.
+#
+# Pull requests of Dependabot and release-please, from a branch of this repository, are exempt: a bot
+# can't sign off, and a person reviews and merges them. A fork can't use this: the branch must be in
+# this repository, which only people with write access can push to.
+#
+# The job is called DCO, and it runs on every pull request with no path filter, so the main branch's
+# ruleset can require it. It also answers in the merge queue, where the commits were checked already.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  dco:
+    name: DCO
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    steps:
+      - name: Merge queue
+        if: github.event_name == 'merge_group'
+        run: echo "The commits of this pull request were checked when it was opened and updated."
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event_name == 'pull_request'
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Check the sign-offs
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          SAME_REPO: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if [ "$SAME_REPO" = true ] && { [ "$AUTHOR" = "dependabot[bot]" ] || [[ "$HEAD_REF" == release-please--* ]]; }; then
+            export DCO_EXEMPT=true
+          fi
+          node tool/ci/check_dco.mjs --base "$BASE" --head "$HEAD"

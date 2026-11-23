@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="passkeys_vault_default">Mon coffre</string>
+    <string name="passkeys_reopen_action">Ouvrez Kemlock une fois pour utiliser vos clés d’accès</string>
+    <string name="passkeys_create_title">Enregistrer une clé d’accès avec Kemlock</string>
+    <string name="passkeys_get_title">Se connecter avec Kemlock</string>
+    <string name="passkeys_off">Les clés d’accès sont désactivées pour ce coffre. Activez-les dans les réglages de remplissage de Kemlock.</string>
+    <string name="passkeys_save_failed">Kemlock n’a pas pu enregistrer la clé d’accès. Réessayez.</string>
+    <string name="passkeys_open_failed">Kemlock n’a pas pu ouvrir ses clés d’accès. Réessayez.</string>
+    <string name="passkeys_reopen">La biométrie de ce téléphone a changé : Kemlock ne peut pas utiliser vos clés d’accès pour l’instant. Ouvrez Kemlock et déverrouillez votre coffre une fois pour les retrouver.</string>
+    <string name="passkeys_offline">Le mode hors ligne est activé : Kemlock ne peut pas vérifier que cette application appartient à %1$s.</string>
+</resources>

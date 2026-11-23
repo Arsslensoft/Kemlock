@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  What Android 12 and later take into a backup and a move to a new phone (security audit
+  2026-11-21, I6). Only the vault's storage: the vaults, already encrypted under their master
+  passwords, and the app's settings, all in the one CapacitorStorage file. An include leaves
+  out everything else: the note attachments in files/, which a phone backup would otherwise
+  hold and which can take the app past the 25 MB Auto Backup stops at, without a word, for the
+  vault too; the caches; the files only this phone's keys open; the plugins' own preferences.
+  Attachments come back from a Kemlock export or from sync.
+
+  A cloud backup is made only where it is end-to-end encrypted, under the phone's screen lock.
+-->
+<data-extraction-rules>
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+        <include domain="sharedpref" path="CapacitorStorage.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="sharedpref" path="CapacitorStorage.xml" />
+    </device-transfer>
+</data-extraction-rules>

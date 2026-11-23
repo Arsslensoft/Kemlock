@@ -1,0 +1,42 @@
+name: Stale issues
+
+# Gently closes issues that have waited for an answer for a long time: after 90 days without activity
+# an issue gets the `stale` label and a note, and 30 days later, if there is still nothing, it is
+# closed (it can be reopened). It looks at issues only, never at pull requests, and never at an issue
+# that is security related, pinned, confirmed, help wanted, a good first issue, or has a milestone or
+# an assignee. Any comment removes the label.
+
+on:
+  schedule:
+    - cron: "23 5 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  stale:
+    name: Mark and close stale issues
+    runs-on: ubuntu-26.04
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/stale@v9 # TODO: pin to SHA
+        with:
+          days-before-issue-stale: 90
+          days-before-issue-close: 30
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          stale-issue-label: stale
+          exempt-issue-labels: security,pinned,confirmed,help wanted,good first issue,formats,crypto
+          exempt-all-issue-milestones: true
+          exempt-all-issue-assignees: true
+          remove-stale-when-updated: true
+          operations-per-run: 100
+          stale-issue-message: >
+            Thank you for this issue. It has had no activity for 90 days, so it is marked as stale. If
+            it still matters, a comment with what has changed (or the answer to the last question)
+            keeps it open; if there is nothing more to add, no action is needed and it will be closed
+            in 30 days. It can always be reopened.
+          close-issue-message: >
+            Closing this for now because there has been no activity since it was marked stale. If it
+            is still a problem, please reopen it or open a new issue with the details.

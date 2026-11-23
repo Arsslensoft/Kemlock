@@ -1,0 +1,28 @@
+# Android's Play services credential transfer (openspec: plan add-credential-exchange, design
+# decision 8): the import half of Credential Manager's provider events. It holds the
+# `providerevents` libraries, one of which brings Play services, so only packages/parts_store
+# depends on it; the free build's parts_free doesn't, and so the free APK holds no
+# com.google.android.gms class.
+name: credential_transfer
+description: "Kemlock's store build's Android side of Credential Exchange: the system's list of apps that can export, over Play services."
+publish_to: "none"
+version: 1.0.0
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.kemlock.credential_transfer
+        pluginClass: CredentialTransferPlugin

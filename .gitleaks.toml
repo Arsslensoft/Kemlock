@@ -1,0 +1,21 @@
+# The rules of the Secret scan workflow (.github/workflows/secret-scan.yml): gitleaks' default
+# rules, with the files that hold keys and tokens on purpose set aside.
+title = "Kemlock gitleaks rules"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Test keys, certificates and sample secrets, made for the tests and never regenerated (CLAUDE.md)"
+paths = [
+  '''mobile/test/fixtures/''',
+  '''mobile/tool/keys/''',
+  '''mobile/tool/pgp/''',
+]
+
+[[allowlists]]
+description = "Sample files that show the shape of a secret file without holding one"
+paths = [
+  '''mobile/env\.example\.json''',
+  '''mobile/ios/Signing\.example\.xcconfig''',
+]

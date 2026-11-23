@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The passkey provider (KemlockCredentialService) and its screens. The French is in values-fr. -->
+<resources>
+    <!-- They exist from Android 14, where Credential Manager takes passkeys from other apps. -->
+    <bool name="passkeys_supported">false</bool>
+    <!-- A vault without a name, as the lock screen calls it (vaults.defaultName). -->
+    <string name="passkeys_vault_default">My vault</string>
+    <string name="passkeys_reopen_action">Open Kemlock once to use your passkeys</string>
+    <string name="passkeys_create_title">Save a passkey with Kemlock</string>
+    <string name="passkeys_get_title">Sign in with Kemlock</string>
+    <string name="passkeys_off">Passkeys are off for this vault. Turn them on in Kemlock’s AutoFill settings.</string>
+    <string name="passkeys_save_failed">Kemlock couldn’t save the passkey. Try again.</string>
+    <string name="passkeys_open_failed">Kemlock couldn’t open its passkeys. Try again.</string>
+    <string name="passkeys_reopen">Biometrics changed on this phone, so Kemlock can’t use your passkeys for now. Open Kemlock and unlock your vault once to use them again.</string>
+    <!-- %1$s is the site the app asks a passkey for. -->
+    <string name="passkeys_offline">Offline mode is on, so Kemlock can’t check that this app belongs to %1$s.</string>
+</resources>

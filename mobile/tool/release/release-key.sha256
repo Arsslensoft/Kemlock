@@ -1,0 +1,6 @@
+# The SHA-256 of Kemlock's release certificate, as apksigner prints it
+# ("Signer #1 certificate SHA-256 digest"), lowercase hex. The free build's
+# APKs, on the releases page and on F-Droid, are signed with this one key.
+# Not made yet: the owner makes it, keeps two offline copies, and writes it
+# here and in docs/reproducible-builds.md (openspec: add-fdroid-release, 4.5).
+unset

@@ -1,0 +1,7 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Local planning notes, not part of the repo
+/plans/

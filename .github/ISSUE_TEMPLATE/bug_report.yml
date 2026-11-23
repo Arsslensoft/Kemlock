@@ -1,0 +1,120 @@
+name: Bug report
+description: Something in Kemlock doesn't work as it should.
+title: "bug: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report this.
+
+        **Is it a security problem?** (a way to read a vault without its password, a leak of codes or
+        logins, a flaw in a format or in the crypto) Don't post it here: [report it
+        privately](https://github.com/Arsslensoft/Kemlock/security/advisories/new).
+
+        **Never paste a master password, a recovery key, a vault file, an export, an OTP secret, a QR code
+        of one, or a private key.** Describe them, or make an empty test vault to show the problem.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you post
+      options:
+        - label: I searched the existing issues, and this isn't one of them.
+          required: true
+        - label: This is not a vulnerability, and nothing secret is in this report.
+          required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did and what you saw. A screenshot helps (with nothing secret on it).
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Settings
+        2. Tap ...
+        3. See ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Kemlock version
+      description: Settings, About.
+      placeholder: "1.1.0 (2)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: build
+    attributes:
+      label: Where did you get it?
+      description: The free build and the store build differ in a few parts (scanning, billing, text recognition).
+      options:
+        - Google Play
+        - App Store
+        - F-Droid
+        - A release on GitHub (the free build)
+        - I built it myself
+        - Another way
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Android
+        - iOS
+    validations:
+      required: true
+
+  - type: input
+    id: system
+    attributes:
+      label: Phone and system version
+      placeholder: "Pixel 8, Android 16"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part?
+      multiple: true
+      options:
+        - Codes (TOTP, HOTP, Steam)
+        - Logins and passwords
+        - Passkeys
+        - Keys (SSH, PGP) and security keys
+        - Notes and other items
+        - AutoFill
+        - Backup, export and import
+        - Sync (WebDAV, Vaultwarden, Kemlock Server)
+        - Lock screen and unlocking
+        - Spaces and sharing
+        - Language or appearance
+        - Not sure
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or error text
+      description: Anything the app printed, with secrets removed. It is formatted as code for you.
+      render: text

@@ -1,0 +1,4 @@
+{
+  "$comment": "Dart packages whose licence tool/ci/check_licenses.mjs can't settle or doesn't allow, after a person read it. Each entry: \"<package>\": {\"license\": \"<SPDX identifier or expression>\", \"reason\": \"<why it can be combined with GPL-3.0-or-later>\", \"reviewed\": \"YYYY-MM-DD\"}. Nothing is excepted yet.",
+  "pub": {}
+}

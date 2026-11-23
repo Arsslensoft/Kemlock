@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "9b3d50cfc5ef3ae7eda868e0ac0c7919e1ba0725",
+  "include-component-in-tag": false,
+  "include-v-in-tag": true,
+  "draft": true,
+  "force-tag-creation": true,
+  "pull-request-title-pattern": "chore(release): ${version}",
+  "pull-request-header": "Merging this pull request tags the release and drafts it on GitHub with this changelog. The tag starts the release build (.github/workflows/release.yml). Before merging, set `version:` in mobile/pubspec.yaml to the new version, and its build number (after the `+`) one higher than the last release's: release-please doesn't touch the pubspec.",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "package-name": "kemlock",
+      "changelog-path": "CHANGELOG.md",
+      "changelog-sections": [
+        { "type": "feat", "section": "Features" },
+        { "type": "fix", "section": "Bug Fixes" },
+        { "type": "refactor", "section": "Refactoring" },
+        { "type": "docs", "section": "Documentation" },
+        { "type": "revert", "section": "Reverts" },
+        { "type": "test", "section": "Tests", "hidden": true },
+        { "type": "chore", "section": "Chores", "hidden": true }
+      ]
+    }
+  }
+}

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Filling one-time codes into other apps and websites (KemlockAutofillService). The French is in values-fr. -->
+<resources>
+    <!-- The service and its screen exist from Android 11 (values-v30), where Keystore can hold the key to
+         strong biometrics alone (AutofillKey). Android 8 to 10 opened it with the phone's PIN too, and
+         with a fingerprint added after it was made. -->
+    <bool name="autofill_supported">false</bool>
+    <string name="autofill_app_name" translatable="false">Kemlock</string>
+    <string name="autofill_fill_code">Fill a code</string>
+    <string name="autofill_suggestion_description">%1$s, from Kemlock</string>
+    <string name="autofill_prompt_title">Fill a code with Kemlock</string>
+    <string name="autofill_prompt_for">For %1$s</string>
+    <string name="autofill_this_app">this app</string>
+    <!-- An app the fill screen names: its name, then its package, as "Bank (com.bank.app)". -->
+    <string name="autofill_app_label" translatable="false">%1$s (%2$s)</string>
+    <string name="autofill_cancel">Cancel</string>
+    <string name="autofill_close">Close</string>
+    <string name="autofill_search">Search accounts</string>
+    <string name="autofill_choose">Choose the account for %1$s.</string>
+    <string name="autofill_choose_any">Choose an account.</string>
+    <string name="autofill_unknown">No account is known for %1$s. Check the address or the app before you fill a code.</string>
+    <string name="autofill_remember">Suggest this account here next time</string>
+    <string name="autofill_reopen">Biometrics changed on this phone, so filling codes is off for now. Open Kemlock and unlock your vault to turn it back on.</string>
+    <string name="autofill_no_codes">No codes to fill yet. Turn AutoFill on for a vault in Kemlock’s settings.</string>
+    <string name="autofill_failed">Kemlock couldn’t open its codes. Try again.</string>
+    <string name="autofill_another_login">Another login</string>
+    <string name="autofill_prompt_login_title">Fill a password with Kemlock</string>
+    <string name="autofill_search_logins">Search logins</string>
+    <string name="autofill_choose_login">Choose the login for %1$s.</string>
+    <string name="autofill_choose_any_login">Choose a login.</string>
+    <string name="autofill_unknown_login">No login is known for %1$s. Check the address or the app before you fill a password.</string>
+    <string name="autofill_remember_login">Suggest this login here next time</string>
+    <string name="autofill_reopen_logins">Biometrics changed on this phone, so filling passwords is off for now. Open Kemlock and unlock your vault to turn it back on.</string>
+    <string name="autofill_no_logins">No passwords to fill yet. Turn passwords on for a vault in Kemlock’s AutoFill settings.</string>
+    <string name="autofill_failed_logins">Kemlock couldn’t open its logins. Try again.</string>
+
+    <!-- The fill screen, a dialog over the app being filled, in Kemlock's Azure. -->
+    <style name="AutofillTheme" parent="Theme.AppCompat.DayNight.Dialog">
+        <item name="colorAccent">@color/autofill_accent</item>
+        <item name="colorPrimary">@color/autofill_accent</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowCloseOnTouchOutside">false</item>
+    </style>
+    <color name="autofill_accent">#1F6FEB</color>
+</resources>

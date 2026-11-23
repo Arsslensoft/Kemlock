@@ -1,0 +1,234 @@
+name: Dependabot lockfiles
+
+# Dependabot updates pubspec.yaml and pubspec.lock, and a Gradle build file, but this repository has
+# two more files that must move with them, and CI fails on a pull request that leaves them behind:
+#
+#   - mobile/pubspec.free.lock, the free build's lockfile (flutter pub get --enforce-lockfile);
+#   - mobile/android/gradle/verification-metadata.xml, the checksums Gradle checks every
+#     dependency against, for the tasks CI runs.
+#
+# On a Dependabot pull request for pub or Gradle this workflow refreshes both, with the store build's
+# pubspec.lock refreshed too (a change to a package under mobile/packages doesn't reach it), and
+# pushes one commit to the pull request's branch. That push has to be made with a token of the
+# owner's, because a push made with the workflow's own token starts no workflow, so CI would never
+# run on the fix:
+#
+#   LOCKFILE_BOT_TOKEN, a fine-grained personal access token for this repository with
+#   Contents: read and write, kept as BOTH an Actions secret and a Dependabot secret (a workflow
+#   run for a Dependabot pull request reads only the Dependabot ones).
+#
+# With no such secret the refresh still runs, and the push job fails with the diff it would have
+# pushed. Once someone else has pushed to a Dependabot branch, Dependabot stops rebasing it.
+#
+# Two jobs, because the first runs the code of a Dependabot pull request (pub and Gradle run what the
+# updated dependencies and build files say), which could plant a git hook, an insteadOf rewrite or a
+# credential helper and take any token it finds:
+#
+#   refresh  has no secret, no write permission, and keeps no credentials in its checkout. It
+#            regenerates the files and uploads one patch, which is all it can hand on.
+#   push     runs no dependency code. It checks out the branch afresh, accepts the patch only if it
+#            touches nothing but the three files above, commits it with a sign-off, and pushes with
+#            hooks off and the token in an http header for that one command, never in a URL or in
+#            .git/config.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  refresh:
+    name: Refresh the lockfiles
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    outputs:
+      changed: ${{ steps.patch.outputs.changed }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@v2 # TODO: pin to SHA
+        with:
+          github-token: ${{ github.token }}
+
+      - name: What the pull request updates
+        id: kind
+        env:
+          ECOSYSTEM: ${{ steps.meta.outputs.package-ecosystem }}
+          NAMES: ${{ steps.meta.outputs.dependency-names }}
+        run: |
+          case "$ECOSYSTEM" in
+            pub | gradle) echo "refresh=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "refresh=false" >> "$GITHUB_OUTPUT"; echo "A $ECOSYSTEM update: nothing to refresh." ;;
+          esac
+          # Only the names of a pub update are packages pub can upgrade.
+          if [ "$ECOSYSTEM" = pub ]; then
+            echo "pub=true" >> "$GITHUB_OUTPUT"
+            echo "packages=$(tr ',' ' ' <<<"$NAMES")" >> "$GITHUB_OUTPUT"
+          else
+            echo "pub=false" >> "$GITHUB_OUTPUT"
+            echo "packages=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.kind.outputs.refresh == 'true'
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-flutter
+        if: steps.kind.outputs.refresh == 'true'
+        with:
+          packages: "false"
+
+      - name: Cache Gradle
+        if: steps.kind.outputs.refresh == 'true'
+        uses: actions/cache@v4 # TODO: pin to SHA
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-lockfiles-${{ github.event.pull_request.number }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      # The store build first: pubspec.lock moves to what pubspec.yaml, and the packages under
+      # packages/, now allow. Dependabot has done it when it changed pubspec.yaml and pubspec.lock
+      # itself; a change in a package under packages/ it leaves to this step.
+      - name: Store build's pubspec.lock
+        if: steps.kind.outputs.pub == 'true'
+        working-directory: mobile
+        env:
+          PACKAGES: ${{ steps.kind.outputs.packages }}
+        run: |
+          if ! flutter pub get --enforce-lockfile; then
+            for package in $PACKAGES; do
+              flutter pub upgrade "$package" || echo "::notice::$package is not in the store build"
+            done
+          fi
+          flutter pub get --enforce-lockfile
+          git add pubspec.lock
+
+      # Then the free build: the free lockfile in place, its parts, and the same packages moved
+      # (Dependabot never writes this lockfile, so it moves even when pubspec.lock already has).
+      # pubspec.lock is the store's again afterwards, from the index.
+      - name: Free build's pubspec.free.lock
+        if: steps.kind.outputs.pub == 'true'
+        working-directory: mobile
+        env:
+          PACKAGES: ${{ steps.kind.outputs.packages }}
+        run: |
+          tool/build/use_free.sh
+          for package in $PACKAGES; do
+            flutter pub upgrade "$package" || echo "::notice::$package is not in the free build"
+          done
+          flutter pub get
+          cp pubspec.lock pubspec.free.lock
+          git add pubspec.free.lock
+          rm -f pubspec_overrides.yaml
+          git checkout -- pubspec.lock
+          flutter pub get --enforce-lockfile
+
+      # Gradle adds the checksums of what the tasks CI runs now resolve. It keeps the old ones: a
+      # stale entry is harmless, and is for a person to prune.
+      - name: Gradle's verification-metadata.xml
+        if: steps.kind.outputs.refresh == 'true'
+        working-directory: mobile/android
+        run: |
+          # flutter pub get writes android/local.properties (flutter.sdk), which Gradle needs, and
+          # the plugin list; a Gradle-only update has had no pub get yet.
+          (cd .. && flutter pub get --enforce-lockfile)
+          export JAVA_HOME="$JAVA_HOME_17_X64"
+          ./gradlew --write-verification-metadata sha256 \
+            :app:testDebugUnitTest :app:lintDebug :credential_transfer:testDebugUnitTest :app:assembleDebug
+          cd ..
+          tool/build/use_free.sh
+          flutter pub get --enforce-lockfile
+          (cd android && ./gradlew --write-verification-metadata sha256 :app:assembleDebug)
+          rm -f pubspec_overrides.yaml
+          git checkout -- pubspec.lock
+          git add android/gradle/verification-metadata.xml
+
+      # The staged changes, as one patch. Only these three files can be in it; the push job checks.
+      - name: Make the patch
+        id: patch
+        if: steps.kind.outputs.refresh == 'true'
+        run: |
+          if git diff --cached --quiet; then
+            echo "The lockfiles are up to date."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git diff --cached --stat
+          git diff --cached --binary > "$RUNNER_TEMP/lockfiles.patch"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the patch
+        if: steps.patch.outputs.changed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lockfiles-patch
+          path: ${{ runner.temp }}/lockfiles.patch
+          if-no-files-found: error
+          retention-days: 1
+
+  push:
+    name: Push the lockfiles
+    needs: refresh
+    if: needs.refresh.outputs.changed == 'true'
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: lockfiles-patch
+          path: ${{ runner.temp }}/patch
+
+      # The patch was made by a job that ran the pull request's dependency code, so it is only taken
+      # for what it must be: changes to the lockfiles and the checksum file.
+      - name: Apply the patch
+        run: |
+          patch="$RUNNER_TEMP/patch/lockfiles.patch"
+          git apply --numstat "$patch" | cut -f3 | while read -r file; do
+            case "$file" in
+              mobile/pubspec.lock | mobile/pubspec.free.lock | mobile/android/gradle/verification-metadata.xml) ;;
+              *) echo "::error::The patch touches $file, which a lockfile refresh never does"; exit 1 ;;
+            esac
+          done
+          git apply --index "$patch"
+          git diff --cached --stat
+
+      - name: Commit and push
+        env:
+          TOKEN: ${{ secrets.LOCKFILE_BOT_TOKEN }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::The lockfiles are stale, and there is no LOCKFILE_BOT_TOKEN secret to push the fix with. Run tool/build/use_free.sh, flutter pub upgrade and ./gradlew --write-verification-metadata sha256 by hand, or add the secret (see this workflow's header)."
+            git diff --cached --stat
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -c core.hooksPath=/dev/null commit -s -m "chore(deps): refresh the lockfiles of #${PR_NUMBER}" \
+            -m "Dependabot updates pubspec.yaml and pubspec.lock. This also moves pubspec.free.lock, the free build's, and the checksums Gradle verifies dependencies against."
+          basic="$(printf 'x-access-token:%s' "$TOKEN" | base64 | tr -d '\n')"
+          echo "::add-mask::$basic"
+          git -c core.hooksPath=/dev/null -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $basic" \
+            push origin "HEAD:refs/heads/$BRANCH"

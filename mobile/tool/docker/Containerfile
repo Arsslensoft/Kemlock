@@ -1,0 +1,28 @@
+# The Flutter SDK for checking mobile/ where Flutter isn't installed.
+# Formatting, analysis and the tests need nothing else (no Android SDK or
+# Xcode). Built and run by tool/docker/flutter.sh. The browser extension's
+# Node image moved with it to the Kemlock-browser repository.
+FROM debian:bookworm-slim AS flutter
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git curl ca-certificates unzip xz-utils libglu1-mesa \
+ && rm -rf /var/lib/apt/lists/*
+
+# Flutter 3.47.7 stable, checked against the release's published SHA-256.
+RUN curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.7-stable.tar.xz -o /tmp/flutter.tar.xz \
+ && echo "af7455f540df951184c7953fbe3cf884766e7541dacf8571f9f582db03dd6230  /tmp/flutter.tar.xz" | sha256sum -c - \
+ && tar -xJf /tmp/flutter.tar.xz -C /opt \
+ && rm /tmp/flutter.tar.xz
+
+ENV PATH=/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH \
+    PUB_CACHE=/pub-cache \
+    FLUTTER_SUPPRESS_ANALYTICS=true
+
+# Fetches the engine artifacts the test runner needs, by running a test once.
+RUN git config --global --add safe.directory '*' \
+ && flutter config --no-analytics --no-cli-animations \
+ && dart --disable-analytics \
+ && flutter precache --no-android --no-ios --no-web --no-linux --no-windows --no-macos --no-fuchsia --universal \
+ && flutter create --no-pub /tmp/warm && cd /tmp/warm && flutter pub get && flutter test && rm -rf /tmp/warm
+
+WORKDIR /src

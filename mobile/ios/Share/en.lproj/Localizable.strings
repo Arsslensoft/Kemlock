@@ -1,0 +1,6 @@
+/* Kemlock's Share extension, in English. */
+"saving" = "Saving it for Kemlock…";
+"openApp" = "Open Kemlock to continue";
+"done" = "Done";
+"oneItem" = "Kemlock takes one item at a time";
+"unreadable" = "Kemlock could not read this file";
