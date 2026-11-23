@@ -1,2 +1,1 @@
-/// Whether [error] is a TLS handshake failure. A browser tells the code nothing about one.
-bool isTlsFailure(Object error) => false;
+export 'package:kemlock_core/core/network/tls_failure_stub.dart';

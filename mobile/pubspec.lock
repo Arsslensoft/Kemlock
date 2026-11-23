@@ -587,6 +587,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  kemlock_core:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: "8e0e3755f5b1db5c38136933898f92c6366a7552"
+      resolved-ref: "8e0e3755f5b1db5c38136933898f92c6366a7552"
+      url: "https://github.com/Arsslensoft/Kemlock-core.git"
+    source: git
+    version: "0.1.0"
   kemlock_parts:
     dependency: "direct main"
     description:

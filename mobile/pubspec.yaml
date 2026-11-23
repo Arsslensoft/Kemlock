@@ -24,6 +24,13 @@ dependencies:
   crypto: ^3.0.7
   cryptography: ^2.9.0
   http: ^1.6.0
+  # The platform-free Dart the app shares with the browser extension: the crypto, the models, the
+  # vault store and the sync engines. Pinned to a commit of Kemlock-core; each old path in lib/
+  # exports its file from here.
+  kemlock_core:
+    git:
+      url: https://github.com/Arsslensoft/Kemlock-core.git
+      ref: 8e0e3755f5b1db5c38136933898f92c6366a7552
   # The interfaces of the parts the free build replaces (openspec: add-fdroid-release).
   kemlock_ports:
     path: packages/kemlock_ports

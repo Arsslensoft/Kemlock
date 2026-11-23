@@ -6,6 +6,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/core_sources.dart';
+
 void main() {
   test('lib/features imports no file of crypto/keys/openpgp', () {
     final import = RegExp(r'''^\s*(?:import|export)\s+['"]([^'"]+)['"]''', multiLine: true);
@@ -24,7 +26,7 @@ void main() {
 
   test('pgp.dart and keys.dart are where the OpenPGP code is exported', () {
     for (final entry in ['lib/crypto/keys/pgp.dart', 'lib/crypto/keys/keys.dart']) {
-      expect(File(entry).readAsStringSync(), contains("'openpgp/"), reason: entry);
+      expect(File(inCore(entry)).readAsStringSync(), contains("'openpgp/"), reason: entry);
     }
   });
 }
