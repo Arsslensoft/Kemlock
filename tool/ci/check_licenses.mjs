@@ -5,7 +5,7 @@
 //   node tool/ci/check_licenses.mjs [--project mobile] [--overrides tool/ci/license-overrides.json]
 //   node tool/ci/check_licenses.mjs --classify <licence file>      what the check reads in one file
 //
-// It runs `dart pub deps --json --no-dev` in the project (run `flutter pub get` first) for the
+// It runs `dart pub deps --json` in the project (run `flutter pub get` first) for the
 // packages the app depends on, finds each one's directory in .dart_tool/package_config.json, and reads
 // the licence files there (LICENSE, LICENSE.md, COPYING, UNLICENSE and the like). A package of
 // the Flutter SDK is BSD-3-Clause, and a package under packages/ is Kemlock's own.
@@ -150,7 +150,7 @@ function main(argv) {
   let deps;
   try {
     deps = JSON.parse(
-      execFileSync("dart", ["pub", "deps", "--json", "--no-dev"], { cwd: project, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }),
+      execFileSync("dart", ["pub", "deps", "--json"], { cwd: project, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }),
     );
   } catch (error) {
     console.error(`dart pub deps failed in ${project}: ${error.message}`);
@@ -158,11 +158,25 @@ function main(argv) {
   }
   const directories = packageDirectories(project);
 
+  // dart pub refuses --json with --no-dev, so the packages the app ships are found here: everything the
+  // root depends on, and what those depend on, leaving the dev dependencies and what only they bring out.
+  const byName = new Map(deps.packages.map((pkg) => [pkg.name, pkg]));
+  const root = deps.packages.find((pkg) => pkg.kind === "root");
+  const devOnly = new Set(root?.devDependencies ?? []);
+  const shipped = new Set();
+  const queue = (root?.dependencies ?? []).filter((name) => !devOnly.has(name));
+  while (queue.length > 0) {
+    const name = queue.pop();
+    if (shipped.has(name) || !byName.has(name)) continue;
+    shipped.add(name);
+    queue.push(...(byName.get(name).dependencies ?? []));
+  }
+
   const rows = [];
   const problems = [];
   const used = new Set();
   for (const pkg of deps.packages) {
-    if (pkg.kind === "root") continue;
+    if (pkg.kind === "root" || !shipped.has(pkg.name)) continue;
     const row = { name: pkg.name, version: pkg.version, source: pkg.source, licences: [], note: "" };
     rows.push(row);
 
