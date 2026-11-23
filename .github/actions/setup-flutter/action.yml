@@ -24,7 +24,15 @@ runs:
       with:
         channel: stable
         flutter-version: 3.47.7
-        cache: true
+        # Its own cache step uses actions/cache by tag, which this repository refuses (every action pinned to a SHA)
+        cache: false
+
+    - name: Cache the pub packages
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.pub-cache
+        key: pub-${{ runner.os }}-${{ hashFiles('mobile/pubspec.lock', 'mobile/pubspec.free.lock') }}
+        restore-keys: pub-${{ runner.os }}-
 
     - name: Packages (store build)
       if: inputs.packages == 'true' && inputs.build == 'store'

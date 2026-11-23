@@ -146,7 +146,7 @@ jobs:
 
       - name: Upload the coverage to Codecov
         if: steps.codecov.outputs.enabled == 'true'
-        uses: codecov/codecov-action@v5 # TODO: pin to SHA
+        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: mobile/coverage/lcov.info
@@ -167,7 +167,7 @@ jobs:
       - uses: ./.github/actions/setup-flutter
 
       - name: Cache Gradle
-        uses: actions/cache@v4 # TODO: pin to SHA
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.gradle/caches
@@ -221,7 +221,7 @@ jobs:
           build: ${{ matrix.build }}
 
       - name: Cache Gradle
-        uses: actions/cache@v4 # TODO: pin to SHA
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.gradle/caches
