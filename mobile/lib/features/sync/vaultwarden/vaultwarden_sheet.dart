@@ -288,7 +288,7 @@ class _VaultwardenSetupState extends ConsumerState<VaultwardenSetup> {
     final reach = await ref.read(securityKeysProvider).capabilities();
     if (mounted) setState(() => _reach = reach);
     return VwAccountSetup(
-      VwApi(ref.read(vwClientFactoryProvider)(_pin), clock: ref.read(clockProvider)),
+      VwApi(ref.read(vwClientFactoryProvider)(_pin), clock: ref.read(clockProvider), info: ref.read(vwClientInfoProvider)),
       clock: ref.read(clockProvider),
       derive: ref.read(vwKeyDerivationProvider),
     )..canReachKey = vwCanReachKey(reach);
@@ -1330,7 +1330,11 @@ class _VaultwardenOnState extends ConsumerState<VaultwardenOn> {
     }
     final KemlockOffer? offer;
     try {
-      final api = VwApi(ref.read(vwClientFactoryProvider)(_target.pin), clock: ref.read(clockProvider));
+      final api = VwApi(
+        ref.read(vwClientFactoryProvider)(_target.pin),
+        clock: ref.read(clockProvider),
+        info: ref.read(vwClientInfoProvider),
+      );
       offer = KemlockOffer.fromConfig(await api.config(Uri.parse(_target.server)));
     } on Object {
       return;
@@ -1350,7 +1354,11 @@ class _VaultwardenOnState extends ConsumerState<VaultwardenOn> {
     }
     final KemlockOffer? offer;
     try {
-      final api = VwApi(ref.read(vwClientFactoryProvider)(_target.pin), clock: ref.read(clockProvider));
+      final api = VwApi(
+        ref.read(vwClientFactoryProvider)(_target.pin),
+        clock: ref.read(clockProvider),
+        info: ref.read(vwClientInfoProvider),
+      );
       offer = KemlockOffer.fromConfig(await api.config(Uri.parse(_target.server)));
     } on Object {
       return;

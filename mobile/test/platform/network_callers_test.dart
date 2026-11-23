@@ -31,12 +31,7 @@ List<String> filesWithNetworkCallers() {
 /// The only files that may name one: the gate itself, and the three it or a
 /// provider wraps (the browser, and the pinned Vaultwarden client and its
 /// certificate probe).
-const _allowed = {
-  'features/sync/vaultwarden/vw_http.dart',
-  'platform/browser_auth.dart',
-  'platform/links.dart',
-  'platform/network.dart',
-};
+const _allowed = {'features/sync/vaultwarden/vw_http.dart', 'platform/browser_auth.dart', 'platform/links.dart', 'platform/network.dart'};
 
 void main() {
   // openspec: add-offline-mode, design decision 3. A new caller goes through `platform/network.dart`:

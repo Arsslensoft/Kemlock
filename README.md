@@ -76,7 +76,7 @@ All OTP secrets are stored encrypted. The scheme layers three cryptographic prim
 
 **Nothing is ever stored in plaintext.** The private key and KEK only live in memory while the vault is unlocked. The one place codes leave the vault is [AutoFill](#autofill), and only for a vault it is turned on for.
 
-ML-KEM-1024, Keccak, scrypt and the SHA-256 behind PBKDF2 are written in Dart (`mobile/lib/crypto`), ported from `@noble/post-quantum` and `@noble/hashes`, and tested against vectors those libraries made from fixed seeds. AES-GCM comes from the `cryptography` package. Key derivation runs in a background isolate so the UI keeps moving.
+ML-KEM-1024, Keccak, scrypt and the SHA-256 behind PBKDF2 are written in Dart (`crypto/` in [Kemlock-core](https://github.com/Arsslensoft/Kemlock-core), the platform-free Dart the app shares with the browser extension; `mobile/lib/crypto` exports it), ported from `@noble/post-quantum` and `@noble/hashes`, and tested against vectors those libraries made from fixed seeds. AES-GCM comes from the `cryptography` package. Key derivation runs in a background isolate so the UI keeps moving.
 
 ### Kemlock Server account keys
 
@@ -385,7 +385,7 @@ Where Flutter isn't installed, `mobile/tool/docker/flutter.sh 'flutter analyze &
 | Flutter 3.47 / Dart 3.13 | UI framework |
 | `flutter_riverpod`, `go_router` | State and routing |
 | `cryptography`, `crypto` | AES-256-GCM, HMAC |
-| Dart ports (`mobile/lib/crypto`) | ML-KEM-1024, Keccak, scrypt, PBKDF2 |
+| `kemlock_core` ([Kemlock-core](https://github.com/Arsslensoft/Kemlock-core)) | The crypto (Dart ports of ML-KEM-1024, Keccak, scrypt, PBKDF2; OPAQUE; the account crypto), the models, the vault store and the sync engines, pinned by commit |
 | `shared_preferences` | Native storage for the vault, on the `CapacitorStorage` keys |
 | `mobile_scanner`, `qr_flutter` | Scanning and drawing QR codes |
 | `google_mlkit_text_recognition` | On-device text recognition for importing backup codes from pictures |

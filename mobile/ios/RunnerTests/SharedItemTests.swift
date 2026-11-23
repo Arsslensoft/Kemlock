@@ -64,6 +64,13 @@ final class SharedItemTests: XCTestCase {
   }
 
   func testBothFilesAreProtectedAndOutOfBackups() throws {
+    // The simulator keeps no data protection class, so it can't report .complete here; the release check on a phone covers this.
+    #if targetEnvironment(simulator)
+      let onSimulator = true
+    #else
+      let onSimulator = false
+    #endif
+    try XCTSkipIf(onSimulator, "The simulator doesn't apply file protection; the check on a phone covers this")
     for id in [try files.write(text: "Meet me at nine.", now: now), try files.write(fileAt: try source("a.pdf", "x"), name: "a.pdf", type: nil, now: now)] {
       for url in [files.itemURL(id), files.metaURL(id)] {
         let attributes = try FileManager.default.attributesOfItem(atPath: url.path)

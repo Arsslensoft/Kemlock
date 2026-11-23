@@ -19,6 +19,14 @@ keep opening and the fixtures stay valid: `"app": "BackMyCodes"` in exports and 
   in Docker.
 - `docs/`: plans that are part of the repo. `/plans/` holds local notes and stays out of git.
 
+The platform-free Dart (the crypto, the models, the vault store, the sync engines, OTP, the generator
+and site matching) is in [Kemlock-core](https://github.com/Arsslensoft/Kemlock-core), checked out
+next to this repository as `../kemlock-core` and pinned by commit in `mobile/pubspec.yaml` (both
+lockfiles). Each moved file under `mobile/lib` is now one line exporting
+`package:kemlock_core/<same path>`; change the code in Kemlock-core, then move the pin here. Its
+platform halves (`*_io.dart`) and the seams the app fills (unlock keys, biometrics, the attachment
+store, Vaultwarden's client details) are described there.
+
 The browser extension is no longer here. It moved, with its history, to
 [Kemlock-browser](https://github.com/Arsslensoft/Kemlock-browser), checked out next to this
 repository as `../kemlock-browser`. It still reads the app's `mobile/lib/ui/theme/tokens.dart`,

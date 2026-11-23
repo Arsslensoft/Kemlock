@@ -20,11 +20,34 @@ runs:
   steps:
     # The one place the Flutter version is named for CI. Keep it equal to
     # mobile/tool/docker/flutter.sh and mobile/tool/release/Containerfile.
-    - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+    # Flutter from its own repository at the release tag. flutter-action calls actions/cache by tag inside
+    # itself, and this repository runs only actions pinned to a commit, so it can't be used.
+    - name: Cache the Flutter SDK
+      id: sdk
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        channel: stable
-        flutter-version: 3.47.7
-        cache: true
+        path: ${{ runner.tool_cache }}/flutter-3.47.7
+        key: flutter-3.47.7-${{ runner.os }}-${{ runner.arch }}
+
+    - name: Flutter 3.47.7
+      shell: bash
+      env:
+        SDK: ${{ runner.tool_cache }}/flutter-3.47.7
+        HIT: ${{ steps.sdk.outputs.cache-hit }}
+      run: |
+        if [ "$HIT" != true ]; then
+          git clone --depth 1 --branch 3.47.7 https://github.com/flutter/flutter.git "$SDK"
+        fi
+        echo "$SDK/bin" >> "$GITHUB_PATH"
+        "$SDK/bin/flutter" config --no-analytics >/dev/null
+        "$SDK/bin/flutter" --version
+
+    - name: Cache the pub packages
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.pub-cache
+        key: pub-${{ runner.os }}-${{ hashFiles('mobile/pubspec.lock', 'mobile/pubspec.free.lock') }}
+        restore-keys: pub-${{ runner.os }}-
 
     - name: Packages (store build)
       if: inputs.packages == 'true' && inputs.build == 'store'

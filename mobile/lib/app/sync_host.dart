@@ -122,6 +122,7 @@ class _SyncHostState extends ConsumerState<SyncHost> {
       vault: ref.read(vaultStoreProvider),
       session: session,
       clientFor: ref.read(vwClientFactoryProvider),
+      info: ref.read(vwClientInfoProvider),
       websiteFor: _website,
       files: VwFiles(store: ref.read(attachmentStoreProvider), vaultId: vaultId),
       clock: ref.read(clockProvider),

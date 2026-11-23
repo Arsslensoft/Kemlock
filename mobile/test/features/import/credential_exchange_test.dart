@@ -23,7 +23,7 @@ Finder get _anyTransferError => find.byWidgetPredicate(
 );
 
 void main() {
-  group('on Android, in the store build', () {
+  group('on Android, in the store build', skip: buildKind == BuildKind.free ? 'the free build has no system list' : null, () {
     testWidgets('offers the system list, asks for the kinds Kemlock keeps, and previews what the exporter sent', (tester) async {
       final transfer = FakeCredentialTransfer(answer: _example);
       await openSheet(tester, showImportSheet, vault: RecordingVault(), overrides: [transfer.asOverride]);

@@ -46,13 +46,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: github/codeql-action/init@v4 # TODO: pin to SHA
+      - uses: github/codeql-action/init@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         with:
           languages: actions
           build-mode: none
           queries: security-extended
 
-      - uses: github/codeql-action/analyze@v4 # TODO: pin to SHA
+      - uses: github/codeql-action/analyze@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         with:
           category: /language:actions
 
@@ -69,13 +69,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: github/codeql-action/init@v4 # TODO: pin to SHA
+      - uses: github/codeql-action/init@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         with:
           languages: python
           build-mode: none
           queries: security-extended
 
-      - uses: github/codeql-action/analyze@v4 # TODO: pin to SHA
+      - uses: github/codeql-action/analyze@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         with:
           category: /language:python
 
@@ -96,7 +96,7 @@ jobs:
       # Flutter writes android/local.properties and the plugin list the Gradle build reads.
       - uses: ./.github/actions/setup-flutter
 
-      - uses: github/codeql-action/init@v4 # TODO: pin to SHA
+      - uses: github/codeql-action/init@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         with:
           languages: java-kotlin
           build-mode: manual
@@ -108,10 +108,12 @@ jobs:
       - name: Build the Kotlin and Java
         working-directory: mobile/android
         run: |
+          # gradlew and its wrapper jar are made by Flutter, not kept in git: --config-only writes them, and builds nothing
+          (cd .. && flutter build apk --config-only --debug)
           JAVA_HOME="$JAVA_HOME_17_X64" ./gradlew --no-daemon --no-build-cache --dependency-verification strict \
             :app:compileDebugKotlin :app:compileDebugJavaWithJavac :credential_transfer:compileDebugKotlin
 
-      - uses: github/codeql-action/analyze@v4 # TODO: pin to SHA
+      - uses: github/codeql-action/analyze@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         with:
           category: /language:java-kotlin
 
@@ -136,7 +138,7 @@ jobs:
 
       - uses: ./.github/actions/setup-flutter
 
-      - uses: github/codeql-action/init@v4 # TODO: pin to SHA
+      - uses: github/codeql-action/init@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         with:
           languages: swift
           build-mode: manual
@@ -146,6 +148,6 @@ jobs:
         working-directory: mobile
         run: flutter build ios --simulator --debug --no-codesign
 
-      - uses: github/codeql-action/analyze@v4 # TODO: pin to SHA
+      - uses: github/codeql-action/analyze@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         with:
           category: /language:swift

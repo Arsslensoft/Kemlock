@@ -95,9 +95,9 @@ flutter {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     // local_auth's biometric prompt needs an AppCompat activity theme, or it crashes on Android 8 and below.
-    implementation("androidx.appcompat:appcompat:1.7.1")
+    implementation("androidx.appcompat:appcompat:1.8.0")
     // Autofill: the biometric prompt of the fill screen, and the keyboard's inline suggestions.
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.autofill:autofill:1.3.0")
@@ -106,5 +106,5 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     // The real org.json, which the copy's parsing uses, in place of the Android stubs.
-    testImplementation("org.json:json:20250517")
+    testImplementation("org.json:json:20260814")
 }

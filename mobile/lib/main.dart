@@ -29,7 +29,10 @@ Future<void> main() async {
   await sweepPhoneScratch();
 
   // The vault is read synchronously, so native storage is loaded before the first frame, as persist.ts did.
-  final store = await KeyValueStore.open(CapacitorPreferences.forPlatform() ?? MemoryPreferences());
+  final store = await KeyValueStore.open(
+    CapacitorPreferences.forPlatform() ?? MemoryPreferences(),
+    onSaveError: (error) => debugPrint('Saving to native storage failed: $error'),
+  );
   final catalog = await MessageCatalog.load();
   final container = ProviderContainer(
     overrides: [keyValueStoreProvider.overrideWithValue(store), messageCatalogProvider.overrideWithValue(catalog)],

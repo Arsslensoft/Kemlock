@@ -42,6 +42,7 @@ import 'package:kemlock/features/sync/sync_merge.dart';
 import 'package:kemlock/models/login.dart';
 import 'package:kemlock/models/secure_note.dart';
 
+import '../../../helpers/core_sources.dart';
 import '../../spaces/chain_kit.dart';
 import '../../spaces/fake_space_server.dart';
 import '../../spaces/server_spaces_test.dart' show KmSpacePhone;
@@ -918,8 +919,8 @@ void main() {
       final literal = RegExp(r"'(/[^'\s]*)'");
       final interpolation = RegExp(r'\$\{[^}]*\}|\$[A-Za-z_]\w*');
       final found = <String>{};
-      for (final directory in const ['lib/features/sync/kemlock', 'lib/features/spaces', 'lib/features/sends']) {
-        for (final file in Directory(directory).listSync().whereType<File>()) {
+      for (final directory in const ['lib/features/sync/kemlock', 'lib/features/spaces', 'lib/features/sends'].expand(appAndCore)) {
+        for (final file in directory.listSync().whereType<File>()) {
           if (!file.path.endsWith('.dart')) {
             continue;
           }
