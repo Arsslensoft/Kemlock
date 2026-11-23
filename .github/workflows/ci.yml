@@ -3,8 +3,8 @@ name: CI
 # Checks the Flutter app in mobile/ on every pull request, on every push to main, in the
 # merge queue, and when started by hand from the Actions tab: formatting, analysis and the
 # tests of the store build and of the free build (F-Droid), the Kotlin tests on the JVM with
-# Gradle's dependency verification on, both APKs, the Swift tests on a simulator, and the
-# pure-Dart crypto tests under dart2wasm in Chrome.
+# Gradle's dependency verification on, both APKs and the Swift tests on a simulator. The
+# pure-Dart code and its dart2wasm run are Kemlock-core's, checked in that repository.
 #
 # Every Dart check runs on both builds (openspec: add-fdroid-release): the store build as
 # checked out, then the free build, after tool/build/use_free.sh swaps in its parts and its
@@ -14,8 +14,8 @@ name: CI
 # The jobs are skipped, not removed, on a pull request that touches nothing they read, so
 # this workflow can be required without a path filter. Require only "CI gate": it is green
 # when every job it waits for passed or was skipped, so a skipped matrix job can't leave a
-# required check pending. The iOS and the dart2wasm jobs report to the gate but don't fail
-# it until the repository variables CI_REQUIRE_IOS and CI_REQUIRE_WASM are set to "true".
+# required check pending. The iOS job reports to the gate but doesn't fail it until the
+# repository variable CI_REQUIRE_IOS is set to "true".
 #
 # A newer run for the same pull request or branch cancels the one still going; a push to
 # main is never cancelled, so its coverage is always uploaded.
@@ -288,46 +288,10 @@ jobs:
             -destination "id=$iphone,arch=x86_64" EXCLUDED_ARCHS=arm64 CODE_SIGNING_ALLOWED=NO \
             SYMROOT="$PWD/../build/ios"
 
-  wasm:
-    name: Crypto tests (dart2wasm)
-    needs: changes
-    if: needs.changes.outputs.mobile == 'true'
-    runs-on: ubuntu-26.04
-    permissions:
-      contents: read
-    defaults:
-      run:
-        working-directory: mobile
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - uses: ./.github/actions/setup-flutter
-
-      # The pure-Dart crypto tests also run in a browser under dart2wasm (docs/plans/add-account-crypto.md,
-      # task 6.4): the 15 tests tagged `wasm`. Their browser settings are in
-      # mobile/tool/test/dart_test.wasm.yaml, not in mobile/dart_test.yaml, because `flutter test`
-      # rejects a browser platform there. The run copies the file to mobile/dart_test.yaml for its
-      # own sake, in this throwaway checkout, and puts the runner's Chrome path in the copy (the file
-      # names `google-chrome` for Linux, and Windows' Edge for local runs).
-      - name: Point dart test at the runner's Chrome
-        run: |
-          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
-          [ -n "$chrome" ] || { echo "::error::No Chrome on this runner"; exit 1; }
-          "$chrome" --version
-          echo "CHROME_EXECUTABLE=$chrome" >> "$GITHUB_ENV"
-          cp tool/test/dart_test.wasm.yaml dart_test.yaml
-          CHROME="$chrome" yq -i '.override_platforms.chrome.settings.executable.linux = strenv(CHROME)' dart_test.yaml
-          cat dart_test.yaml
-
-      - name: Test under dart2wasm
-        run: dart test -p chrome -c dart2wasm -t wasm
-
   gate:
     name: CI gate
     if: always()
-    needs: [changes, format, check, android-unit, android-build, ios, wasm]
+    needs: [changes, format, check, android-unit, android-build, ios]
     runs-on: ubuntu-26.04
     permissions: {}
     steps:
@@ -335,7 +299,6 @@ jobs:
         env:
           NEEDS: ${{ toJSON(needs) }}
           REQUIRE_IOS: ${{ vars.CI_REQUIRE_IOS }}
-          REQUIRE_WASM: ${{ vars.CI_REQUIRE_WASM }}
         run: |
           failed=0
           while read -r job result; do
@@ -345,8 +308,6 @@ jobs:
               *)
                 if [ "$job" = ios ] && [ "$REQUIRE_IOS" != true ]; then
                   echo "::warning::$job is $result; it is not required until CI_REQUIRE_IOS is true"
-                elif [ "$job" = wasm ] && [ "$REQUIRE_WASM" != true ]; then
-                  echo "::warning::$job is $result; it is not required until CI_REQUIRE_WASM is true"
                 else
                   failed=1
                 fi

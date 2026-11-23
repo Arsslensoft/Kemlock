@@ -56,8 +56,10 @@ cd android
 
 On a Mac, the Swift tests: `flutter build ios --simulator --debug --no-codesign`, then
 `xcodebuild test -workspace ios/Runner.xcworkspace -scheme Runner -only-testing:RunnerTests` on a
-simulator (`.github/workflows/ci.yml` has the exact command). The pure-Dart crypto tests also run
-in a browser under dart2wasm. From `mobile/`: `cp tool/test/dart_test.wasm.yaml dart_test.yaml && dart test -p chrome -c dart2wasm -t wasm; rm dart_test.yaml` (`flutter test` rejects a browser platform in `dart_test.yaml`, so the file only sits there for this run).
+simulator (`.github/workflows/ci.yml` has the exact command). The crypto, the models, the vault store
+and the sync engines are in [Kemlock-core](https://github.com/Arsslensoft/Kemlock-core), which
+runs their tests, under dart2wasm too; a change to them is made there and the pin in
+`mobile/pubspec.yaml` moved here after.
 
 A test that checks a fix goes in the same commit as the fix. Any other test goes in its own
 `test(scope)` commit after the code it checks. The whole-app flows run as widget tests through the
