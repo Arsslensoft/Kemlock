@@ -7,13 +7,13 @@
 // The master key is derived off the UI isolate, like the vault's scrypt.
 
 import 'dart:convert';
-import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart' as hash;
 import 'package:cryptography/cryptography.dart';
 import 'package:cryptography/dart.dart';
 
+import 'background.dart';
 import 'bytes.dart';
 import 'hkdf.dart' as hkdf;
 import 'kdf.dart';
@@ -112,7 +112,7 @@ Future<Uint8List> bwMasterKey(String password, String email, BwKdf kdf) {
       final parallelism = kdf.parallelism!;
       final iterations = kdf.iterations;
       final saltHash = Uint8List.fromList(hash.sha256.convert(salt).bytes);
-      return Isolate.run(() async {
+      return runInBackground(() async {
         final argon = DartArgon2id(parallelism: parallelism, memory: memory * 1024, iterations: iterations, hashLength: 32);
         final key = await argon.deriveKey(secretKey: SecretKeyData(secret), nonce: saltHash);
         return Uint8List.fromList(await key.extractBytes());

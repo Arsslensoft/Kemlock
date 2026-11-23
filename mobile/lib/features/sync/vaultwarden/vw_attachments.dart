@@ -18,13 +18,13 @@
 library;
 
 import 'dart:convert';
-import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart' as hash;
 import 'package:cryptography/cryptography.dart';
 import 'package:cryptography/dart.dart';
 
+import '../../../crypto/background.dart';
 import '../../../crypto/bitwarden.dart';
 import '../../../crypto/bytes.dart';
 import '../../../models/secure_note.dart';
@@ -66,7 +66,7 @@ Future<Uint8List> bwEncryptAttachment(Uint8List data, BwKey key) async {
   if (data.length <= _inlineLimit) return _encrypt(data, key.enc, key.mac!);
   final enc = key.enc;
   final mac = key.mac!;
-  return Isolate.run(() => _encrypt(data, enc, mac), debugName: 'bitwarden attachment');
+  return runInBackground(() => _encrypt(data, enc, mac), debugName: 'bitwarden attachment');
 }
 
 /// The data of [buffer], a Bitwarden attachment, opened with [key]. Throws a
@@ -76,7 +76,7 @@ Future<Uint8List> bwDecryptAttachment(Uint8List buffer, BwKey key) async {
   if (buffer.length <= _inlineLimit) return _decrypt(buffer, key.enc, key.mac!);
   final enc = key.enc;
   final mac = key.mac!;
-  return Isolate.run(() => _decrypt(buffer, enc, mac), debugName: 'bitwarden attachment');
+  return runInBackground(() => _decrypt(buffer, enc, mac), debugName: 'bitwarden attachment');
 }
 
 Uint8List _mac(Uint8List key, Uint8List iv, Uint8List data) =>

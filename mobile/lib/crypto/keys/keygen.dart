@@ -6,9 +6,9 @@
 // `ml_dsa.dart`. The result is the same ParsedKey an import gives.
 
 import 'dart:async';
-import 'dart:isolate';
 import 'dart:typed_data';
 
+import '../background.dart';
 import '../bytes.dart';
 import 'algorithms.dart';
 import 'der.dart';
@@ -139,8 +139,7 @@ class KeyGeneration {
   }
 
   final _done = Completer<KeyGenerationResult>();
-  Isolate? _isolate;
-  RawReceivePort? _port;
+  BackgroundJob<Object>? _job;
 
   Future<KeyGenerationResult> get result => _done.future;
 
@@ -148,51 +147,49 @@ class KeyGeneration {
   void cancel() {
     if (_done.isCompleted) return;
     _done.complete(const KeyGenerationCancelled());
-    _isolate?.kill(priority: Isolate.immediate);
-    _port?.close();
+    _job?.cancel();
   }
 
   Future<void> _start(KeyRequest request) async {
-    final port = _port = RawReceivePort();
-    port.handler = (Object? message) {
-      port.close();
+    try {
+      final job = _job = startBackgroundJob<Object>(_generator(request));
+      final message = await job.result;
       if (_done.isCompleted) return;
       switch (message) {
         case ParsedKey():
           _done.complete(KeyGenerated(message));
         case final Exception error when error is PgpEditException || error is PgpException || error is KeyFormatException:
           _done.completeError(error);
-        case [final Object? error, final Object? stack]:
-          _done.completeError(StateError('key generation failed: $error'), StackTrace.fromString('$stack'));
         default:
           _done.completeError(StateError('key generation stopped without a key'));
       }
-    };
-    try {
-      final isolate = await Isolate.spawn(_generate, (port.sendPort, request), onError: port.sendPort, onExit: port.sendPort);
-      _isolate = isolate;
-      // Cancelled while the isolate was starting.
-      if (_done.isCompleted) isolate.kill(priority: Isolate.immediate);
+    } on BackgroundError catch (e) {
+      if (!_done.isCompleted) _done.completeError(StateError('key generation failed: ${e.error}'), StackTrace.fromString(e.stack));
+    } on BackgroundStopped {
+      if (!_done.isCompleted) _done.completeError(StateError('key generation stopped without a key'));
     } on Object catch (e, stack) {
-      port.close();
       if (!_done.isCompleted) _done.completeError(e, stack);
     }
   }
 }
 
-Future<void> _generate((SendPort, KeyRequest) message) async {
-  final (port, request) = message;
-  Object result;
+/// The computation for the background isolate, made apart from [KeyGeneration] so that it captures the request and not the generation
+/// (which holds a completer and cannot be sent).
+Future<Object> Function() _generator(KeyRequest request) =>
+    () => _generate(request);
+
+/// What the background isolate runs: the key, or the exception that says
+/// why there is none, to give back as a value.
+Future<Object> _generate(KeyRequest request) async {
   try {
-    result = await makeKey(request);
+    return await makeKey(request);
   } on PgpEditException catch (e) {
-    result = e;
+    return e;
   } on PgpException catch (e) {
-    result = e;
+    return e;
   } on KeyFormatException catch (e) {
-    result = e;
+    return e;
   }
-  Isolate.exit(port, result);
 }
 
 /// Makes the key on the calling isolate. [generateKey] runs this in the
