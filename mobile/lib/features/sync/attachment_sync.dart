@@ -23,7 +23,7 @@ library;
 import 'dart:typed_data';
 
 import '../../models/secure_note.dart';
-import '../../vault/attachment_store.dart';
+import '../../vault/attachment_store_interface.dart';
 import 'sync_merge.dart';
 import 'webdav.dart';
 

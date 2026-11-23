@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
-
 import '../core/storage/key_value_store.dart';
 
 /// The first vault's id. Its keys are the ones every earlier version used.
@@ -89,7 +87,7 @@ class VaultRegistry {
 
   final KeyValueStore _store;
   String _active = mainVault;
-  final List<VoidCallback> _listeners = [];
+  final List<void Function()> _listeners = [];
 
   /// The vault being unlocked or used; storage reads and writes go to it.
   String get active => _active;
@@ -107,7 +105,7 @@ class VaultRegistry {
   }
 
   /// Calls [onChange] after the active vault changes; returns the call that stops it.
-  VoidCallback listen(VoidCallback onChange) {
+  void Function() listen(void Function() onChange) {
     _listeners.add(onChange);
     return () => _listeners.remove(onChange);
   }

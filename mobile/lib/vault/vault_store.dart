@@ -19,8 +19,8 @@ import '../models/passkey.dart';
 import '../models/payment_card.dart';
 import '../models/secure_note.dart';
 import '../models/vault_key.dart';
-import '../platform/unlock_keys.dart';
-import 'biometrics.dart';
+import '../platform/unlock_keys_interface.dart';
+import 'biometrics_interface.dart';
 import 'key_unlock.dart';
 import 'sealed_value.dart';
 import 'vault_registry.dart';
@@ -455,7 +455,7 @@ class VaultStore {
     this._store,
     this._vaults, {
     this._deriveKey = deriveVaultKey,
-    this._unlockKeys = const ChannelUnlockKeys(),
+    this._unlockKeys = const NoUnlockKeys(),
     this._clock = DateTime.now,
   });
 

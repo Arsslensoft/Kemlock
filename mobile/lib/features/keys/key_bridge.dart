@@ -2,9 +2,9 @@
 /// and how a key is named on screen.
 library;
 
-import 'dart:isolate';
 import 'dart:typed_data';
 
+import '../../crypto/background.dart';
 import '../../crypto/bytes.dart';
 import '../../crypto/keys/keys.dart' as crypto;
 import '../../models/vault_key.dart';
@@ -44,11 +44,11 @@ crypto.ParsedKey parsedKeyOf(VaultKey key) {
 /// Reads a key from [input], text or bytes, off the UI isolate: opening one
 /// with a passphrase runs a key derivation. Throws [crypto.KeyFormatException].
 Future<crypto.ParsedKey> readKeyInBackground(Object input, {String? passphrase}) =>
-    Isolate.run(() => crypto.readPrivateKey(input, passphrase: passphrase), debugName: 'readKey');
+    runInBackground(() => crypto.readPrivateKey(input, passphrase: passphrase), debugName: 'readKey');
 
 /// Writes [key]'s private half in its kind's form off the UI isolate,
 /// protected by [passphrase] unless it is null.
-Future<String> exportKeyInBackground(crypto.ParsedKey key, {String? passphrase, String? comment}) => Isolate.run(
+Future<String> exportKeyInBackground(crypto.ParsedKey key, {String? passphrase, String? comment}) => runInBackground(
   () => crypto.exportPrivateKey(key, passphrase: passphrase, comment: comment),
   debugName: 'exportKey',
 );
