@@ -41,7 +41,10 @@ function main(argv) {
     console.log("No commits to check.");
     return 0;
   }
-  const missing = commits.filter((commit) => !signedByAuthor(commit));
+  // A bot's commit (Dependabot's, taken into a person's pull request) can't certify anything; the person who
+  // submits the pull request answers for it, and signs off their own commits.
+  const isBot = (commit) => commit.authorEmail.trim().toLowerCase().endsWith("[bot]@users.noreply.github.com");
+  const missing = commits.filter((commit) => !isBot(commit) && !signedByAuthor(commit));
   for (const commit of commits) {
     const subject = commit.message.split("\n")[0];
     console.log(`${missing.includes(commit) ? "MISSING" : "ok     "} ${commit.sha.slice(0, 10)} ${subject}`);

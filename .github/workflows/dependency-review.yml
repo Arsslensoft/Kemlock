@@ -39,13 +39,8 @@ jobs:
       - uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
         with:
           fail-on-severity: high
+          # The pub licences come through in lower case ("mit"), which this action doesn't take as SPDX, so
+          # every pub dependency failed. The Licences workflow (tool/ci/check_licenses.mjs) checks the pub
+          # licences; this one checks vulnerabilities.
+          license-check: false
           comment-summary-in-pr: on-failure
-          # The licences of tool/ci/check_licenses.mjs, as SPDX identifiers. GPL-2.0-only is not
-          # here: it can't be combined with GPL-3.0 code. A dependency whose licence is missing
-          # or not listed fails; after reading its licence, add it to allow-dependencies-licenses
-          # here as a package URL, and to tool/ci/license-overrides.json.
-          allow-licenses: >-
-            MIT, MIT-0, BSD-2-Clause, BSD-3-Clause, 0BSD, Apache-2.0, ISC, Zlib, MPL-2.0,
-            LGPL-2.1-only, LGPL-2.1-or-later, LGPL-3.0-only, LGPL-3.0-or-later,
-            GPL-2.0-or-later, GPL-3.0-only, GPL-3.0-or-later, CC0-1.0, Unlicense, BSL-1.0,
-            Python-2.0, BlueOak-1.0.0
