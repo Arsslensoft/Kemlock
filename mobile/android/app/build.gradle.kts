@@ -106,5 +106,5 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     // The real org.json, which the copy's parsing uses, in place of the Android stubs.
-    testImplementation("org.json:json:20250517")
+    testImplementation("org.json:json:20260814")
 }
