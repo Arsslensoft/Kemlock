@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-
-import 'preferences_backend.dart';
+import 'preferences_interface.dart';
 
 /// Every key the app stores starts with this.
 const storagePrefix = 'backmycodes_';
@@ -14,24 +12,26 @@ const storagePrefix = 'backmycodes_';
 /// storage in the background, in order. A write that fails is logged and
 /// the ones after it still run.
 class KeyValueStore {
-  KeyValueStore._(this._backend, this._memory);
+  KeyValueStore._(this._backend, this._memory, this._onSaveError);
 
-  /// Loads what the phone holds.
-  static Future<KeyValueStore> open(PreferencesBackend backend) async {
+  /// Loads what the phone holds. [onSaveError] hears each write that fails (the app passes `debugPrint` through it);
+  /// without it a failed write is silent.
+  static Future<KeyValueStore> open(PreferencesBackend backend, {void Function(Object error)? onSaveError}) async {
     final all = await backend.readAll();
     final memory = <String, String>{
       for (final MapEntry(:key, :value) in all.entries)
         if (key.startsWith(storagePrefix)) key: value,
     };
-    return KeyValueStore._(backend, memory);
+    return KeyValueStore._(backend, memory, onSaveError);
   }
 
   /// A store in memory, for tests.
-  factory KeyValueStore.memory([Map<String, String> values = const {}]) => KeyValueStore._(MemoryPreferences(values), {...values});
+  factory KeyValueStore.memory([Map<String, String> values = const {}]) => KeyValueStore._(MemoryPreferences(values), {...values}, null);
 
   final PreferencesBackend _backend;
   final Map<String, String> _memory;
-  final Map<String, List<VoidCallback>> _listeners = {};
+  final void Function(Object error)? _onSaveError;
+  final Map<String, List<void Function()>> _listeners = {};
   Future<void> _pending = Future.value();
 
   /// Writes queued and not yet done.
@@ -58,7 +58,7 @@ class KeyValueStore {
   Future<void> flush() => _pending;
 
   /// Calls [onChange] after each write to [key]; returns the call that stops it.
-  VoidCallback listen(String key, VoidCallback onChange) {
+  void Function() listen(String key, void Function() onChange) {
     final list = _listeners.putIfAbsent(key, () => []);
     list.add(onChange);
     return () => list.remove(onChange);
@@ -66,7 +66,7 @@ class KeyValueStore {
 
   void _queue(Future<void> Function() write) {
     Future<void> run() => Future.sync(write).catchError((Object error, StackTrace stack) {
-      debugPrint('Saving to native storage failed: $error');
+      _onSaveError?.call(error);
     });
     // With nothing under way the write starts now, rather than after a chain that has finished,
     // which may belong to another zone (a test's real one) that [flush] would then wait on.
