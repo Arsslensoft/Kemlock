@@ -2,6 +2,11 @@
     xmlns:tools="http://schemas.android.com/tools">
     <!-- CredentialDependency: androidx.credentials is here for the passkey provider, from Android 14; the app
          never asks Credential Manager for credentials, so it needs no Play services fallback for older phones. -->
+    <!-- allowBackup stays on on purpose: the vault restoring on a new phone is a feature. What leaves the phone is
+         set by the two rule files and by them alone: the vault's storage (CapacitorStorage.xml, already encrypted
+         under the master passwords) and nothing else, to an end-to-end encrypted cloud backup or a direct
+         transfer to a new phone (security audit 2026-11-21, I6). No Keystore-bound file, cache or attachment is
+         included; BackupRulesTest keeps it so. -->
     <application
         android:label="Kemlock"
         android:name="${applicationName}"
