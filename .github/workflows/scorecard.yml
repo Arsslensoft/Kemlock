@@ -31,7 +31,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ossf/scorecard-action@v2.4.3 # TODO: pin to SHA
+      - uses: ossf/scorecard-action@v2.6.0 # TODO: pin to SHA
         with:
           results_file: results.sarif
           results_format: sarif
