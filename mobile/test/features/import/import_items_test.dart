@@ -116,6 +116,9 @@ void main() {
     await tapOn(tester, find.text(t('import.browse')));
     await tester.enterText(fieldLabelled('import.field.password'), 'pw');
     await tester.pump();
+    // The free build's sheet is taller, so the button can be below the fold
+    await tester.ensureVisible(find.text(t('import.decrypt')));
+    await tester.pumpAndSettle();
     await tester.runAsync(() async {
       await tester.tap(find.text(t('import.decrypt')));
       await Future<void>.delayed(const Duration(milliseconds: 200));
@@ -185,6 +188,9 @@ void main() {
       await tapOn(tester, find.text(t('import.browse')));
       await tester.enterText(fieldLabelled('import.field.password'), 'pw');
       await tester.pump();
+      // The free build's sheet is taller, so the button can be below the fold
+      await tester.ensureVisible(find.text(t('import.decrypt')));
+      await tester.pumpAndSettle();
       await tester.runAsync(() async {
         await tester.tap(find.text(t('import.decrypt')));
         await Future<void>.delayed(const Duration(milliseconds: 200));
@@ -353,6 +359,9 @@ void main() {
       await tapOn(tester, find.text(t('import.browse')));
       await tester.enterText(fieldLabelled('import.field.password'), 'pw');
       await tester.pump();
+      // The free build's sheet is taller, so the button can be below the fold
+      await tester.ensureVisible(find.text(t('import.decrypt')));
+      await tester.pumpAndSettle();
       await tester.runAsync(() async {
         await tester.tap(find.text(t('import.decrypt')));
         await Future<void>.delayed(const Duration(milliseconds: 200));
