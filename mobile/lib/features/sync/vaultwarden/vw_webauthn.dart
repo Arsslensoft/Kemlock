@@ -11,7 +11,7 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 
-import '../../../core/public_suffixes.dart';
+import '../../../core/public_suffix_list.dart';
 import '../../../crypto/bytes.dart';
 
 /// The server's challenge for a security key: the WebAuthn request options

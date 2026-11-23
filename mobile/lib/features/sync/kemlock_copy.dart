@@ -84,6 +84,7 @@ final kemlockCopyRemovalProvider = Provider<Future<int> Function(VaultwardenTarg
       vault: ref.read(vaultStoreProvider),
       session: ref.read(vaultControllerProvider).session!,
       clientFor: ref.read(vwClientFactoryProvider),
+      info: ref.read(vwClientInfoProvider),
       clock: ref.read(clockProvider),
     );
     try {

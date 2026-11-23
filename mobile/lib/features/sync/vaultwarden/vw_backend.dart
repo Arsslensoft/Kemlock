@@ -45,11 +45,15 @@ class VaultwardenBackend {
     this.websiteFor,
     this.files,
     this.clock = DateTime.now,
+    this.info = const VwClientInfo(),
   });
 
   final VaultStore vault;
   final VaultSession session;
   final http.Client Function(String? pin) clientFor;
+
+  /// Who this app says it is to the server; the phone's values come from the app.
+  final VwClientInfo info;
 
   /// A new plain login's website, from the 2FA directory.
   final String? Function(String issuer)? websiteFor;
@@ -74,7 +78,7 @@ class VaultwardenBackend {
   void forgetCredentials() => vault.removeEncryptedValue(keyVaultwardenSession);
 
   /// The API on a client for [pin], made once and kept.
-  VwApi api(String? pin) => VwApi(_clients[pin ?? ''] ??= clientFor(pin), clock: clock);
+  VwApi api(String? pin) => VwApi(_clients[pin ?? ''] ??= clientFor(pin), clock: clock, info: info);
 
   /// A connection with the stored session. Throws a `signedOut` [VwError]
   /// when there's none.
@@ -449,7 +453,7 @@ class VwAccountSetup {
       _passwordHash = await derive.passwordHash(_masterKey!, password);
       _password = password;
     }
-    final device = _device = VwDevice(id: deviceId, type: vwDeviceType);
+    final device = _device = VwDevice(id: deviceId, type: api.info.deviceType, name: api.info.deviceName);
     final login = await api.signIn(
       server,
       email: email,
@@ -490,7 +494,7 @@ class VwAccountSetup {
   Future<VwSignInDone> signInWithApiKey(String clientId, String clientSecret, String password, {required String deviceId}) async {
     _masterKey = await derive.masterKey(password, email, kdf);
     _password = password;
-    final device = _device = VwDevice(id: deviceId, type: vwDeviceType);
+    final device = _device = VwDevice(id: deviceId, type: api.info.deviceType, name: api.info.deviceName);
     final login = await api.signInWithApiKey(server, clientId: clientId, clientSecret: clientSecret, device: device);
     return VwSignInDone(await _credentials(login, deviceId, apiKey: (clientId: clientId.trim(), clientSecret: clientSecret.trim())));
   }
@@ -500,7 +504,7 @@ class VwAccountSetup {
     server,
     email: email,
     passwordHash: _passwordHash!,
-    device: _device ?? VwDevice(id: newUuid(), type: vwDeviceType),
+    device: _device ?? VwDevice(id: newUuid(), type: api.info.deviceType, name: api.info.deviceName),
   );
 
   Future<VwCredentials> _credentials(VwSignedIn login, String deviceId, {({String clientId, String clientSecret})? apiKey}) async {

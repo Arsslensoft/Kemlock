@@ -218,7 +218,7 @@ class VwConnection {
         server,
         clientId: clientId,
         clientSecret: credentials.clientSecret!,
-        device: VwDevice(id: credentials.deviceId, type: vwDeviceType),
+        device: VwDevice(id: credentials.deviceId, type: api.info.deviceType, name: api.info.deviceName),
       );
       tokens = login.tokens;
     } else {

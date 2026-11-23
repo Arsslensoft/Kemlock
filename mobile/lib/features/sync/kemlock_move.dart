@@ -113,6 +113,7 @@ final kemlockRestoreHomeProvider = Provider<Future<int> Function(VaultwardenTarg
       vault: ref.read(vaultStoreProvider),
       session: controller.session!,
       clientFor: ref.read(vwClientFactoryProvider),
+      info: ref.read(vwClientInfoProvider),
       clock: ref.read(clockProvider),
     );
     try {
@@ -338,6 +339,7 @@ Future<KmMoveOutcome> runKmMove(
       vault: vault,
       session: session,
       clientFor: ref.read(vwClientFactoryProvider),
+      info: ref.read(vwClientInfoProvider),
       websiteFor: (issuer) {
         final domain = ref.read(twoFactorDirectoryProvider).value?.findService(issuer)?.domain;
         return domain == null || domain.isEmpty ? null : 'https://$domain';

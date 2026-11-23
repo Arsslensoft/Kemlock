@@ -14,6 +14,8 @@
 /// ```
 library;
 
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -28,6 +30,7 @@ import 'kemlock/km_host.dart' show KmHost;
 import 'kemlock/km_models.dart';
 import 'kemlock_host_factory.dart';
 import 'sync.dart';
+import 'vaultwarden/vw_api.dart' show VwClientInfo;
 import 'vaultwarden/vw_http.dart';
 import 'vaultwarden/vw_sync.dart';
 import 'webdav.dart';
@@ -121,6 +124,10 @@ final vwPlainClientFactoryProvider = Provider<http.Client Function(String? pin)>
 final vwClientFactoryProvider = Provider<http.Client Function(String? pin)>(
   (ref) => gatedClientFactory(ref.watch(networkGateProvider), ref.watch(vwPlainClientFactoryProvider)),
 );
+
+/// Who this phone says it is to a Vaultwarden server: Bitwarden's device type 1 on iOS and 0 on Android. The names and
+/// the version are `VwClientInfo`'s own.
+final vwClientInfoProvider = Provider<VwClientInfo>((ref) => VwClientInfo(deviceType: Platform.isIOS ? 1 : 0));
 
 /// Makes the client Kemlock Server sync talks through: the same gated, certificate-pinning factory
 /// Vaultwarden uses, so nothing is sent while offline mode is on and a server whose certificate the

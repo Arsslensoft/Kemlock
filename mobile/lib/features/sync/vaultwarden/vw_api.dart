@@ -11,14 +11,14 @@ library;
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show HandshakeException, Platform;
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import '../../../core/network/answers.dart' show AnswerTooLarge, readAnswer;
+import '../../../core/network/tls_failure.dart';
 import '../../../crypto/bitwarden.dart';
 import '../../../crypto/bytes.dart';
-import '../../../platform/network.dart' show AnswerTooLarge, readAnswer;
 import 'vw_items.dart' show sshKeyItemsVersion, versionAtLeast;
 
 /// What went wrong talking to the server. The names are the ends of the
@@ -102,8 +102,33 @@ String vwHost(String server) {
   return url.hasPort ? '${url.host}:${url.port}' : url.host;
 }
 
-/// This phone's Bitwarden device type: 1 for iOS, 0 for Android.
-int get vwDeviceType => Platform.isIOS ? 1 : 0;
+/// Who the app says it is to the server: the Bitwarden device type, and the names and version sent as the client's.
+/// The app makes it from the phone it runs on (iOS is device type 1, Android 0); the defaults are the Android phone's,
+/// and a build that isn't the phone (the browser extension's core) passes its own. Pure Dart.
+class VwClientInfo {
+  const VwClientInfo({
+    this.deviceType = 0,
+    this.deviceName = 'Kemlock',
+    this.clientName = 'kemlock',
+    this.clientVersion = '1.1.0',
+    this.clientId = 'mobile',
+  });
+
+  /// Bitwarden's device type: 0 for Android, 1 for iOS.
+  final int deviceType;
+
+  /// How the device shows up in the account's list of devices.
+  final String deviceName;
+
+  /// Sent as `Bitwarden-Client-Name`.
+  final String clientName;
+
+  /// This app's version, sent as `Bitwarden-Client-Version`: Vaultwarden logs an error for each sync without it.
+  final String clientVersion;
+
+  /// Sent as the token request's `client_id`.
+  final String clientId;
+}
 
 /// How this phone shows up in the account's list of devices.
 class VwDevice {
@@ -215,13 +240,15 @@ Object? jsonKey(Map<String, Object?> json, String key) {
 /// Talks to Vaultwarden servers through [client], which tests replace with
 /// a `MockClient`, and which pins a certificate when setup asked for it.
 class VwApi {
-  VwApi(this.client, {this.timeout = const Duration(seconds: 60), this.clock = DateTime.now, this.clientVersion = '1.1.0'});
+  VwApi(this.client, {this.timeout = const Duration(seconds: 60), this.clock = DateTime.now, this.info = const VwClientInfo()});
 
   final http.Client client;
 
-  /// This app's version, sent as `Bitwarden-Client-Version`: Vaultwarden
-  /// logs an error for each sync without it.
-  final String clientVersion;
+  /// Who this app says it is: the device type, and the client's name, version and id.
+  final VwClientInfo info;
+
+  /// This app's version, sent as `Bitwarden-Client-Version`.
+  String get clientVersion => info.clientVersion;
 
   /// How long a request may take before it counts as a `network` problem.
   final Duration timeout;
@@ -268,7 +295,7 @@ class VwApi {
     'username': email.trim(),
     'password': passwordHash,
     'scope': 'api offline_access',
-    'client_id': 'mobile',
+    'client_id': info.clientId,
     ..._deviceFields(device),
     if (step != null) ...{
       'twoFactorProvider': '${step.provider}',
@@ -307,7 +334,7 @@ class VwApi {
     final res = await _send(
       'POST',
       _identity(server, '/connect/token'),
-      form: {'grant_type': 'refresh_token', 'client_id': 'mobile', 'refresh_token': refreshToken},
+      form: {'grant_type': 'refresh_token', 'client_id': info.clientId, 'refresh_token': refreshToken},
     );
     final json = _jsonOrNull(res);
     if (res.statusCode == 400 || res.statusCode == 401) throw VwError(VwProblem.signedOut, status: res.statusCode, message: _message(json));
@@ -471,7 +498,7 @@ class VwApi {
     if (!sameServer(server, address.toString())) throw const VwFilesRefused(VwFilesRefusal.elsewhere);
     final request = http.Request('GET', address)
       ..headers['Accept'] = 'application/octet-stream'
-      ..headers['Bitwarden-Client-Name'] = 'kemlock'
+      ..headers['Bitwarden-Client-Name'] = info.clientName
       ..headers['Bitwarden-Client-Version'] = clientVersion
       ..followRedirects = false;
     final http.StreamedResponse res;
@@ -604,8 +631,8 @@ class VwApi {
     final request = http.Request(method, url)
       ..followRedirects = false
       ..headers['Accept'] = 'application/json'
-      ..headers['Bitwarden-Client-Name'] = 'kemlock'
-      ..headers['Bitwarden-Client-Version'] = clientVersion ?? this.clientVersion;
+      ..headers['Bitwarden-Client-Name'] = info.clientName
+      ..headers['Bitwarden-Client-Version'] = clientVersion ?? info.clientVersion;
     if (token != null) request.headers['Authorization'] = 'Bearer $token';
     if (json != null) {
       request.headers['Content-Type'] = 'application/json';
@@ -623,10 +650,9 @@ class VwApi {
       return await send().timeout(timeout ?? this.timeout);
     } on AnswerTooLarge {
       throw const VwError(VwProblem.server, message: 'The answer is larger than it should be');
-    } on HandshakeException {
-      // As over a certificate the phone refused
-      throw const VwError(VwProblem.network, handshakeFailed: true);
-    } catch (_) {
+    } catch (error) {
+      // A handshake failure is as over a certificate the phone refused
+      if (isTlsFailure(error)) throw const VwError(VwProblem.network, handshakeFailed: true);
       throw const VwError(VwProblem.network);
     }
   }

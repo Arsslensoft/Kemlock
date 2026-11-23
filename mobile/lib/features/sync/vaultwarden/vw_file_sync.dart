@@ -22,7 +22,7 @@ import '../../../crypto/attachment_format.dart';
 import '../../../crypto/bitwarden.dart';
 import '../../../crypto/bytes.dart';
 import '../../../models/secure_note.dart';
-import '../../../vault/attachment_store.dart';
+import '../../../vault/attachment_store_interface.dart';
 import 'vw_api.dart';
 import 'vw_attachments.dart';
 import 'vw_codec.dart';
