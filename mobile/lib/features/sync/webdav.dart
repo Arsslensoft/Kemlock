@@ -14,8 +14,8 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
 
+import '../../core/network/answers.dart';
 import '../../models/json.dart';
-import '../../platform/network.dart';
 
 /// A WebDAV folder and the login for it, as the sync settings store it.
 /// Keys it doesn't know are kept in [extra] and written back.

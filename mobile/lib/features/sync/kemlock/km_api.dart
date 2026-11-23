@@ -25,15 +25,15 @@ library;
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show HandshakeException;
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import '../../../core/network/answers.dart' show AnswerTooLarge, readAnswer;
+import '../../../core/network/tls_failure.dart';
 import '../../../crypto/account/encoding.dart';
 import '../../../crypto/account/kem1.dart';
 import '../../../models/json.dart';
-import '../../../platform/network.dart' show AnswerTooLarge, readAnswer;
 import 'km_models.dart' show KemlockServer;
 import 'km_session.dart';
 
@@ -1024,12 +1024,11 @@ class KmApi {
         throw const KmError(KmProblem.network, timedOut: true);
       } on AnswerTooLarge {
         throw const KmError(KmProblem.tooLarge, message: 'The answer is larger than it should be');
-      } on HandshakeException {
-        // As over a certificate the phone refused
-        throw const KmError(KmProblem.network, handshakeFailed: true);
       } on KmError {
         rethrow;
-      } catch (_) {
+      } catch (error) {
+        // A handshake failure is as over a certificate the phone refused
+        if (isTlsFailure(error)) throw const KmError(KmProblem.network, handshakeFailed: true);
         throw const KmError(KmProblem.network);
       }
       signer?.observe(url, res.headers);

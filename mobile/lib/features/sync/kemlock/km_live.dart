@@ -13,7 +13,7 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
-import '../../../platform/network.dart' show LiveSocket, LiveSocketConnector, maxLiveFrameBytes;
+import '../../../core/network/answers.dart' show LiveSocket, LiveSocketConnector, maxLiveFrameBytes;
 
 /// What opening the socket needs: the `wss` address, the headers of the upgrade (the DPoP proof and the token), and
 /// the certificate pin of the server, if it has one.
