@@ -17,8 +17,9 @@ name: CI
 # required check pending. The iOS job reports to the gate but doesn't fail it until the
 # repository variable CI_REQUIRE_IOS is set to "true".
 #
-# A newer run for the same pull request or branch cancels the one still going; a push to
-# main is never cancelled, so its coverage is always uploaded.
+# A newer run for the same pull request or branch cancels the one still going, a push to main
+# included: after back-to-back merges only the newest main run goes on, and uploads the coverage.
+# A run started by hand has a group of its own, so a push never cancels it.
 
 on:
   pull_request:
@@ -28,8 +29,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
 
 permissions: {}
 
