@@ -14,6 +14,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# A newer push to main cancels the run still going; scheduled and manual runs have their own group.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
 permissions: {}
 
 jobs:

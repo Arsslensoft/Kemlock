@@ -13,8 +13,9 @@ on:
   workflow_dispatch:
 
 concurrency:
+  # The newest change to the labels wins: it syncs the whole file, so the older run can stop.
   group: ${{ github.workflow }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions: {}
 
