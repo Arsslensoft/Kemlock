@@ -319,7 +319,11 @@ void main() {
 
       expect(state().generated, [const GeneratedPassword(password: 'Xk9-generated', site: 'news.example', at: 7)]);
       expect(state().revision, 0, reason: 'never synced, so no sync is due');
-      expect(store.getItem('backmycodes_generated_data'), isNot(contains('Xk9')));
+      expect(
+        store.getItem('backmycodes_generated_data'),
+        isNot(contains('Xk9-generated')),
+        reason: 'a dash is not base64, so only the plaintext can match',
+      );
       expect(await vaultStore.loadGenerated(session), state().generated);
 
       await controller().takeLoginRecords([

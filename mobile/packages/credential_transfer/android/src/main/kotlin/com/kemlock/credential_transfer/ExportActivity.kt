@@ -111,14 +111,18 @@ class ExportActivity : Activity(), ExportReplier {
         val request = asked
         if (ended || request == null) return
         ended = true
+        // A fresh intent, never the incoming one: its flags are the caller's to set, and a result that carried
+        // FLAG_GRANT_*_URI_PERMISSION would hand the selector a grant on whatever URI the caller named. The
+        // library writes the export to the importer's URI and, on a failure, one extra of its own
+        val result = Intent()
         try {
-            IntentHandler.setImportCredentialsResponse(this, request.uri, intent, ImportCredentialsResponse(json))
+            IntentHandler.setImportCredentialsResponse(this, request.uri, result, ImportCredentialsResponse(json))
         } catch (_: RuntimeException) {
             // The exception's text is left out: it could name what was being written
-            IntentHandler.setImportCredentialsException(intent, ImportCredentialsSystemErrorException("The export could not be written"))
+            IntentHandler.setImportCredentialsException(result, ImportCredentialsSystemErrorException("The export could not be written"))
         }
         // RESULT_OK even for an exception: the system reads the intent's extras to tell
-        setResult(RESULT_OK, intent)
+        setResult(RESULT_OK, result)
         end()
     }
 
