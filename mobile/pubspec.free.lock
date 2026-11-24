@@ -616,8 +616,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "8e0e3755f5b1db5c38136933898f92c6366a7552"
-      resolved-ref: "8e0e3755f5b1db5c38136933898f92c6366a7552"
+      ref: "b8d5d236b7292fc9f7c747b4751a0a60ed070f35"
+      resolved-ref: "b8d5d236b7292fc9f7c747b4751a0a60ed070f35"
       url: "https://github.com/Arsslensoft/Kemlock-core.git"
     source: git
     version: "0.1.0"
