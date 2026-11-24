@@ -16,6 +16,7 @@
   <a href="https://github.com/Arsslensoft/Kemlock/actions/workflows/release.yml"><img alt="Release" src="https://github.com/Arsslensoft/Kemlock/actions/workflows/release.yml/badge.svg"></a>
   <a href="https://github.com/Arsslensoft/Kemlock/actions/workflows/codeql.yml"><img alt="CodeQL" src="https://github.com/Arsslensoft/Kemlock/actions/workflows/codeql.yml/badge.svg"></a>
   <a href="https://scorecard.dev/viewer/?uri=github.com/Arsslensoft/Kemlock"><img alt="OpenSSF Scorecard" src="https://api.scorecard.dev/projects/github.com/Arsslensoft/Kemlock/badge"></a>
+  <a href="https://www.bestpractices.dev/projects/17053"><img alt="OpenSSF Best Practices" src="https://www.bestpractices.dev/projects/17053/badge"></a>
   <a href="https://api.reuse.software/info/github.com/Arsslensoft/Kemlock"><img alt="REUSE status" src="https://api.reuse.software/badge/github.com/Arsslensoft/Kemlock"></a>
   <a href="LICENSE"><img alt="Licence: GPL-3.0-or-later" src="https://img.shields.io/badge/licence-GPL--3.0--or--later-blue"></a>
   <img alt="Version 1.1.0" src="https://img.shields.io/badge/version-1.1.0-informational">
