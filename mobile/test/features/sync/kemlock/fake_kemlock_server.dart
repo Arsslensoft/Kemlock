@@ -290,6 +290,9 @@ class FakeKemlockServer {
         'server': 'kemlock-server',
         'apiVersions': ['v1'],
         'version': '0.1.0',
+        // As the server since d109724: its licence and where its source is (AGPL-3.0 section 13)
+        'license': 'AGPL-3.0-only',
+        'sourceUrl': 'https://github.com/Arsslensoft/Kemlock-Server/tree/v0.1.0',
         'serverId': '00000000-0000-4000-8000-0000000000a1',
         'domain': 'https://kem.example.com',
         'setup': 'complete',
