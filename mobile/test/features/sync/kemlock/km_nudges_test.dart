@@ -102,7 +102,11 @@ void main() {
 
     testWidgets('a new UnifiedPush endpoint is registered at once, by a sync run, while push is on', (tester) async {
       final push = unifiedPush(token: endpoint);
-      final opened = await _open(tester, settings: const SyncSettings(kemlock: _target), push: push);
+      final opened = await _open(
+        tester,
+        settings: const SyncSettings(kemlock: _target),
+        push: push,
+      );
 
       await changed(tester, push);
 
@@ -112,7 +116,12 @@ void main() {
     testWidgets('a lost endpoint is taken back from the server', (tester) async {
       final taken = <KemlockTarget>[];
       final push = unifiedPush();
-      final opened = await _open(tester, settings: const SyncSettings(kemlock: _target), push: push, taken: taken);
+      final opened = await _open(
+        tester,
+        settings: const SyncSettings(kemlock: _target),
+        push: push,
+        taken: taken,
+      );
 
       await changed(tester, push);
 
@@ -122,7 +131,11 @@ void main() {
 
     testWidgets('a new endpoint with the push switch off runs nothing', (tester) async {
       final push = unifiedPush(token: endpoint);
-      final opened = await _open(tester, settings: SyncSettings(kemlock: _target.copyWith(push: false)), push: push);
+      final opened = await _open(
+        tester,
+        settings: SyncSettings(kemlock: _target.copyWith(push: false)),
+        push: push,
+      );
 
       await changed(tester, push);
 
@@ -132,7 +145,12 @@ void main() {
     testWidgets('a lost endpoint with the push switch off asks the server nothing', (tester) async {
       final taken = <KemlockTarget>[];
       final push = unifiedPush();
-      await _open(tester, settings: SyncSettings(kemlock: _target.copyWith(push: false)), push: push, taken: taken);
+      await _open(
+        tester,
+        settings: SyncSettings(kemlock: _target.copyWith(push: false)),
+        push: push,
+        taken: taken,
+      );
 
       await changed(tester, push);
 
@@ -141,7 +159,11 @@ void main() {
 
     testWidgets('a UnifiedPush message is a sync nudge', (tester) async {
       final push = unifiedPush(token: endpoint);
-      final opened = await _open(tester, settings: const SyncSettings(kemlock: _target), push: push);
+      final opened = await _open(
+        tester,
+        settings: const SyncSettings(kemlock: _target),
+        push: push,
+      );
 
       await _nudge(tester, push, PushNudge.sync);
 

@@ -98,7 +98,10 @@ class UnifiedPushChannel {
           if (list is List)
             for (final item in list)
               if (item is Map && item['id'] is String)
-                UnifiedPushDistributor(id: item['id'] as String, name: item['name'] is String ? item['name'] as String : item['id'] as String),
+                UnifiedPushDistributor(
+                  id: item['id'] as String,
+                  name: item['name'] is String ? item['name'] as String : item['id'] as String,
+                ),
         ],
         inUse: answer?['inUse'] is String ? answer!['inUse'] as String : null,
       );
