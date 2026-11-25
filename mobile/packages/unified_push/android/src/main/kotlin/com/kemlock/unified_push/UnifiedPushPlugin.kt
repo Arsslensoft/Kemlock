@@ -95,12 +95,18 @@ class UnifiedPushPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
     }
 
     /**
-     * The endpoint this phone has, or null. A phone that has a distributor but no endpoint yet registers again
-     * (the first call of a run registers too, to make sure the distributor is still there), which needs no screen.
+     * The endpoint this phone has, or null. With no distributor saved (it was uninstalled and its end of the registration
+     * never heard) the kept endpoint is dead: it is forgotten, and Dart hears `unregistered` so the server drops it. A phone
+     * that has a distributor but no endpoint yet registers again (the first call of a run registers too, to make sure the
+     * distributor is still there), which needs no screen.
      */
     private fun endpoint(app: Context): String? {
-        val kept = endpoints?.get()
-        if ((kept == null || !registered) && UnifiedPush.getSavedDistributor(app) != null) register(app)
+        val saved = UnifiedPush.getSavedDistributor(app)
+        val kept = endpoints?.getFor(saved) {
+            registered = false
+            PushEvents.emit("unregistered")
+        }
+        if ((kept == null || !registered) && saved != null) register(app)
         return kept
     }
 

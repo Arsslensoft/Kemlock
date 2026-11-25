@@ -42,6 +42,21 @@ class EndpointStore(private val memory: Memory) {
 
     fun clear() = memory.put(KEY, null)
 
+    /**
+     * The endpoint, if a distributor ([saved], the connector's own record) is still there to push to it. Without one the
+     * registration is gone, as when the distributor was uninstalled and no `UNREGISTERED` reached the app: the endpoint
+     * is forgotten, and [onLost] is told when there was one, so the server drops it rather than get it again each sync.
+     */
+    fun getFor(saved: String?, onLost: () -> Unit): String? {
+        val kept = get()
+        if (saved != null) return kept
+        if (kept != null) {
+            clear()
+            onLost()
+        }
+        return null
+    }
+
     private companion object {
         const val KEY = "endpoint"
     }

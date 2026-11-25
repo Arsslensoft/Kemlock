@@ -65,4 +65,26 @@ class EndpointStoreTest {
 
         assertNull(store.get())
     }
+
+    @Test
+    fun givesTheKeptEndpointWhileADistributorIsSaved() {
+        store.set("https://ntfy.example/up123")
+        var lost = 0
+
+        assertEquals("https://ntfy.example/up123", store.getFor("io.heckel.ntfy") { lost++ })
+        assertEquals(0, lost)
+    }
+
+    @Test
+    fun forgetsAnEndpointWhoseDistributorIsGoneAndSaysSo() {
+        store.set("https://ntfy.example/up123")
+        var lost = 0
+
+        assertNull(store.getFor(null) { lost++ })
+
+        assertNull(store.get())
+        assertEquals(1, lost)
+        assertNull(store.getFor(null) { lost++ })
+        assertEquals(1, lost)
+    }
 }
