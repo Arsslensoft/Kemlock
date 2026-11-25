@@ -31,7 +31,7 @@ class PreferencesMemory(context: Context) : Memory {
  * the next time Dart asks. It is a capability: anyone who holds it can wake this phone, so it goes nowhere but
  * to the account's server, and it is forgotten when the registration ends.
  */
-class EndpointStore(private val memory: Memory) {
+class EndpointStore(private val memory: Memory, private val now: () -> Long = System::currentTimeMillis) {
     /** The endpoint now, or null when there is none. */
     fun get(): String? = memory.get(KEY)?.takeIf { it.isNotBlank() }
 
@@ -41,6 +41,18 @@ class EndpointStore(private val memory: Memory) {
     }
 
     fun clear() = memory.put(KEY, null)
+
+    /**
+     * A change of distributor begins: the old registration is ended and the person picks the next. For [CHANGE_MS] after
+     * this the old distributor may still answer with `UNREGISTERED`, which must not clear the endpoint of the new one.
+     */
+    fun beginChange() = memory.put(CHANGING, (now() + CHANGE_MS).toString())
+
+    /** The change is over: the person went back, or the push was stopped. */
+    fun endChange() = memory.put(CHANGING, null)
+
+    /** Whether a change of distributor began less than [CHANGE_MS] ago. */
+    fun changing(): Boolean = (memory.get(CHANGING)?.toLongOrNull() ?: return false) > now()
 
     /**
      * The endpoint, if a distributor ([saved], the connector's own record) is still there to push to it. Without one the
@@ -59,5 +71,7 @@ class EndpointStore(private val memory: Memory) {
 
     private companion object {
         const val KEY = "endpoint"
+        const val CHANGING = "changing_until"
+        const val CHANGE_MS = 60_000L
     }
 }

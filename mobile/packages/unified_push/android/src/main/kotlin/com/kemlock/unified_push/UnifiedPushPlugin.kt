@@ -128,6 +128,15 @@ class UnifiedPushPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
             register(app)
             return result.success(true)
         }
+        // Ends the registration with the distributor in use before another is saved, so what it answers later (the connector
+        // drops answers for a registration it no longer has) cannot end the new one; if the person goes back it is restored
+        val before = if (change) UnifiedPush.getSavedDistributor(app) else null
+        if (before != null) {
+            endpoints?.beginChange()
+            UnifiedPush.unregister(app)
+            endpoints?.clear()
+            registered = false
+        }
         choosing = true
         val done: (Boolean) -> Unit = { ok ->
             main.post {
@@ -135,6 +144,9 @@ class UnifiedPushPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
                 if (ok) {
                     // The endpoint of the old distributor is not this one's
                     endpoints?.clear()
+                    register(app)
+                } else if (before != null) {
+                    UnifiedPush.saveDistributor(app, before)
                     register(app)
                 }
                 result.success(ok)
@@ -146,6 +158,7 @@ class UnifiedPushPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
     /** Ends the registration and forgets the endpoint; the server is told by Dart (`DELETE /kem/v1/devices/push-token`). */
     private fun stop(app: Context) {
         endpoints?.clear()
+        endpoints?.endChange()
         registered = false
         UnifiedPush.unregister(app)
     }

@@ -27,6 +27,9 @@ class KemlockPushService : PushService() {
     }
 
     override fun onUnregistered(instance: String) {
+        // The old distributor answering the end of its registration, while the person changes to another: the endpoint
+        // now, or soon, is the new one's, and the end of the old registration is no news
+        if (endpoints.changing()) return
         endpoints.clear()
         PushEvents.emit("unregistered")
     }

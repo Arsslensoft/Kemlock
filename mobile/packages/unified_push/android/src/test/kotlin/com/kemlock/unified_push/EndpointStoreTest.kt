@@ -1,7 +1,9 @@
 package com.kemlock.unified_push
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** The endpoint the service learns of is kept for Dart, and forgotten when the registration ends. */
@@ -86,5 +88,23 @@ class EndpointStoreTest {
         assertEquals(1, lost)
         assertNull(store.getFor(null) { lost++ })
         assertEquals(1, lost)
+    }
+
+    @Test
+    fun aChangeOfDistributorHoldsForAMinuteAndEndsWhenToldTo() {
+        var time = 1_000L
+        val changing = EndpointStore(memory) { time }
+        assertFalse(changing.changing())
+
+        changing.beginChange()
+        assertTrue(changing.changing())
+        time += 59_000L
+        assertTrue(changing.changing())
+        time += 1_001L
+        assertFalse(changing.changing())
+
+        changing.beginChange()
+        changing.endChange()
+        assertFalse(changing.changing())
     }
 }
