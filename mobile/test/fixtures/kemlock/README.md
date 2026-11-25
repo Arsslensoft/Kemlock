@@ -67,8 +67,8 @@ Read from the server's `build/vertical-slice` (`docs/federation.md` too), and in
 
 The manifest, the device list, the Bitwarden enrolment and `deletedAt` on tombstones, which the app contract listed, are served too.
 
-Not served, or not read against the client (the client does without each), by the server's OpenAPI document at 2f66a04
-(`test/fixtures/server/openapi.json`, 106 paths, which every route of the tables above is in):
+Not served, or not read against the client (the client does without each), by the server's OpenAPI document at d109724
+(`test/fixtures/server/openapi.json`, 124 paths, which every route of the tables above is in):
 
 - `/kem/v1/auth/methods` answers `methods` and, with `sso` in them, `sso: {providerName}`. It has no "Require SSO"
   (`ssoRequired`, which the client reads and so never sees `true`) and no passkey (they are discoverable).

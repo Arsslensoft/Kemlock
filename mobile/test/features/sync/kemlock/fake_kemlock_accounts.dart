@@ -496,13 +496,15 @@ class FakeKemlockAccountServer extends FakeKemlockServer {
       if (request.method == 'POST') {
         final body = jsonDecode(request.body) as Map<String, Object?>;
         final token = body['token'];
-        // As the server's `PushTokenRequest`: only kind and token, fcm or apns, 1 to 512 characters, no whitespace
+        // As the server's `PushTokenRequest`: only kind and token, apns or unifiedpush (fcm is refused), 1 to 512
+        // characters, no whitespace; a UnifiedPush endpoint is an https URL on port 443 or 8443, with no user info
         if (!{'kind', 'token'}.containsAll(body.keys) ||
-            !{'fcm', 'apns'}.contains(body['kind']) ||
+            !{'apns', 'unifiedpush'}.contains(body['kind']) ||
             token is! String ||
             token.isEmpty ||
             token.length > 512 ||
-            token.contains(RegExp(r'\s'))) {
+            token.contains(RegExp(r'\s')) ||
+            (body['kind'] == 'unifiedpush' && !_usableEndpoint(token))) {
           return problem(400, 'invalid-request');
         }
         pushTokens.add((kind: body['kind']! as String, token: token));
@@ -587,4 +589,10 @@ class FakeKemlockAccountServer extends FakeKemlockServer {
     }
     return null;
   }
+}
+
+/// Whether [endpoint] is a UnifiedPush endpoint the server takes: https, a host, no user info, port 443 or 8443.
+bool _usableEndpoint(String endpoint) {
+  final uri = Uri.tryParse(endpoint);
+  return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty && uri.userInfo.isEmpty && {443, 8443}.contains(uri.port);
 }

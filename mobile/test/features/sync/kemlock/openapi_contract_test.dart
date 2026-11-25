@@ -418,7 +418,8 @@ void main() {
       final token = server.issueTokens('jkt')['accessToken']! as String;
 
       expect(await auth.devices(_server, token), hasLength(1));
-      await auth.registerPushToken(_server, token, (kind: 'fcm', token: 'push-token-1'));
+      await auth.registerPushToken(_server, token, (kind: 'apns', token: 'push-token-1'));
+      await auth.registerPushToken(_server, token, (kind: 'unifiedpush', token: 'https://ntfy.example/upAbC123?up=1'));
       await auth.unregisterPushToken(_server, token);
       await auth.signOutDevice(_server, token, FakeKemlockServer.deviceId);
       final keys = {...account.material()}..remove('keyVersion');
