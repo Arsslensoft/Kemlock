@@ -2,7 +2,6 @@
 // the ways in as the server lists them, the password through OPAQUE against the
 // fake server, the second step, what a refused address or downgrade says, and
 // that nothing is sent while offline mode is on.
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -23,6 +22,7 @@ import 'package:kemlock/platform/platform_passkeys.dart';
 import 'package:kemlock/platform/push.dart';
 
 import '../../../fakes/fake_device_keys.dart';
+import '../../../fakes/fake_push_tokens.dart';
 import '../../../fakes/fake_security_keys.dart';
 import '../../../helpers/test_app.dart';
 import '../../spaces/chain_kit.dart';
@@ -34,31 +34,6 @@ const _email = 'me@example.com';
 const _address = 'https://kem.example.com';
 
 late KmTestAccount _account;
-
-/// A phone with no push service. The store build's push asks a platform channel for its token, and a widget
-/// test never gets that answer, so the sheet would wait on it for ever with its progress bar spinning.
-class _NoPush implements PushTokens {
-  @override
-  bool get available => false;
-
-  @override
-  Future<String?> token() async => null;
-
-  @override
-  Stream<PushNudge> get onMessage => const Stream.empty();
-}
-
-/// A phone whose push channel never answers for its token.
-class _SilentPush implements PushTokens {
-  @override
-  bool get available => true;
-
-  @override
-  Future<String?> token() => Completer<String?>().future;
-
-  @override
-  Stream<PushNudge> get onMessage => const Stream.empty();
-}
 
 Future<FakeKemlockAccountServer> _opaqueServer() async {
   final server = FakeKemlockAccountServer(userId: _account.userId);
@@ -83,7 +58,7 @@ Future<SyncSheetKit> _open(
     // The fake server checks each proof's time against the real clock
     clock: DateTime.now,
     overrides: [
-      pushTokensProvider.overrideWithValue(push ?? _NoPush()),
+      pushTokensProvider.overrideWithValue(push ?? FakePushTokens.none()),
       ...overrides,
       kemlockClientFactoryProvider.overrideWithValue((pin) => server.client),
       deviceKeysProvider.overrideWithValue(FakeDeviceKeys(hasHardware: hardware)),
@@ -138,7 +113,7 @@ void main() {
   });
 
   testWidgets('a push channel that never gives its token holds nothing up', (tester) async {
-    await _open(tester, await _opaqueServer(), push: _SilentPush());
+    await _open(tester, await _opaqueServer(), push: FakePushTokens(silent: true));
 
     await _connect(tester);
     expect(find.text(t('kemlock.ways.title')), findsOneWidget);

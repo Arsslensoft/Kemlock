@@ -6,7 +6,13 @@ void main() {
     const push = NoPushTokens();
 
     expect(push.available, isFalse);
-    expect(await push.token(), isNull);
+    expect(push.choosesDistributor, isFalse);
+    expect(await push.pushToken(), isNull);
     expect(await push.onMessage.isEmpty, isTrue);
+    expect(await push.onTokenChanged.isEmpty, isTrue);
+    expect((await push.distributors()).installed, isEmpty);
+    expect(await push.start(), isFalse);
+    expect(await push.change(), isFalse);
+    await push.stop();
   });
 }

@@ -2,14 +2,13 @@
 // nudge runs the scheduler only while the vault is open and Kemlock Server sync
 // is on with push left on, and a nudge of a type this version does not know is
 // dropped. The push token goes to the server with the device.
-import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kemlock/features/sync/kemlock/km_models.dart';
 import 'package:kemlock/features/sync/sync.dart';
 import 'package:kemlock/features/sync/sync_sheet.dart';
 import 'package:kemlock/platform/push.dart';
 
+import '../../../fakes/fake_push_tokens.dart';
 import '../sync_screen_kit.dart';
 
 const _target = KemlockTarget(
@@ -19,23 +18,10 @@ const _target = KemlockTarget(
   deviceId: '00000000-0000-4000-8000-0000000000d1',
 );
 
-class _Push implements PushTokens {
-  final controller = StreamController<PushNudge>.broadcast();
-
-  @override
-  bool get available => true;
-
-  @override
-  Future<String?> token() async => 'relay-token';
-
-  @override
-  Stream<PushNudge> get onMessage => controller.stream;
-}
-
 /// A vault with sync running as in the app, and a count of the sync requests that reach the scheduler.
-Future<({SyncSheetKit kit, _Push push, List<int> requests})> _open(WidgetTester tester, {SyncSettings? settings}) async {
-  final push = _Push();
-  addTearDown(push.controller.close);
+Future<({SyncSheetKit kit, FakePushTokens push, List<int> requests})> _open(WidgetTester tester, {SyncSettings? settings}) async {
+  final push = FakePushTokens.apns();
+  addTearDown(push.close);
   final kit = SyncSheetKit();
   await kit.pump(tester, showSyncSheet, syncHost: true, overrides: [pushTokensProvider.overrideWithValue(push)]);
   if (settings != null) await kit.save(settings);
@@ -47,8 +33,8 @@ Future<({SyncSheetKit kit, _Push push, List<int> requests})> _open(WidgetTester 
   return (kit: kit, push: push, requests: requests);
 }
 
-Future<void> _nudge(WidgetTester tester, _Push push, PushNudge nudge) async {
-  push.controller.add(nudge);
+Future<void> _nudge(WidgetTester tester, FakePushTokens push, PushNudge nudge) async {
+  push.nudges.add(nudge);
   await tester.pump();
 }
 
