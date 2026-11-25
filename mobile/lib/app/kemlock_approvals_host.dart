@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/sync/kemlock_approval.dart';
+import '../features/sync/kemlock_push.dart';
 import '../features/sync/sync.dart';
 import '../features/sync/sync_store.dart';
 import '../platform/push.dart';
@@ -13,7 +14,8 @@ import '../vault/vault_controller.dart';
 /// Reads the sign-in requests other devices of the account have made, while the vault is open: when the
 /// Kemlock Server host starts and after each sync (which a nudge also runs), and shows each new one in the
 /// approval sheet over the current screen (add-kemlock-server-sync, design 11). A request is shown once; one
-/// the person dismissed is not shown again, but stays listed for the next read.
+/// the person dismissed is not shown again, but stays listed for the next read. It also listens to the phone's push: a
+/// message is a nudge, and a new endpoint is registered with the server at once (plan add-unifiedpush).
 class KemlockApprovalsHost extends ConsumerStatefulWidget {
   const KemlockApprovalsHost({super.key, required this.child});
 
@@ -27,6 +29,7 @@ class _KemlockApprovalsHostState extends ConsumerState<KemlockApprovalsHost> {
   final _shown = <String>{};
   var _open = false;
   StreamSubscription<PushNudge>? _nudges;
+  StreamSubscription<void>? _tokenChanges;
   StreamSubscription<void>? _taps;
   var _noticeShown = false;
 
@@ -44,6 +47,7 @@ class _KemlockApprovalsHostState extends ConsumerState<KemlockApprovalsHost> {
     });
     ref.listenManual(kemlockApprovalsProvider, (_, pending) => _showNext());
     _nudges = ref.read(pushTokensProvider).onMessage.listen(_nudged);
+    _tokenChanges = ref.read(pushTokensProvider).onTokenChanged.listen((_) => unawaited(_tokenChanged()));
     _taps = ref.read(approvalNoticeProvider).taps.listen((_) => _noticeTapped());
   }
 
@@ -107,9 +111,38 @@ class _KemlockApprovalsHostState extends ConsumerState<KemlockApprovalsHost> {
     }
   }
 
+  /// The phone's push token changed (a new UnifiedPush endpoint) or went (the distributor ended the registration, or was
+  /// uninstalled). A new one is sent to the server at once, by a sync run, which registers a token it doesn't hold; a lost one is
+  /// taken back from the server, which would otherwise keep pushing to an address that no longer reaches this phone. Nothing
+  /// is done while the vault is locked, Kemlock Server sync is off or the person turned the push switch off: the next open
+  /// syncs anyway, and registers the token it finds.
+  Future<void> _tokenChanged() async {
+    if (!mounted || ref.read(vaultControllerProvider).session == null) {
+      return;
+    }
+    final target = ref.read(syncProvider).settings?.kemlock;
+    if (target == null || !target.push) {
+      return;
+    }
+    final token = await ref.read(pushTokensProvider).pushToken();
+    if (!mounted) {
+      return;
+    }
+    if (token != null) {
+      ref.read(syncProvider.notifier).requestSync();
+      return;
+    }
+    try {
+      await ref.read(kemlockPushOffProvider)(target);
+    } on Object {
+      // The server can't be reached: it drops an address that no longer answers on its own
+    }
+  }
+
   @override
   void dispose() {
     unawaited(_nudges?.cancel());
+    unawaited(_tokenChanges?.cancel());
     unawaited(_taps?.cancel());
     super.dispose();
   }
