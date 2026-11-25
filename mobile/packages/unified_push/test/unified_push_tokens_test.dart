@@ -1,7 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kemlock_ports/kemlock_ports.dart';
-import 'package:unified_push/unified_push.dart';
 import 'package:unified_push/unified_push_tokens.dart';
 
 const _channel = MethodChannel('com.kemlock.app/unified_push');
