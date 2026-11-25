@@ -24,6 +24,7 @@ import '../../platform/browser_auth.dart';
 import '../../platform/device_keys.dart';
 import '../../platform/network.dart';
 import '../../platform/platform_passkeys.dart';
+import '../../platform/push.dart';
 import '../../platform/security_keys.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
@@ -596,7 +597,10 @@ class _KemlockSetupState extends ConsumerState<KemlockSetup> {
           title: Text(context.t('kemlock.ways.trust')),
           subtitle: Text(context.t('kemlock.ways.trustHint')),
         ),
-        Text(context.t('kemlock.push.hint'), style: AppType.caption.copyWith(color: context.palette.textSecondary)),
+        Text(
+          context.t(ref.read(pushTokensProvider).choosesDistributor ? 'kemlock.push.unifiedpush.hint' : 'kemlock.push.hint'),
+          style: AppType.caption.copyWith(color: context.palette.textSecondary),
+        ),
         if (_busy) _progress(),
       ],
     );
