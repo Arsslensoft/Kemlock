@@ -12,7 +12,11 @@ void _answer(Future<Object?> Function(MethodCall call) handler) =>
 /// The native side calls Dart, as the service does.
 Future<void> _heard(String method, [Object? arguments]) async {
   final message = const StandardMethodCodec().encodeMethodCall(MethodCall(method, arguments));
-  await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage('com.kemlock.app/unified_push', message, (_) {});
+  await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
+    'com.kemlock.app/unified_push',
+    message,
+    (_) {},
+  );
 }
 
 void main() {
