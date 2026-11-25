@@ -87,6 +87,23 @@ void main() {
       expect(find.text(t('kemlock.push.unifiedpush.using', {'name': 'ntfy'})), findsOneWidget);
     });
 
+    testWidgets('turning the switch on asks for a sync once it is saved, which registers an endpoint that came first', (tester) async {
+      final push = FakePushTokens.unifiedPush(
+        installed: [_ntfy],
+        token: (kind: pushKindUnifiedPush, token: 'https://ntfy.example.com/up1'),
+      );
+      final kit = await _open(tester, push, target: _target.copyWith(push: false));
+      var requests = 0;
+      final stop = kit.sync.onSyncRequest(() => requests++);
+      addTearDown(stop);
+
+      await tester.tap(find.text(t('kemlock.push.changes')));
+      await tester.pumpAndSettle();
+
+      expect(kit.settings?.kemlock?.push, isTrue);
+      expect(requests, greaterThan(0), reason: 'an endpoint that came before the save was ignored, and only a sync takes it');
+    });
+
     testWidgets('a person who goes back from the system’s choice leaves it off and saves nothing', (tester) async {
       final push = FakePushTokens.unifiedPush(installed: [_ntfy, _nextPush])..startAnswer = false;
       final kit = await _open(tester, push, target: _target.copyWith(push: false));
