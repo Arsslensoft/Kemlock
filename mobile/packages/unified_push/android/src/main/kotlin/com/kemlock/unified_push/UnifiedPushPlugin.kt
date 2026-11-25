@@ -28,8 +28,11 @@ class UnifiedPushPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
     private var endpoints: EndpointStore? = null
     private val main = Handler(Looper.getMainLooper())
 
-    // A choice is on the screen: another would put a second one over it
+    // A choice is on the screen: another would put a second one over it. [pending] is its answer to Dart, and [pick]
+    // numbers the choices, so the callback of one that was given up (the screen went away) touches nothing of the next.
     private var choosing = false
+    private var pending: MethodChannel.Result? = null
+    private var pick = 0
 
     // Whether this run has registered with the distributor already
     private var registered = false
@@ -60,10 +63,20 @@ class UnifiedPushPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
 
     override fun onDetachedFromActivityForConfigChanges() {
         activity = null
+        giveUpChoice()
     }
 
     override fun onDetachedFromActivity() {
         activity = null
+        giveUpChoice()
+    }
+
+    /** The screen the choice was on is gone, and the connector may never call back: answer Dart that none was made. */
+    private fun giveUpChoice() {
+        pick++
+        choosing = false
+        pending?.success(false)
+        pending = null
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -138,9 +151,16 @@ class UnifiedPushPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
             registered = false
         }
         choosing = true
+        pending = result
+        val mine = ++pick
         val done: (Boolean) -> Unit = { ok ->
             main.post {
-                choosing = false
+                // Not this choice any more when the screen went away first: Dart was answered then, and the next one is its own
+                val current = mine == pick
+                if (current) {
+                    choosing = false
+                    pending = null
+                }
                 if (ok) {
                     // The endpoint of the old distributor is not this one's
                     endpoints?.clear()
@@ -149,7 +169,7 @@ class UnifiedPushPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
                     UnifiedPush.saveDistributor(app, before)
                     register(app)
                 }
-                result.success(ok)
+                if (current) result.success(ok)
             }
         }
         if (change) UnifiedPush.tryPickDistributor(screen, done) else UnifiedPush.tryUseDefaultDistributor(screen, done)
