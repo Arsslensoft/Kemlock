@@ -18,9 +18,12 @@ while the app is open. UnifiedPush lets a phone get "sync now" from the person's
    - lists the installed distributors and registers with the one in use (the connector's saved
      choice, else the only one, else asks the person to pick, once);
    - reports the endpoint (`onNewEndpoint`), its loss (`onUnregistered`) and a failed registration;
-   - turns any message into `PushNudge.sync`, also when the app is not running (the connector's
-     `MessagingReceiver` starts the sync the same way the schedule does). The body is ignored:
-     the server sends none.
+   - turns any message into `PushNudge.sync`, but only while the app's process runs: the service
+     (`KemlockPushService`) forwards it to Dart when the Flutter engine is attached and drops it
+     otherwise. A closed app has a locked vault and nothing to sync with, so it syncs at the next
+     open or on its schedule, the same as an iPhone. The body is ignored: the server sends none;
+   - keeps the endpoint in the app's private preferences (`EndpointStore`) so one that arrives while
+     Dart is not running is still there at the next open.
 2. **`kemlock_ports`**: `PushTokens.token()` becomes `pushToken()` returning `(kind, token)`, so
    the caller stops assuming `apns`. iOS keeps `apns`; Android gives `unifiedpush` and the
    endpoint URL. `available` is true on Android when a distributor is installed.
@@ -33,8 +36,9 @@ while the app is open. UnifiedPush lets a phone get "sync now" from the person's
 5. **The push switch** (Sync settings): with no distributor installed, it says so and links to
    the UnifiedPush page that lists distributors, instead of turning on. With several, it names the
    one in use and lets the person change it.
-6. **Kemlock-core**: `km_auth_api.dart`'s comments name `apns` and `unifiedpush` (not `fcm`); the
-   app moves its pin.
+6. **Kemlock-core**: `km_auth_api.dart`'s comments name `apns` and `unifiedpush` (not `fcm`). That
+   change is on the kemlock-core branch `docs/push-kinds` (4981e30); the app's pin moves once it is
+   on Kemlock-core's main.
 
 ## What the server needs (already true)
 
@@ -47,10 +51,12 @@ server. At most 20 UnifiedPush endpoints per account.
 - Dart: `kemlock_push` with a fake `PushTokens` for both kinds; re-registering on a new endpoint;
   `DELETE` on unregister and on the switch; the switch's no-distributor and several-distributor
   states (widget tests).
-- Kotlin: the plugin's endpoint and message handling with Robolectric, if the project already
-  runs Android unit tests; otherwise a manual check.
+- Kotlin: `EndpointStore` (the kept endpoint, its loss with the distributor, and a change of
+  distributor under way) as a plain JVM unit test; the plugin and service need Android and are
+  checked by hand.
 - Manual, on a phone with ntfy: register, see the endpoint on the server, change an item on
-  another device, the phone syncs while closed.
+  another device, the open phone syncs; with the app closed nothing happens until the next open or
+  schedule.
 
 ## Not in this change
 
