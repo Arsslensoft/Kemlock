@@ -21,12 +21,10 @@ bool usableEndpoint(String url) {
 /// the distributor delivers is a [PushNudge.sync], whatever it holds (the server sends none).
 class UnifiedPushTokens implements PushTokens {
   UnifiedPushTokens({UnifiedPushChannel? channel}) : _push = channel ?? UnifiedPushChannel() {
-    // Lives as long as the app does: the push is one object for the whole run
     _heard = _push.events.listen(_onEvent);
   }
 
   final UnifiedPushChannel _push;
-  // ignore: unused_field
   late final StreamSubscription<UnifiedPushEvent> _heard;
   final _nudges = StreamController<PushNudge>.broadcast();
   final _changes = StreamController<void>.broadcast();
@@ -76,4 +74,12 @@ class UnifiedPushTokens implements PushTokens {
 
   @override
   Future<void> stop() => _push.stop();
+
+  /// Stops listening to the plugin and closes the streams. The app's push lives as long as the app does, so only a test
+  /// ends it.
+  Future<void> dispose() async {
+    await _heard.cancel();
+    await _nudges.close();
+    await _changes.close();
+  }
 }

@@ -88,6 +88,19 @@ void main() {
     expect(changes, 2);
   });
 
+  test('once disposed, it no longer hears the plugin and its streams are closed', () async {
+    final push = UnifiedPushTokens();
+    var heard = 0;
+    final nudging = push.onMessage.listen((_) => heard++, onDone: () => heard += 100);
+
+    await push.dispose();
+    await _heard('message');
+    await Future<void>.delayed(Duration.zero);
+    await nudging.cancel();
+
+    expect(heard, 100, reason: 'the stream ended, and the message after it was not heard');
+  });
+
   group('the distributors', () {
     test('are the ones installed, with the one in use', () async {
       _answer(
