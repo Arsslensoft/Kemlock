@@ -30,7 +30,7 @@ dependencies:
   kemlock_core:
     git:
       url: https://github.com/Arsslensoft/Kemlock-core.git
-      ref: b8d5d236b7292fc9f7c747b4751a0a60ed070f35
+      ref: 3c9c6b2bbb9cc7b018d02af343af16ccee8f8586
   # The interfaces of the parts the free build replaces (openspec: add-fdroid-release).
   kemlock_ports:
     path: packages/kemlock_ports
