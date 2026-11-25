@@ -14,6 +14,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  kemlock_ports:
+    path: ../kemlock_ports
 
 dev_dependencies:
   flutter_test:
