@@ -41,5 +41,5 @@ CredentialTransfer makeCredentialTransfer() => const NoCredentialTransfer();
 /// No export to another app on the phone: it runs on Google Play services too.
 CredentialExport makeCredentialExport() => const NoCredentialExport();
 
-/// No push: the schedule and the live socket only.
-PushTokens newPushTokens() => const NoPushTokens();
+/// Push through UnifiedPush on Android, which needs no Google service, and none elsewhere (plan add-unifiedpush).
+PushTokens newPushTokens() => makePushTokens();

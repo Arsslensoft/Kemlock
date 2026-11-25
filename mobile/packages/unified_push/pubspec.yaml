@@ -1,0 +1,30 @@
+# Android's UnifiedPush (plan add-unifiedpush): the app's side of the connector library, which
+# receives the push messages of the distributor the person chose (ntfy, NextPush, Sunup, ...). The
+# connector is free software on Maven Central with no Google service; its embedded FCM distributor is
+# a separate library this package never adds. Both builds depend on it, through packages/parts_store
+# and packages/parts_free, so the free build has push on Android too.
+name: unified_push
+description: "Kemlock's Android side of UnifiedPush: the connector library's registration and messages, over one method channel."
+publish_to: "none"
+version: 1.0.0
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  kemlock_ports:
+    path: ../kemlock_ports
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.kemlock.unified_push
+        pluginClass: UnifiedPushPlugin

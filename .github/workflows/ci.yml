@@ -187,7 +187,7 @@ jobs:
           # gradlew and its wrapper jar are made by Flutter, not kept in git: --config-only writes them, and builds nothing
           (cd .. && flutter build apk --config-only --debug)
           JAVA_HOME="$JAVA_HOME_17_X64" ./gradlew --dependency-verification strict \
-            :app:testDebugUnitTest :app:lintDebug :credential_transfer:testDebugUnitTest
+            :app:testDebugUnitTest :app:lintDebug :credential_transfer:testDebugUnitTest :unified_push:testDebugUnitTest
 
       - name: Upload the test reports
         if: failure()
@@ -197,6 +197,7 @@ jobs:
           path: |
             mobile/android/app/build/reports
             mobile/packages/credential_transfer/android/build/reports
+            mobile/packages/unified_push/android/build/reports
           if-no-files-found: ignore
           retention-days: 7
 

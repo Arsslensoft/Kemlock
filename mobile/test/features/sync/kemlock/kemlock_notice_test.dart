@@ -2,8 +2,6 @@
 // locked vault raises the fixed-text notification and fetches nothing; a `sync` nudge raises none; with the vault
 // open the request is read instead, and no notification is raised. A tap on the notification, then the unlock, lands on
 // the request.
-import 'dart:async';
-
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kemlock/features/sync/kemlock/km_approvals.dart';
@@ -14,6 +12,7 @@ import 'package:kemlock/features/sync/sync.dart';
 import 'package:kemlock/features/sync/sync_sheet.dart';
 import 'package:kemlock/platform/push.dart';
 
+import '../../../fakes/fake_push_tokens.dart';
 import '../../../helpers/test_app.dart' show t;
 import '../sync_screen_kit.dart';
 
@@ -24,22 +23,12 @@ const _target = KemlockTarget(
   deviceId: '00000000-0000-4000-8000-0000000000d1',
 );
 
-class _Push implements PushTokens {
-  final controller = StreamController<PushNudge>.broadcast();
-
-  @override
-  bool get available => true;
-
-  @override
-  Future<String?> token() async => 'relay-token';
-
-  @override
-  Stream<PushNudge> get onMessage => controller.stream;
-}
-
-Future<({SyncSheetKit kit, _Push push, List<int> requests})> _open(WidgetTester tester, {List<Override> overrides = const []}) async {
-  final push = _Push();
-  addTearDown(push.controller.close);
+Future<({SyncSheetKit kit, FakePushTokens push, List<int> requests})> _open(
+  WidgetTester tester, {
+  List<Override> overrides = const [],
+}) async {
+  final push = FakePushTokens.apns();
+  addTearDown(push.close);
   final kit = SyncSheetKit();
   await kit.pump(tester, showSyncSheet, syncHost: true, overrides: [pushTokensProvider.overrideWithValue(push), ...overrides]);
   await kit.save(const SyncSettings(kemlock: _target));
@@ -80,8 +69,8 @@ final _request = KmPendingApproval(
   serverPhraseAgrees: true,
 );
 
-Future<void> _nudge(WidgetTester tester, _Push push, PushNudge nudge) async {
-  push.controller.add(nudge);
+Future<void> _nudge(WidgetTester tester, FakePushTokens push, PushNudge nudge) async {
+  push.nudges.add(nudge);
   await tester.pump();
   await tester.pump(const Duration(seconds: 1));
 }

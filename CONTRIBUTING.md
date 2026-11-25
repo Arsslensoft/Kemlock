@@ -48,10 +48,10 @@ dart format --output=none --set-exit-if-changed lib test packages tool/build too
 flutter analyze && flutter analyze packages/parts_store
 flutter test && flutter test packages/parts_store/test
 
-# The Kotlin tests (autofill and the credential transfer plugin), on the JVM, with the dependency
+# The Kotlin tests (autofill and the credential transfer and UnifiedPush plugins), on the JVM, with the dependency
 # checksums verified.
 cd android
-./gradlew --dependency-verification strict :app:testDebugUnitTest :app:lintDebug :credential_transfer:testDebugUnitTest
+./gradlew --dependency-verification strict :app:testDebugUnitTest :app:lintDebug :credential_transfer:testDebugUnitTest :unified_push:testDebugUnitTest
 ```
 
 On a Mac, the Swift tests: `flutter build ios --simulator --debug --no-codesign`, then
@@ -94,7 +94,7 @@ rm pubspec_overrides.yaml && git checkout pubspec.lock   # back to the store bui
    `cp pubspec.lock pubspec.free.lock`, then `rm pubspec_overrides.yaml && git checkout pubspec.lock`.
    Check that `tool/build/use_free.sh && flutter pub get --enforce-lockfile` passes.
 3. If an Android dependency changed, add its checksums to Gradle's verification file:
-   `cd android && ./gradlew --write-verification-metadata sha256 :app:testDebugUnitTest :app:lintDebug :credential_transfer:testDebugUnitTest :app:assembleDebug`,
+   `cd android && ./gradlew --write-verification-metadata sha256 :app:testDebugUnitTest :app:lintDebug :credential_transfer:testDebugUnitTest :unified_push:testDebugUnitTest :app:assembleDebug`,
    and the same with `:app:assembleDebug` alone after `tool/build/use_free.sh`. Read the diff to
    `android/gradle/verification-metadata.xml`: every new line is a file you are trusting.
 

@@ -16,6 +16,9 @@ dependencies:
     path: ../kemlock_ports
   # Flutter's own camera plugin (BSD; CameraX on Android, Apache-2.0).
   camera: ^0.12.2
+  # Android's UnifiedPush push: free software (the connector is Apache-2.0), with no Google service.
+  unified_push:
+    path: ../unified_push
   # ZXing in Dart (BSD-3-Clause). Exact: qr_decoder.dart uses its implementation libraries.
   zxing2: 0.2.4
 

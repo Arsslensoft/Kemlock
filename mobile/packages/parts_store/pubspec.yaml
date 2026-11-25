@@ -18,6 +18,9 @@ dependencies:
   # Android's Play services credential transfer; nothing else depends on it, so the free build has none.
   credential_transfer:
     path: ../credential_transfer
+  # Android's UnifiedPush push (free software, no Google service); the free build has it too.
+  unified_push:
+    path: ../unified_push
   path_provider: ^2.1.6
   mobile_scanner: ^7.4.2
   google_mlkit_text_recognition: ^1.0.3

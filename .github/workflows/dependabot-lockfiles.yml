@@ -157,7 +157,7 @@ jobs:
           (cd .. && flutter pub get --enforce-lockfile)
           export JAVA_HOME="$JAVA_HOME_17_X64"
           ./gradlew --write-verification-metadata sha256 \
-            :app:testDebugUnitTest :app:lintDebug :credential_transfer:testDebugUnitTest :app:assembleDebug
+            :app:testDebugUnitTest :app:lintDebug :credential_transfer:testDebugUnitTest :unified_push:testDebugUnitTest :app:assembleDebug
           cd ..
           tool/build/use_free.sh
           flutter pub get --enforce-lockfile

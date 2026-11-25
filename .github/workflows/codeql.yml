@@ -113,7 +113,7 @@ jobs:
           # gradlew and its wrapper jar are made by Flutter, not kept in git: --config-only writes them, and builds nothing
           (cd .. && flutter build apk --config-only --debug)
           JAVA_HOME="$JAVA_HOME_17_X64" ./gradlew --no-daemon --no-build-cache --dependency-verification strict \
-            :app:compileDebugKotlin :app:compileDebugJavaWithJavac :credential_transfer:compileDebugKotlin
+            :app:compileDebugKotlin :app:compileDebugJavaWithJavac :credential_transfer:compileDebugKotlin :unified_push:compileDebugKotlin
 
       - uses: github/codeql-action/analyze@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         with:

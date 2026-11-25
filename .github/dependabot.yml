@@ -40,10 +40,11 @@ updates:
           - patch
 
   - package-ecosystem: gradle
-    # The app, and the credential transfer plugin's own build file.
+    # The app, and the plugins' own build files.
     directories:
       - /mobile/android
       - /mobile/packages/credential_transfer/android
+      - /mobile/packages/unified_push/android
     schedule:
       interval: weekly
       day: monday

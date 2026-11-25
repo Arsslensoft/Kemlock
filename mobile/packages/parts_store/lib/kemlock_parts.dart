@@ -41,5 +41,5 @@ CredentialTransfer makeCredentialTransfer() => PlayCredentialTransfer();
 /// Kemlock as a source other apps import from, over the same plugin (switched off until plan add-credential-exchange, task 8.6).
 CredentialExport makeCredentialExport() => PlayCredentialExport();
 
-/// Push through APNs on iOS, and none on Android: the live socket and the schedule only, as in the free build.
-PushTokens newPushTokens() => ChannelPushTokens();
+/// Push through APNs on iOS and UnifiedPush on Android (plan add-unifiedpush).
+PushTokens newPushTokens() => makePushTokens();

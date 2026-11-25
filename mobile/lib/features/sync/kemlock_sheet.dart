@@ -17,7 +17,7 @@ import 'kemlock/km_session.dart';
 import 'kemlock_devices.dart';
 import 'kemlock_matching_section.dart';
 import 'kemlock_move_section.dart';
-import 'kemlock_push.dart';
+import 'kemlock_push_switch.dart';
 import 'removal_guard.dart';
 import 'sync.dart';
 import 'sync_messages.dart';
@@ -49,27 +49,6 @@ class _KemlockOnState extends ConsumerState<KemlockOn> {
   var _busy = false;
 
   KemlockTarget get _target => widget.target;
-
-  Future<void> _save(KemlockTarget next) async {
-    final session = ref.read(vaultControllerProvider).session;
-    if (session == null) return;
-    final store = ref.read(syncProvider.notifier);
-    await store.saveSettings((store.snapshot.settings ?? noSync).copyWith(kemlock: next), session);
-  }
-
-  /// The push switch: saved first, so the next run no longer registers the token, then, when turned off, the
-  /// server is asked to forget it. The server not answering changes nothing: the phone drops the nudges anyway.
-  Future<void> _setPush(bool on) async {
-    final next = _target.copyWith(push: on);
-    await _save(next);
-    if (!on) {
-      try {
-        await ref.read(kemlockPushOffProvider)(next);
-      } on Object {
-        // Best effort
-      }
-    }
-  }
 
   Future<void> _turnOff() async {
     final session = ref.read(vaultControllerProvider).session;
@@ -141,13 +120,7 @@ class _KemlockOnState extends ConsumerState<KemlockOn> {
               label: Text(context.t('kemlock.devices.open')),
             ),
           ),
-          SwitchListTile.adaptive(
-            contentPadding: EdgeInsets.zero,
-            value: _target.push,
-            onChanged: _busy ? null : (on) => unawaited(_setPush(on)),
-            title: Text(context.t('kemlock.push')),
-            subtitle: Text(context.t('kemlock.push.hint')),
-          ),
+          KemlockPushSwitch(target: _target, disabled: _busy),
           KemlockMatchingSection(target: _target),
           Text(context.t('kemlock.on.hint'), style: AppType.caption.copyWith(color: p.textSecondary)),
         ],

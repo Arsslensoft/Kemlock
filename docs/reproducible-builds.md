@@ -36,7 +36,7 @@ files, invites and Recovery Kit pieces. Three parts differ:
 |---|---|---|
 | QR scanning | `mobile_scanner` (Google ML Kit on Android) | Flutter's `camera` plugin and `zxing2`, a Dart port of ZXing |
 | Backup codes from pictures and PDFs | ML Kit's text recognition and PDFium (`pdfrx`) | Not offered: text files, pasting and typing only |
-| Push and system credential transfer | APNs push on iOS; the system credential hand-off | Not offered: no Google Play services, no push |
+| System credential transfer and APNs push | The system credential hand-off; APNs push on iOS | Not offered: no Google Play services, no APNs |
 
 The free build sends nothing to Google. The breach check and the
 password leak check ask Have I Been Pwned, only when turned on, and sync talks only to a

@@ -25,7 +25,7 @@ void main() {
       final push = ChannelPushTokens(platform: TargetPlatform.android);
 
       expect(push.available, isFalse);
-      expect(await push.token(), isNull);
+      expect(await push.pushToken(), isNull);
       expect(await push.onMessage.isEmpty, isTrue);
     });
 
@@ -37,7 +37,7 @@ void main() {
       });
       final push = ChannelPushTokens(platform: TargetPlatform.android);
 
-      expect(await push.token(), isNull);
+      expect(await push.pushToken(), isNull);
       expect(push.available, isFalse);
       expect(asked, isEmpty);
     });
@@ -47,7 +47,7 @@ void main() {
       final push = ChannelPushTokens();
 
       expect(push.available, isFalse);
-      expect(await push.token(), isNull);
+      expect(await push.pushToken(), isNull);
     });
 
     test('has no push on any platform but iOS', () async {
@@ -55,7 +55,7 @@ void main() {
         final push = ChannelPushTokens(platform: platform);
 
         expect(push.available, isFalse, reason: '$platform');
-        expect(await push.token(), isNull, reason: '$platform');
+        expect(await push.pushToken(), isNull, reason: '$platform');
       }
     });
   });
@@ -65,20 +65,31 @@ void main() {
       expect(ChannelPushTokens(platform: TargetPlatform.iOS).available, isTrue);
     });
 
+    test('has no distributor to choose, and is ready as it is', () async {
+      final push = ChannelPushTokens(platform: TargetPlatform.iOS);
+
+      expect(push.choosesDistributor, isFalse);
+      expect((await push.distributors()).installed, isEmpty);
+      expect(await push.start(), isTrue);
+      expect(await push.change(), isFalse);
+      expect(await push.onTokenChanged.isEmpty, isTrue);
+      await push.stop();
+    });
+
     test('gives the token the native side has', () async {
       _answer((call) async => call.method == 'token' ? 'token-1' : null);
       final push = ChannelPushTokens(platform: TargetPlatform.iOS);
 
-      expect(await push.token(), 'token-1');
+      expect(await push.pushToken(), (kind: pushKindApns, token: 'token-1'));
       expect(push.available, isTrue);
     });
 
     test('has no token where there is no native side, or it has none to give', () async {
-      expect(await ChannelPushTokens(platform: TargetPlatform.iOS).token(), isNull);
+      expect(await ChannelPushTokens(platform: TargetPlatform.iOS).pushToken(), isNull);
       _answer((call) async => '');
-      expect(await ChannelPushTokens(platform: TargetPlatform.iOS).token(), isNull);
+      expect(await ChannelPushTokens(platform: TargetPlatform.iOS).pushToken(), isNull);
       _answer((call) async => throw PlatformException(code: 'denied'));
-      expect(await ChannelPushTokens(platform: TargetPlatform.iOS).token(), isNull);
+      expect(await ChannelPushTokens(platform: TargetPlatform.iOS).pushToken(), isNull);
     });
 
     test('turns each nudge into its type, and drops one of a type it does not know', () async {

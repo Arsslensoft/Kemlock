@@ -11,7 +11,9 @@ import 'package:kemlock/features/sync/sync_messages.dart';
 import 'package:kemlock/features/sync/sync_sheet.dart';
 import 'package:kemlock/features/sync/sync_store.dart';
 import 'package:kemlock/models/login.dart';
+import 'package:kemlock/platform/push.dart';
 
+import '../../../fakes/fake_push_tokens.dart';
 import '../../../helpers/test_app.dart';
 import '../sync_screen_kit.dart';
 
@@ -24,11 +26,14 @@ const _target = KemlockTarget(
 
 /// A vault that syncs with Kemlock Server, its sheet open. [signedOut] records each sign-out the host is asked for.
 Future<SyncSheetKit> _open(WidgetTester tester, {List<KemlockTarget>? signedOut, bool unreachable = false}) async {
+  final push = FakePushTokens.apns();
+  addTearDown(push.close);
   final kit = SyncSheetKit();
   await kit.pump(
     tester,
     showSyncSheet,
     overrides: [
+      pushTokensProvider.overrideWithValue(push),
       kemlockSignOutProvider.overrideWithValue((target) async {
         signedOut?.add(target);
         if (unreachable) throw StateError('no route to host');
