@@ -1466,14 +1466,14 @@ class VaultController extends Notifier<VaultState> {
   Owner? get _linkAccount => ref.read(linkAccountProvider);
 
   /// Whether the person may change [entry]: always for the vault's own, by the verified chain for an entry of a space.
-  bool _mayWrite(VaultEntry<dynamic> entry) => ref.read(hiddenPasswordsProvider).canEdit(entry);
+  bool _mayWrite(VaultEntry<Object?> entry) => ref.read(hiddenPasswordsProvider).canEdit(entry);
 
   /// The entry the vault holds as [entry] now, of its kind and id; [entry] itself when the vault does not hold it.
-  VaultEntry<dynamic> _held(VaultEntry<dynamic> entry) =>
+  VaultEntry<Object?> _held(VaultEntry<Object?> entry) =>
       entriesOf(state.lists).firstWhereOrNull((other) => other.runtimeType == entry.runtimeType && other.id == entry.id) ?? entry;
 
   /// The entries of [put] by their kind, each list in order.
-  Map<Type, List<Object>> _byKind(Iterable<VaultEntry<dynamic>> entries) {
+  Map<Type, List<Object>> _byKind(Iterable<VaultEntry<Object?>> entries) {
     final kinds = <Type, List<Object>>{};
     for (final entry in entries) {
       kinds.putIfAbsent(entry.runtimeType, () => []).add(entry);
@@ -1485,8 +1485,8 @@ class VaultController extends Notifier<VaultState> {
   /// a save fails the lists saved before it go back and the error goes on. Gives a step that puts every list back as it was.
   Future<Future<void> Function()> _applyEntries(
     VaultSession session, {
-    required Iterable<VaultEntry<dynamic>> put,
-    Iterable<VaultEntry<dynamic>> remove = const [],
+    required Iterable<VaultEntry<Object?>> put,
+    Iterable<VaultEntry<Object?>> remove = const [],
   }) async {
     final putting = _byKind(put);
     final removing = _byKind(remove);
@@ -1515,7 +1515,7 @@ class VaultController extends Notifier<VaultState> {
   /// Saves [put], each replacing the entry with its id in its own list, and takes [remove] out of theirs, whatever the kinds,
   /// one save per list and the changed ones stamped as just changed. All or none: false, with the lists as they were, when a
   /// save fails. Sync follows, as after any change.
-  Future<bool> saveEntries(List<VaultEntry<dynamic>> put, {List<VaultEntry<dynamic>> remove = const []}) async {
+  Future<bool> saveEntries(List<VaultEntry<Object?>> put, {List<VaultEntry<Object?>> remove = const []}) async {
     final session = state.session;
     if (session == null) return false;
     if (put.isEmpty && remove.isEmpty) return true;
@@ -1531,7 +1531,7 @@ class VaultController extends Notifier<VaultState> {
   /// Links [a] and [b] to each other, which writes both items; an end that names the other already is left as it is, so
   /// this also writes the missing end of a link that only one end names. False, with a toast, when the person may not change
   /// both, or a save failed.
-  Future<bool> linkItems(VaultEntry<dynamic> a, VaultEntry<dynamic> b) {
+  Future<bool> linkItems(VaultEntry<Object?> a, VaultEntry<Object?> b) {
     final first = _held(a);
     final second = _held(b);
     final linked = linkEntries(first, second, now: _now, account: _linkAccount);
@@ -1540,7 +1540,7 @@ class VaultController extends Notifier<VaultState> {
 
   /// Unlinks [a] and [b]: both items lose the other, and the code's `linkedLoginId` or the login's `accountId` that tied them
   /// is cleared. False, with a toast, when the person may not change both, or a save failed.
-  Future<bool> unlinkItems(VaultEntry<dynamic> a, VaultEntry<dynamic> b) {
+  Future<bool> unlinkItems(VaultEntry<Object?> a, VaultEntry<Object?> b) {
     final first = _held(a);
     final second = _held(b);
     final unlinked = unlinkEntries(first, second, now: _now, account: _linkAccount);
@@ -1549,7 +1549,7 @@ class VaultController extends Notifier<VaultState> {
 
   /// Saves what a link or an unlink changed of [first] and [second] (the [nextFirst] and [nextSecond] the core made), both
   /// together.
-  Future<bool> _saveLinked(VaultEntry<dynamic> first, VaultEntry<dynamic> second, VaultEntry<dynamic> nextFirst, VaultEntry<dynamic> nextSecond) async {
+  Future<bool> _saveLinked(VaultEntry<Object?> first, VaultEntry<Object?> second, VaultEntry<Object?> nextFirst, VaultEntry<Object?> nextSecond) async {
     final put = [
       if (!identical(first, nextFirst)) nextFirst,
       if (!identical(second, nextSecond)) nextSecond,
@@ -1566,7 +1566,7 @@ class VaultController extends Notifier<VaultState> {
 
   /// The entries that name one of [removed] in their `links`, as they are once they do not: the ones the person may change.
   /// The link of a code and its login (`linkedLoginId`, `accountId`) is not in `links` and is left alone.
-  List<VaultEntry<dynamic>> _withoutLinksTo(List<VaultEntry<dynamic>> removed) {
+  List<VaultEntry<Object?>> _withoutLinksTo(List<VaultEntry<Object?>> removed) {
     // A vault with no link at all has nothing to drop, and needs no account to tell
     if (!entriesOf(state.lists).any((entry) => entry.links.isNotEmpty)) return const [];
     final account = _linkAccount;
@@ -1574,21 +1574,21 @@ class VaultController extends Notifier<VaultState> {
       for (final entry in removed) ...{entry.id.toLowerCase(), linkIdOf(entry, account: account).toLowerCase()},
     };
     final going = {for (final entry in removed) (entry.runtimeType, entry.id)};
-    final others = <VaultEntry<dynamic>>[];
+    final others = <VaultEntry<Object?>>[];
     for (final other in entriesOf(state.lists)) {
       if (going.contains((other.runtimeType, other.id)) || !other.links.ids.any(names.contains) || !_mayWrite(other)) continue;
       var links = other.links;
       for (final name in names) {
         links = links.removing(name);
       }
-      others.add(other.withLinks(links) as VaultEntry<dynamic>);
+      others.add(other.withLinks(links) as VaultEntry<Object?>);
     }
     return others;
   }
 
   /// Takes [removed] out of the `links` of the entries that name them, saved together; null when none does. The step it gives puts
   /// them back as they were; a failed save puts them back and throws.
-  Future<_DroppedLinks?> _dropLinksTo(VaultSession session, List<VaultEntry<dynamic>> removed) async {
+  Future<_DroppedLinks?> _dropLinksTo(VaultSession session, List<VaultEntry<Object?>> removed) async {
     final others = _withoutLinksTo(removed);
     if (others.isEmpty) return null;
     return _DroppedLinks(await _applyEntries(session, put: others), [for (final other in others) other.id]);
@@ -1597,10 +1597,10 @@ class VaultController extends Notifier<VaultState> {
   /// After Undo put [restored] back: the entries of [ids], which named it before it was removed, name it again, as far as
   /// they are still there and the person may change them. A save that fails leaves them one-way links, which the item sheet
   /// offers to mend.
-  Future<void> _relinkRestored(VaultEntry<dynamic> restored, List<String> ids) async {
+  Future<void> _relinkRestored(VaultEntry<Object?> restored, List<String> ids) async {
     if (ids.isEmpty) return;
     final held = entriesOf(state.lists);
-    final put = <VaultEntry<dynamic>>[];
+    final put = <VaultEntry<Object?>>[];
     for (final id in ids) {
       final other = held.firstWhereOrNull((entry) => entry.id == id);
       if (other == null || !_mayWrite(other)) continue;
@@ -1613,12 +1613,12 @@ class VaultController extends Notifier<VaultState> {
   /// What a merge does to the items linked to the ones it removes: the item that stays takes over their links, and each item
   /// that named one of them names it instead (relink.ts of the web vault). Null when nothing is linked to the removed items. A
   /// link no item of the vault answers to is taken over too, and an item the person may not change is left as it is.
-  ({VaultEntry<dynamic> survivor, List<VaultEntry<dynamic>> others})? _mergeLinks(Object kept, List<Object> gone) {
+  ({VaultEntry<Object?> survivor, List<VaultEntry<Object?>> others})? _mergeLinks(Object kept, List<Object> gone) {
     final going = [
       for (final item in gone)
-        if (item is VaultEntry<dynamic>) item,
+        if (item is VaultEntry<Object?>) item,
     ];
-    if (kept is! VaultEntry<dynamic> || going.isEmpty) return null;
+    if (kept is! VaultEntry<Object?> || going.isEmpty) return null;
     // A vault with no link at all has nothing to move
     if (!entriesOf(state.lists).any((entry) => entry.links.isNotEmpty)) return null;
     final account = _linkAccount;
@@ -1629,7 +1629,7 @@ class VaultController extends Notifier<VaultState> {
     };
     final ownName = linkIdOf(kept, account: account).toLowerCase();
     final taken = <ItemLink>[];
-    final others = <(Type, String), VaultEntry<dynamic>>{};
+    final others = <(Type, String), VaultEntry<Object?>>{};
     for (final entry in going) {
       for (final linked in linkedItemsOf(lists, entry, account: account)) {
         final other = linked.entry;
@@ -1642,19 +1642,19 @@ class VaultController extends Notifier<VaultState> {
       for (final link in [...kept.links, ...taken])
         if (!link.isReadable || !(goneNames.contains(link.key) || link.key == ownName)) link,
     ];
-    final survivor = kept.withLinks(links) as VaultEntry<dynamic>;
+    final survivor = kept.withLinks(links) as VaultEntry<Object?>;
     final rewritten = [for (final other in others.values) _namingInstead(other, goneNames, ownName)];
     if (rewritten.isEmpty && const ListEquality<ItemLink>().equals(survivor.links, kept.links)) return null;
     return (survivor: survivor, others: rewritten);
   }
 
   /// [other] with the [gone] names out of its links and [name] in.
-  VaultEntry<dynamic> _namingInstead(VaultEntry<dynamic> other, Set<String> gone, String name) {
+  VaultEntry<Object?> _namingInstead(VaultEntry<Object?> other, Set<String> gone, String name) {
     var links = other.links;
     for (final id in gone) {
       links = links.removing(id);
     }
-    return other.withLinks(links.adding(name, ownIds: [other.id])) as VaultEntry<dynamic>;
+    return other.withLinks(links.adding(name, ownIds: [other.id])) as VaultEntry<Object?>;
   }
 
   // Duplicate cleaner (the add-duplicate-cleaner plan, tasks group 6)

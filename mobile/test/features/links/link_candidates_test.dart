@@ -23,7 +23,7 @@ void main() {
   const identity = Identity(id: _identity, name: 'Me', email: 'ada@example.org', addedAt: 0);
   const shared = Login(id: _shared, name: 'Team wiki', username: 'team', spaceId: 'team', addedAt: 0);
 
-  List<String> names(Lists lists, VaultEntry<dynamic> entry, {String query = '', bool Function(VaultEntry<dynamic>)? canEdit}) => [
+  List<String> names(Lists lists, VaultEntry<Object?> entry, {String query = '', bool Function(VaultEntry<Object?>)? canEdit}) => [
     for (final candidate in linkCandidates(lists, entry, query: query, canEdit: canEdit))
       switch (candidate) {
         final Login login => login.name,

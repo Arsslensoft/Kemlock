@@ -27,7 +27,7 @@ class LinkedItemsSection extends ConsumerWidget {
   const LinkedItemsSection({super.key, required this.entry});
 
   /// The item whose sheet this is, as the vault holds it now.
-  final VaultEntry<dynamic> entry;
+  final VaultEntry<Object?> entry;
 
   Future<void> _add(BuildContext context, WidgetRef ref) async {
     final picked = await showLinkPicker(context, entry: entry);
@@ -98,7 +98,7 @@ class _LinkRow extends ConsumerWidget {
   final LinkedItem item;
 
   /// The item whose sheet this is.
-  final VaultEntry<dynamic> entry;
+  final VaultEntry<Object?> entry;
 
   /// The person may change both ends, so the link can be unlinked or mended.
   final bool canChange;

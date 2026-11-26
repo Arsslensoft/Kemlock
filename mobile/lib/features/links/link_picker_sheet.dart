@@ -17,8 +17,8 @@ import 'link_view.dart';
 const linkPickerLimit = 100;
 
 /// Asks which item [entry] is to be linked to: the item, or null when the sheet is dismissed.
-Future<VaultEntry<dynamic>?> showLinkPicker(BuildContext context, {required VaultEntry<dynamic> entry}) =>
-    showAppBottomSheet<VaultEntry<dynamic>>(
+Future<VaultEntry<Object?>?> showLinkPicker(BuildContext context, {required VaultEntry<Object?> entry}) =>
+    showAppBottomSheet<VaultEntry<Object?>>(
       context,
       label: context.t('links.picker.title'),
       builder: (_) => LinkPicker(entry: entry),
@@ -28,7 +28,7 @@ Future<VaultEntry<dynamic>?> showLinkPicker(BuildContext context, {required Vaul
 class LinkPicker extends ConsumerStatefulWidget {
   const LinkPicker({super.key, required this.entry});
 
-  final VaultEntry<dynamic> entry;
+  final VaultEntry<Object?> entry;
 
   @override
   ConsumerState<LinkPicker> createState() => _LinkPickerState();

@@ -84,7 +84,7 @@ class HiddenPasswords {
   /// Whether this account may change [entry]: an entry of the vault's own always, one of a WebDAV space that has not moved (it
   /// has no roles), and one of a server space only when the verified chain gives the account edit access to its collection.
   /// It fails closed like [hides]: a space whose chain isn't reported yet is not one the account may write.
-  bool canEdit(VaultEntry<dynamic> entry) {
+  bool canEdit(VaultEntry<Object?> entry) {
     final space = entry.spaceId;
     if (space == null || space.isEmpty) {
       return true;

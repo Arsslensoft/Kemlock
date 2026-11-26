@@ -19,7 +19,7 @@ import '../sync/kemlock/km_kinds.dart' show itemKindOf;
 import '../vault/vault_items.dart' show VaultItemKind;
 
 /// What an entry is called, which is empty for one with no name at all.
-String entryName(VaultEntry<dynamic> entry) => switch (entry) {
+String entryName(VaultEntry<Object?> entry) => switch (entry) {
   final Login login => login.name,
   final OtpAccount account => displayName(account),
   final BackupService service => service.serviceName,
@@ -35,7 +35,7 @@ String entryName(VaultEntry<dynamic> entry) => switch (entry) {
 };
 
 /// The icon of an entry's kind: the one the Vault tab uses where it lists the kind.
-IconData entryIcon(VaultEntry<dynamic> entry) => switch (entry) {
+IconData entryIcon(VaultEntry<Object?> entry) => switch (entry) {
   Login() => VaultItemKind.login.icon,
   OtpAccount() => Icons.timer_outlined,
   BackupService() => Icons.format_list_numbered_rounded,
@@ -51,10 +51,10 @@ IconData entryIcon(VaultEntry<dynamic> entry) => switch (entry) {
 };
 
 /// The id of the words for an entry's kind ("Login", "MFA code", "PGP key"…), from the kind name the vault stores it as.
-String entryKindLabelId(VaultEntry<dynamic> entry) => 'links.kind.${itemKindOf(entry)}';
+String entryKindLabelId(VaultEntry<Object?> entry) => 'links.kind.${itemKindOf(entry)}';
 
 /// What the picker's search reads of an entry besides its name: the lines the Vault tab finds an item by. Never a secret.
-List<String> entrySearchText(VaultEntry<dynamic> entry) => [
+List<String> entrySearchText(VaultEntry<Object?> entry) => [
   entryName(entry),
   ...switch (entry) {
     final Login login => [?login.username, ...?login.websites],

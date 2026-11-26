@@ -12,11 +12,11 @@ import 'link_view.dart';
 /// The entries of [lists] that [entry] can be linked to, [query] being words that each must be in the entry's name or one of the
 /// lines its kind is found by, ignoring case. Sorted by name, then kind. [canEdit] says whether the person may change an entry:
 /// the picker offers none they may not. [account] is the vault's Kemlock Server account owner, for the item ids of the entries.
-List<VaultEntry<dynamic>> linkCandidates(
+List<VaultEntry<Object?>> linkCandidates(
   Lists lists,
-  VaultEntry<dynamic> entry, {
+  VaultEntry<Object?> entry, {
   String query = '',
-  bool Function(VaultEntry<dynamic> candidate)? canEdit,
+  bool Function(VaultEntry<Object?> candidate)? canEdit,
   Owner? account,
 }) {
   final linked = linkedItemsOf(lists, entry, account: account);
@@ -25,7 +25,7 @@ List<VaultEntry<dynamic>> linkCandidates(
       if (item.entry case final other?) (other.runtimeType, other.id),
   };
   final words = query.toLowerCase().split(RegExp(r'\s+')).where((word) => word.isNotEmpty).toList();
-  bool matches(VaultEntry<dynamic> candidate) {
+  bool matches(VaultEntry<Object?> candidate) {
     if (words.isEmpty) {
       return true;
     }

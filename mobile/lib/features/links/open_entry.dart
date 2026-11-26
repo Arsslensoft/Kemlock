@@ -33,7 +33,7 @@ import '../passkeys/passkey_sheet.dart';
 import 'link_view.dart';
 
 /// Opens [entry]: its sheet over the one this is called from, or its page after the sheets are closed.
-Future<void> openLinkedEntry(BuildContext context, WidgetRef ref, VaultEntry<dynamic> entry) async {
+Future<void> openLinkedEntry(BuildContext context, WidgetRef ref, VaultEntry<Object?> entry) async {
   switch (entry) {
     case final Login login:
       await showLoginSheet(context, login);
