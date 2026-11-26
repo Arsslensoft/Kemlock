@@ -13,6 +13,7 @@ import '../../core/toasts.dart';
 import '../../crypto/bytes.dart';
 import '../../features/sync/sync_merge.dart' show canonical;
 import '../../i18n/messages.dart';
+import '../../models/custom_field.dart';
 import '../../models/json.dart';
 import '../../models/secure_note.dart';
 import '../../platform/files.dart';
@@ -21,8 +22,10 @@ import '../../ui/ui.dart';
 import '../../vault/attachment_store.dart';
 import '../../vault/vault_controller.dart';
 import '../accounts/tag_input.dart';
+import '../fields/custom_fields_editor.dart';
 import '../sends/new_send_sheet.dart';
 import '../sync/attachment_downloads.dart';
+import '../sync/kemlock/km_kinds.dart';
 import '../sync/space_picker.dart';
 import '../sync/sync_store.dart';
 import '../vault/owner_check.dart';
@@ -67,6 +70,9 @@ class _NotePageState extends ConsumerState<NotePage> {
   var _files = <NoteAttachment>[];
   var _attaching = false;
 
+  /// The custom fields, as the editor last gave them.
+  var _customFields = <CustomField>[];
+
   /// Which of the note's files this phone holds, by attachment id, once looked.
   final _stored = <String, bool>{};
 
@@ -86,6 +92,7 @@ class _NotePageState extends ConsumerState<NotePage> {
     _pinned = _saved.isPinned;
     _spaceId = _saved.spaceId;
     _files = [..._saved.files];
+    _customFields = [..._saved.fields];
     unawaited(_lookForFiles());
     _title.addListener(_changed);
     _text.addListener(_changed);
@@ -115,6 +122,7 @@ class _NotePageState extends ConsumerState<NotePage> {
     pinned: _pinned ? true : unset,
     spaceId: _spaceId ?? unset,
     attachments: _files.isEmpty && _saved.attachments == null ? unset : [..._files],
+    fields: _customFields,
   );
 
   bool get _dirty => canonical(_draft.toJson()) != canonical(_saved.toJson());
@@ -478,6 +486,12 @@ class _NotePageState extends ConsumerState<NotePage> {
                             errorText: _over > 0 ? context.t('notes.error.tooLong', {'count': _over, 'limit': noteTextLimit}) : null,
                             errorMaxLines: 3,
                           ),
+                        ),
+                        const SizedBox(height: 20),
+                        CustomFieldsEditor(
+                          kind: itemKindOf(_saved),
+                          fields: _customFields,
+                          onChanged: (next) => setState(() => _customFields = next),
                         ),
                         const SizedBox(height: 20),
                         TagInput(value: _tags, onChanged: (tags) => setState(() => _tags = tags), suggestions: allTags),
