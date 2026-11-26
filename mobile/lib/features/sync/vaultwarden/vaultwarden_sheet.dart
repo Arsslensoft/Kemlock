@@ -1094,6 +1094,7 @@ class _VaultwardenSetupState extends ConsumerState<VaultwardenSetup> {
         const _LoginsStayAlert(),
         const _CardsStayAlert(),
         const _IdentitiesStayAlert(),
+        const _FilesStayAlert(),
         if (preview.paused.isNotEmpty) ...[
           _ConsentAlert(paused: preview.paused, email: _email.text.trim()),
           _CheckRow(
@@ -1147,6 +1148,18 @@ class _IdentitiesStayAlert extends ConsumerWidget {
     final count = ref.watch(vaultControllerProvider.select((state) => inScope(state.identities, null).length));
     if (count == 0) return const SizedBox.shrink();
     return AppAlert(severity: AlertSeverity.info, child: Text(context.t('vaultwarden.identities.stay', {'count': count})));
+  }
+}
+
+/// The same for the vault's File items, which stay on this device and Kemlock Server.
+class _FilesStayAlert extends ConsumerWidget {
+  const _FilesStayAlert();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(vaultControllerProvider.select((state) => inScope(state.files, null).length));
+    if (count == 0) return const SizedBox.shrink();
+    return AppAlert(severity: AlertSeverity.info, child: Text(context.t('files.vaultwarden.stay', {'count': count})));
   }
 }
 
@@ -1559,6 +1572,7 @@ class _VaultwardenOnState extends ConsumerState<VaultwardenOn> {
           const _LoginsStayAlert(),
           const _CardsStayAlert(),
           const _IdentitiesStayAlert(),
+          const _FilesStayAlert(),
           if (!offline && problem == null && waiting.isNotEmpty) ...[
             _ConsentAlert(paused: waiting, email: _target.email),
             Align(

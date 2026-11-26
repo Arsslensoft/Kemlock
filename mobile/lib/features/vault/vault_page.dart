@@ -17,6 +17,8 @@ import '../contacts/contact_keys.dart';
 import '../contacts/contact_sheet.dart';
 import '../contacts/contact_standing.dart';
 import '../contacts/contact_widgets.dart';
+import '../files/file_sheet.dart';
+import '../files/file_size.dart';
 import '../identities/identity_sheet.dart';
 import '../keys/key_bridge.dart';
 import '../keys/key_reminders.dart';
@@ -81,6 +83,9 @@ class _VaultPageState extends ConsumerState<VaultPage> {
         if (identity != null) unawaited(showIdentitySheet(context, identity));
       case VaultItemKind.note:
         context.go('/vault/notes/${item.id}');
+      case VaultItemKind.file:
+        final file = ref.read(vaultControllerProvider).files.where((f) => f.id == item.id).firstOrNull;
+        if (file != null) unawaited(showFileSheet(context, file));
       case VaultItemKind.passkey:
         final passkey = ref.read(vaultControllerProvider).passkeys.where((p) => p.id == item.id).firstOrNull;
         if (passkey != null) unawaited(showPasskeySheet(context, passkey));
@@ -160,6 +165,8 @@ class _VaultPageState extends ConsumerState<VaultPage> {
       for (final card in state.cards)
         if (card.isExpired(now)) card.id: messages.t('vault.card.expired'),
     };
+    // A File item's line: its size and the day it was added
+    final fileLines = {for (final file in state.files) file.id: fileLine(context, file.file, locale)};
     final items = vaultListItems(
       state,
       filter: _filter,
@@ -168,6 +175,7 @@ class _VaultPageState extends ConsumerState<VaultPage> {
       contactListings: contactListings,
       loginListings: loginListings,
       cardTags: cardTags,
+      fileLines: fileLines,
     );
     final searching = _query.text.trim().isNotEmpty;
     final shown = items.pgp.length + items.ssh.length + items.pinned.length + items.rest.length + items.contacts.length;
@@ -291,6 +299,7 @@ IconData _filterIcon(VaultFilter filter) => switch (filter) {
   VaultFilter.identities => VaultItemKind.identity.icon,
   VaultFilter.keys => VaultItemKind.key.icon,
   VaultFilter.notes => VaultItemKind.note.icon,
+  VaultFilter.files => VaultItemKind.file.icon,
   VaultFilter.passkeys => VaultItemKind.passkey.icon,
 };
 

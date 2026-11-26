@@ -165,6 +165,7 @@ class _ExportSheetState extends ConsumerState<ExportSheet> {
           logins: logins,
           cards: exportable.cards,
           identities: exportable.identities,
+          files: exportable.files,
           recoveryKey: recoveryKey,
           deriveKey: deriveKey,
           now: now,
@@ -181,10 +182,11 @@ class _ExportSheetState extends ConsumerState<ExportSheet> {
           logins: logins,
           cards: exportable.cards,
           identities: exportable.identities,
+          files: exportable.files,
           now: now,
         );
       }
-      final attached = [for (final note in exportable.notes) ...note.files];
+      final attached = [for (final note in exportable.notes) ...note.files, for (final item in exportable.files) item.file];
       final SaveResult result;
       String? archive;
       if (attached.isEmpty) {
@@ -273,7 +275,7 @@ class _ExportSheetState extends ConsumerState<ExportSheet> {
     final logins = ref.watch(hiddenPasswordsProvider).withoutHidden(exportable.logins).length;
     final cards = exportable.cards.length;
     final identities = exportable.identities.length;
-    final attached = exportable.notes.fold(0, (count, note) => count + note.files.length);
+    final attached = exportable.notes.fold(exportable.files.length, (count, note) => count + note.files.length);
     final items = keys + notes + passkeys > 0;
 
     return TransferSheet(
@@ -480,8 +482,10 @@ class _VerifyBackupState extends ConsumerState<VerifyBackup> {
     try {
       opened = await readExportArchiveFile(archive);
     } catch (_) {
-      final first = restored.notes.firstWhere((note) => note.files.isNotEmpty);
-      return (note: first.title, file: first.files.first.name);
+      final first = restored.notes.where((note) => note.files.isNotEmpty).firstOrNull;
+      if (first != null) return (note: first.title, file: first.files.first.name);
+      final item = restored.files.first;
+      return (note: item.name, file: item.file.name);
     }
     for (final note in restored.notes) {
       for (final file in note.files) {
@@ -492,6 +496,15 @@ class _VerifyBackupState extends ConsumerState<VerifyBackup> {
         } catch (_) {
           return (note: note.title, file: file.name);
         }
+      }
+    }
+    for (final item in restored.files) {
+      try {
+        final sealed = opened.files[item.file.id];
+        if (sealed == null) return (note: item.name, file: item.file.name);
+        kma1DecryptSync(sealed(), unb64(item.file.key));
+      } catch (_) {
+        return (note: item.name, file: item.file.name);
       }
     }
     return null;

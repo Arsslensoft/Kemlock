@@ -32,6 +32,7 @@ import '../models/passkey.dart';
 import '../models/payment_card.dart';
 import '../models/secure_note.dart';
 import '../models/vault_entry.dart';
+import '../models/vault_file.dart';
 import '../models/vault_key.dart';
 import '../platform/autofill.dart';
 import '../platform/shared_items.dart';
@@ -81,6 +82,7 @@ class VaultState {
     this.logins = const [],
     this.cards = const [],
     this.identities = const [],
+    this.files = const [],
     this.generated = const [],
     required this.vault,
     this.revision = 0,
@@ -115,6 +117,9 @@ class VaultState {
 
   /// The vault's identities.
   final List<Identity> identities;
+
+  /// The vault's File items, each holding one attached file.
+  final List<VaultFile> files;
 
   /// The passwords AutoFill generated that no saved login holds, newest last.
   final List<GeneratedPassword> generated;
@@ -153,6 +158,7 @@ class VaultState {
     logins: logins,
     cards: cards,
     identities: identities,
+    files: files,
   );
 
   VaultState copyWith({
@@ -169,6 +175,7 @@ class VaultState {
     List<Login>? logins,
     List<PaymentCard>? cards,
     List<Identity>? identities,
+    List<VaultFile>? files,
     List<GeneratedPassword>? generated,
     VaultInfo? vault,
     int? revision,
@@ -189,6 +196,7 @@ class VaultState {
     logins: logins ?? this.logins,
     cards: cards ?? this.cards,
     identities: identities ?? this.identities,
+    files: files ?? this.files,
     generated: generated ?? this.generated,
     vault: vault ?? this.vault,
     revision: revision ?? this.revision,
@@ -272,6 +280,7 @@ class VaultController extends Notifier<VaultState> {
       final logins = await _store.loadLogins(session);
       final cards = await _store.loadCards(session);
       final identities = await _store.loadIdentities(session);
+      final files = await _store.loadFiles(session);
       // Generated passwords are kept a month, and until a login holds them; the others go as the vault opens
       final stored = await _store
           .loadGenerated(session)
@@ -298,6 +307,7 @@ class VaultController extends Notifier<VaultState> {
         logins: logins,
         cards: cards,
         identities: identities,
+        files: files,
         generated: generated,
         vault: vault,
         keyExposed: keyInfo?.exposed ?? false,
@@ -366,6 +376,7 @@ class VaultController extends Notifier<VaultState> {
     final named = {
       for (final note in state.notes)
         for (final file in note.files) file.id,
+      for (final item in state.files) item.file.id,
     };
     final cutoff = ref.read(clockProvider)().subtract(unreferencedFileLife);
     final store = ref.read(attachmentStoreProvider);
@@ -608,6 +619,7 @@ class VaultController extends Notifier<VaultState> {
     List<Login> logins = const [],
     List<PaymentCard> cards = const [],
     List<Identity> identities = const [],
+    List<VaultFile> files = const [],
   }) async {
     final session = state.session;
     if (session == null) return;
@@ -645,6 +657,11 @@ class VaultController extends Notifier<VaultState> {
       await _addAll(_identities, [
         for (final identity in identities)
           if (heldIdentities.add(identity.id)) identity,
+      ], session);
+      final heldFiles = {for (final item in state.files) item.id};
+      await _addAll(_files, [
+        for (final item in files)
+          if (heldFiles.add(item.id)) item,
       ], session);
       _bump();
       _toast('app.snack.importSuccess', {'count': accounts.length});
@@ -902,6 +919,30 @@ class VaultController extends Notifier<VaultState> {
 
   /// Removes an identity, with Undo in the toast for a few seconds.
   Future<void> deleteIdentity(Identity identity) => _deleteItem(_identities, identity);
+
+  late final _files = _ItemList<VaultFile>(
+    read: (state) => state.files,
+    write: (state, files) => state.copyWith(files: files),
+    save: (files, session) => _store.saveFiles(files, session),
+    name: (file) => file.name,
+    messages: const _ItemMessages(
+      added: 'files.snack.added',
+      addFailed: 'files.snack.addFailed',
+      updateFailed: 'files.snack.updateFailed',
+      removed: 'files.snack.removed',
+      removeFailed: 'files.snack.removeFailed',
+    ),
+  );
+
+  /// Adds a File item, whose `addedAt` the caller set from the clock and whose sealed file is stored already; true once it is saved.
+  Future<bool> addFile(VaultFile file) => _addItem(_files, file);
+
+  /// Saves an edited File item; on failure the list goes back as it was, and false.
+  Future<bool> updateFile(VaultFile file) => _updateItem(_files, file);
+
+  /// Removes a File item, with Undo in the toast for a few seconds. Its stored file stays until the sweep at unlock finds that no
+  /// item names it, as the file of a removed note attachment does, so Undo still has it.
+  Future<void> deleteFile(VaultFile file) => _deleteItem(_files, file);
 
   /// Takes in what AutoFill saved while the vault was locked (openspec:
   /// add-passwords, design decision 9), oldest first. A saved login updates
@@ -1434,6 +1475,7 @@ class VaultController extends Notifier<VaultState> {
       Login() => _applyMerge(_logins, session, put: put.cast<Login>(), remove: remove.cast<Login>()),
       PaymentCard() => _applyMerge(_cards, session, put: put.cast<PaymentCard>(), remove: remove.cast<PaymentCard>()),
       Identity() => _applyMerge(_identities, session, put: put.cast<Identity>(), remove: remove.cast<Identity>()),
+      VaultFile() => _applyMerge(_files, session, put: put.cast<VaultFile>(), remove: remove.cast<VaultFile>()),
       _ => throw ArgumentError.value(put.first, 'put', 'is not an item a merge keeps'),
     };
   }
@@ -1540,7 +1582,7 @@ class VaultController extends Notifier<VaultState> {
   }
 
   /// Takes what sync merged; not a user change, so it doesn't start another
-  /// sync. Keys, notes, passkeys, on-key accounts, contacts, logins, cards and identities are
+  /// sync. Keys, notes, passkeys, on-key accounts, contacts, logins, cards, identities and files are
   /// saved only when sync changed them.
   Future<void> applySynced(Lists lists) async {
     final session = state.session;
@@ -1557,6 +1599,7 @@ class VaultController extends Notifier<VaultState> {
     if (changed(lists.logins, state.logins)) await _store.saveLogins(lists.logins, session);
     if (changed(lists.cards, state.cards)) await _store.saveCards(lists.cards, session);
     if (changed(lists.identities, state.identities)) await _store.saveIdentities(lists.identities, session);
+    if (changed(lists.files, state.files)) await _store.saveFiles(lists.files, session);
     state = state.copyWith(
       accounts: lists.accounts,
       backupServices: lists.backupServices,
@@ -1568,6 +1611,7 @@ class VaultController extends Notifier<VaultState> {
       logins: lists.logins,
       cards: lists.cards,
       identities: lists.identities,
+      files: lists.files,
     );
   }
 }

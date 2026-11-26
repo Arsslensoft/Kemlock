@@ -7,6 +7,7 @@ import '../../i18n/messages.dart';
 import '../../ui/ui.dart';
 import '../cards/card_edit_sheet.dart';
 import '../contacts/add_contact_sheet.dart';
+import '../files/new_file.dart';
 import '../identities/identity_edit_sheet.dart';
 import '../keys/generate_key_sheet.dart';
 import '../keys/import_key_sheet.dart';
@@ -100,6 +101,15 @@ class AddToVaultSheet extends StatelessWidget {
                 primary: context.t('vault.add.note'),
                 secondary: context.t('vault.add.note.body'),
                 onTap: () => then(() => router.go('/vault/notes/new')),
+              ),
+              GroupRow(
+                icon: Icon(VaultItemKind.file.icon),
+                primary: context.t('files.add'),
+                secondary: context.t('files.add.body'),
+                onTap: () {
+                  final root = Navigator.of(context, rootNavigator: true).context;
+                  then(() => unawaited(addFileItem(root)));
+                },
               ),
               GroupRow(
                 icon: Icon(VaultItemKind.passkey.icon),

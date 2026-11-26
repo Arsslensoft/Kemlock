@@ -216,7 +216,8 @@ class _QrExportSheetState extends ConsumerState<QrExportSheet> {
               vault.contacts.length +
               vault.logins.length +
               vault.cards.length +
-              vault.identities.length >
+              vault.identities.length +
+              vault.files.length >
           0)
         AppAlert(
           severity: AlertSeverity.info,
@@ -230,6 +231,7 @@ class _QrExportSheetState extends ConsumerState<QrExportSheet> {
                 if (vault.logins.isNotEmpty) context.t('export.chip.logins', {'count': vault.logins.length}),
                 if (vault.cards.isNotEmpty) context.t('export.chip.cards', {'count': vault.cards.length}),
                 if (vault.identities.isNotEmpty) context.t('export.chip.identities', {'count': vault.identities.length}),
+                if (vault.files.isNotEmpty) context.t('files.chip', {'count': vault.files.length}),
               ].join(', '),
             }),
           ),
