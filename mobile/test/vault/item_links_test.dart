@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kemlock/core/providers.dart';
@@ -151,6 +153,30 @@ void main() {
 
       expect(linksOfLogin(), {_goneId});
     });
+  });
+
+  group('an edit that lands between the saves of the two ends', () {
+    test('is kept when linking, since each end is changed as the vault holds it when its list is saved', () async {
+      await openNew();
+      await controller().addLogin(_login(_loginId));
+      await controller().addNote(_note(_noteId));
+      // The note is renamed right after the login's list is saved, before the note's is
+      var renamed = false;
+      final stop = store.listen('backmycodes_login_data', () {
+        if (renamed) return;
+        renamed = true;
+        unawaited(controller().updateNote(note().copyWith(title: 'Renamed')));
+      });
+      addTearDown(stop);
+
+      expect(await controller().linkItems(login(), note()), isTrue);
+
+      expect(renamed, isTrue);
+      expect(note().title, 'Renamed');
+      expect(note().links.ids, {_loginId});
+      expect(linksOfLogin(), {_noteId});
+    });
+
   });
 
   group('a link that changes nothing', () {
