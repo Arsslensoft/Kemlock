@@ -14,6 +14,7 @@ import '../../vault/vault_controller.dart';
 import '../../vault/vault_providers.dart';
 import '../cards/card_sheet.dart';
 import '../contacts/contact_keys.dart';
+import '../contacts/contact_person.dart' show personLine;
 import '../contacts/contact_sheet.dart';
 import '../contacts/contact_standing.dart';
 import '../contacts/contact_widgets.dart';
@@ -135,6 +136,11 @@ class _VaultPageState extends ConsumerState<VaultPage> {
     // Each contact's check and the standing of its key, against the clock now
     final contactListings = <String, ContactListing>{};
     for (final contact in state.contacts) {
+      // A person with no key has none to check: they are listed by their details
+      if (!contact.hasKey) {
+        contactListings[contact.id] = ContactListing(checked: true, line: personLine(contact) ?? context.t('contacts.person.noKeyShort'));
+        continue;
+      }
       final info = ref.watch(contactKeyInfoProvider(contact.id));
       final standing = contactStanding(contact, now, info: info);
       contactListings[contact.id] = ContactListing(

@@ -32,7 +32,8 @@ class ContactRecipient {
 
 /// The open vault's contacts a message can be encrypted to, by name: those
 /// whose key holds an encryption key that is still valid. A contact whose
-/// key expired, was revoked, only signs or can't be read is left out.
+/// key expired, was revoked, only signs or can't be read is left out. A person with
+/// no key is left out too, see [keylessContactCountProvider].
 /// Checked or not makes no difference here: an unchecked contact is
 /// offered, and warned about each time.
 final contactRecipientsProvider = Provider<List<ContactRecipient>>((ref) {
@@ -44,6 +45,12 @@ final contactRecipientsProvider = Provider<List<ContactRecipient>>((ref) {
         ContactRecipient(contact, standing),
   ];
   return recipients..sort((a, b) => a.contact.name.toLowerCase().compareTo(b.contact.name.toLowerCase()));
+});
+
+/// How many of the open vault's contacts are people with no key. They are never offered as recipients, and their key can't check a
+/// signature, so the pickers say how many were left out and why.
+final keylessContactCountProvider = Provider<int>((ref) {
+  return ref.watch(vaultControllerProvider.select((state) => state.contacts.where((contact) => !contact.hasKey).length));
 });
 
 /// Warns that some of the contacts about to be encrypted to were never

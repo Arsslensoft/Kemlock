@@ -315,14 +315,20 @@ List<VaultFile> newFiles(ImportPreview preview, List<VaultFile> current) {
 
 /// The contacts of [preview] whose key [current] doesn't hold, by
 /// fingerprint, each key once. A contact the vault already has is left as
-/// it is, check and all; one whose key can't be read is left out.
+/// it is, check and all; one whose key can't be read is left out. A person with no key is new when no contact has their id.
 List<Contact> newContacts(ImportPreview preview, List<Contact> current) {
   String? fingerprint(Contact contact) => contactKeyInfo(contact)?.primary.fingerprintHex;
   final held = {for (final contact in current) ?fingerprint(contact)};
-  return [
-    for (final contact in preview.contacts)
-      if (fingerprint(contact) case final print? when held.add(print)) contact,
-  ];
+  final heldIds = {for (final contact in current) contact.id};
+  final fresh = <Contact>[];
+  for (final contact in preview.contacts) {
+    if (!contact.hasKey) {
+      if (heldIds.add(contact.id)) fresh.add(contact);
+    } else if (fingerprint(contact) case final print? when held.add(print)) {
+      fresh.add(contact);
+    }
+  }
+  return fresh;
 }
 
 /// What to do with an imported entry the vault holds already.
