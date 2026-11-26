@@ -15,6 +15,7 @@ import '../accounts/tag_input.dart';
 import '../fields/custom_fields_editor.dart';
 import '../lock/gate_widgets.dart';
 import '../settings/prefs.dart';
+import '../spaces/hidden_passwords.dart';
 import '../sync/kemlock/km_kinds.dart';
 import '../vault/owner_check.dart';
 import 'card_number.dart';
@@ -288,6 +289,7 @@ class _CardEditSheetState extends ConsumerState<CardEditSheet> {
                   kind: itemKindOf(draft),
                   fields: _customFields,
                   onChanged: (next) => setState(() => _customFields = next),
+                  hideSecrets: hidesSecretsOf(ref, widget.card),
                 ),
                 TagInput(value: _tags, onChanged: (tags) => setState(() => _tags = tags), suggestions: allTags),
                 FilledButton(

@@ -16,6 +16,7 @@ import '../fields/custom_fields_view.dart';
 import '../links/linked_items_section.dart';
 import '../lock/gate_widgets.dart';
 import '../settings/prefs.dart';
+import '../spaces/hidden_passwords.dart';
 import '../vault/owner_check.dart';
 import 'countries.dart';
 import 'identity_edit_sheet.dart';
@@ -221,7 +222,7 @@ class _IdentitySheetState extends ConsumerState<IdentitySheet> {
                     padding: const EdgeInsets.fromLTRB(6, 10, 6, 0),
                     child: Text(tags.join(' · '), style: AppType.caption.copyWith(color: p.textSecondary)),
                   ),
-                CustomFieldsView(fields: identity.fields),
+                CustomFieldsView(fields: identity.fields, hideSecrets: hidesSecretsOf(ref, identity)),
                 LinkedItemsSection(entry: identity),
                 const SizedBox(height: 16),
                 OutlinedButton(

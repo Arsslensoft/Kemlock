@@ -22,6 +22,7 @@ import '../keys/key_bridge.dart';
 import '../keys/key_standing.dart';
 import '../keys/key_widgets.dart';
 import '../links/linked_items_section.dart';
+import '../spaces/hidden_passwords.dart';
 import '../sync/kemlock/km_kinds.dart';
 import 'add_contact_sheet.dart';
 import 'contact_check.dart';
@@ -396,6 +397,7 @@ class _ContactSheetState extends ConsumerState<ContactSheet> {
                   kind: itemKindOf(contact),
                   fields: _customFields,
                   onChanged: (next) => setState(() => _customFields = next),
+                  hideSecrets: hidesSecretsOf(ref, contact),
                 ),
                 LinkedItemsSection(entry: contact),
                 const SizedBox(height: 8),

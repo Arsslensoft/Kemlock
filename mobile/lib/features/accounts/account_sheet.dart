@@ -22,6 +22,7 @@ import '../fields/custom_fields_view.dart';
 import '../links/linked_items_section.dart';
 import '../logins/account_login.dart';
 import '../settings/prefs.dart';
+import '../spaces/hidden_passwords.dart';
 import '../sync/kemlock/km_kinds.dart';
 import '../sync/space_picker.dart';
 import '../sync/sync_store.dart';
@@ -385,7 +386,7 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
 
           KeyTransferActions(account: account),
 
-          if (_panel != _Panel.edit) CustomFieldsView(fields: account.fields),
+          if (_panel != _Panel.edit) CustomFieldsView(fields: account.fields, hideSecrets: hidesSecretsOf(ref, account)),
           LinkedItemsSection(entry: account),
 
           Padding(
@@ -1083,6 +1084,7 @@ class _EditPanelState extends ConsumerState<_EditPanel> {
               kind: itemKindOf(widget.account),
               fields: _customFields,
               onChanged: (next) => setState(() => _customFields = next),
+              hideSecrets: hidesSecretsOf(ref, widget.account),
             ),
             const SizedBox(height: 14),
             TagInput(key: _tagInput, value: _tags, onChanged: (next) => setState(() => _tags = next), suggestions: widget.allTags),

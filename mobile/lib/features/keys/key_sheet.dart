@@ -25,6 +25,7 @@ import '../accounts/tag_input.dart';
 import '../export/space_export.dart';
 import '../fields/custom_fields_editor.dart';
 import '../links/linked_items_section.dart';
+import '../spaces/hidden_passwords.dart';
 import '../sync/kemlock/km_kinds.dart';
 import '../sync/space_picker.dart';
 import '../sync/sync_store.dart';
@@ -496,6 +497,7 @@ class _KeySheetState extends ConsumerState<KeySheet> {
                   kind: itemKindOf(key),
                   fields: _customFields,
                   onChanged: (next) => setState(() => _customFields = next),
+                  hideSecrets: hidesSecretsOf(ref, key),
                 ),
                 const SizedBox(height: 14),
                 TagInput(value: _tags, onChanged: (tags) => setState(() => _tags = tags), suggestions: allTags),

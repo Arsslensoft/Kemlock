@@ -26,6 +26,7 @@ import '../accounts/tag_input.dart';
 import '../fields/custom_fields_editor.dart';
 import '../links/linked_items_section.dart';
 import '../sends/new_send_sheet.dart';
+import '../spaces/hidden_passwords.dart';
 import '../sync/attachment_downloads.dart';
 import '../sync/kemlock/km_kinds.dart';
 import '../sync/space_picker.dart';
@@ -489,6 +490,7 @@ class _NotePageState extends ConsumerState<NotePage> {
                           kind: itemKindOf(_saved),
                           fields: _customFields,
                           onChanged: (next) => setState(() => _customFields = next),
+                          hideSecrets: hidesSecretsOf(ref, _saved),
                         ),
                         const SizedBox(height: 20),
                         TagInput(value: _tags, onChanged: (tags) => setState(() => _tags = tags), suggestions: allTags),

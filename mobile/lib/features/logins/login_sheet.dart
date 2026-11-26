@@ -340,7 +340,7 @@ class _LoginSheetState extends ConsumerState<LoginSheet> {
                     style: AppType.caption.copyWith(color: b.faint),
                   ),
                 ),
-                CustomFieldsView(fields: login.fields),
+                CustomFieldsView(fields: login.fields, hideSecrets: hidden),
                 LinkedItemsSection(entry: login),
                 const SizedBox(height: 16),
                 OutlinedButton(

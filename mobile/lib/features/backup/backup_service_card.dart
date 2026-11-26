@@ -15,6 +15,7 @@ import '../accounts/service_tile.dart';
 import '../fields/custom_fields_editor.dart';
 import '../fields/custom_fields_view.dart';
 import '../links/linked_items_section.dart';
+import '../spaces/hidden_passwords.dart';
 import '../sync/kemlock/km_kinds.dart';
 import '../sync/space_picker.dart';
 import '../sync/sync_store.dart';
@@ -329,7 +330,10 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
               )
             else
               Padding(padding: const EdgeInsets.only(top: 12), child: _codeGrid(context)),
-            if (_editingFields) _fieldsEditor(context) else CustomFieldsView(fields: _service.fields),
+            if (_editingFields)
+              _fieldsEditor(context)
+            else
+              CustomFieldsView(fields: _service.fields, hideSecrets: hidesSecretsOf(ref, _service)),
             if (_adding) _addForm(context) else _actions(context),
             if (!_editingFields)
               Align(
@@ -488,6 +492,7 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
           kind: itemKindOf(_service),
           fields: _draftFields,
           onChanged: (next) => _draftFields = next,
+          hideSecrets: hidesSecretsOf(ref, _service),
         ),
         const SizedBox(height: 8),
         _FormButtons(

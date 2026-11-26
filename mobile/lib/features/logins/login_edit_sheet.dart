@@ -360,7 +360,12 @@ class _LoginEditSheetState extends ConsumerState<LoginEditSheet> {
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(labelText: context.t('logins.field.note'), alignLabelWithHint: true),
                 ),
-                CustomFieldsEditor(kind: itemKindOf(draft), fields: _fields, onChanged: (next) => setState(() => _fields = next)),
+                CustomFieldsEditor(
+                  kind: itemKindOf(draft),
+                  fields: _fields,
+                  onChanged: (next) => setState(() => _fields = next),
+                  hideSecrets: hidden,
+                ),
                 TagInput(value: _tags, onChanged: (tags) => setState(() => _tags = tags), suggestions: allTags),
                 FilledButton(
                   style: largeButtonStyle,

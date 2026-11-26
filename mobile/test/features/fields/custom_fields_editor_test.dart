@@ -20,11 +20,12 @@ class _AskingPrefs extends PrefsNotifier {
 
 /// Holds the fields as an edit sheet does, and records every list the editor gives it.
 class _Harness extends StatefulWidget {
-  const _Harness({required this.kind, required this.initial, required this.changes});
+  const _Harness({required this.kind, required this.initial, required this.changes, this.hideSecrets = false});
 
   final String kind;
   final List<CustomField> initial;
   final List<List<CustomField>> changes;
+  final bool hideSecrets;
 
   @override
   State<_Harness> createState() => _HarnessState();
@@ -37,6 +38,7 @@ class _HarnessState extends State<_Harness> {
   Widget build(BuildContext context) => SingleChildScrollView(
     child: CustomFieldsEditor(
       kind: widget.kind,
+      hideSecrets: widget.hideSecrets,
       fields: fields,
       onChanged: (next) {
         widget.changes.add(next);
@@ -55,6 +57,7 @@ Future<List<List<CustomField>>> _pump(
   List<CustomField> initial = const [],
   KmCustomFields? definitions = KmCustomFields.none,
   List<Override> overrides = const [],
+  bool hideSecrets = false,
 }) async {
   tester.view
     ..physicalSize = const Size(900, 2400)
@@ -63,7 +66,7 @@ Future<List<List<CustomField>>> _pump(
   final changes = <List<CustomField>>[];
   await pumpOnPage(
     tester,
-    _Harness(kind: kind, initial: initial, changes: changes),
+    _Harness(kind: kind, initial: initial, changes: changes, hideSecrets: hideSecrets),
     center: false,
     overrides: [kmCustomFieldsProvider.overrideWith((ref) async => definitions), ...overrides],
   );
@@ -406,6 +409,26 @@ void main() {
       await tester.pump();
       expect(check.reasons, hasLength(1));
       expect(_textField(tester, 'field-value-0').obscureText, isFalse);
+    });
+
+    testWidgets('a grant that hides passwords gives a hidden field no Show, and a saved value can not be changed', (tester) async {
+      final changes = await _pump(
+        tester,
+        initial: const [
+          CustomField(name: 'PIN', value: '9876', kind: CustomFieldKind.hidden),
+          CustomField(name: 'Badge', value: 'B-1', kind: CustomFieldKind.text),
+        ],
+        hideSecrets: true,
+      );
+
+      final pin = _textField(tester, 'field-value-0');
+      expect(pin.obscureText, isTrue);
+      expect(pin.enabled, isFalse);
+      expect(find.byType(RevealPasswordButton), findsNothing);
+      // Its kind can't be changed to text, which would show it; the other field is still the person's to edit
+      expect(find.byKey(const ValueKey('field-kind-0-text')), findsNothing);
+      expect(find.byKey(const ValueKey('field-kind-1-hidden')), findsOneWidget);
+      expect(changes, isEmpty);
     });
 
     testWidgets('a checkbox holds "true" or "false"', (tester) async {

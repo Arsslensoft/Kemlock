@@ -73,12 +73,22 @@ class _Row {
 /// same [CustomField]: only the one the person changes is replaced, through `copyWith`. The editor keeps the list it
 /// edits, so it is read at the start only; [onChanged] gets the whole list after each change.
 class CustomFieldsEditor extends ConsumerStatefulWidget {
-  const CustomFieldsEditor({super.key, required this.kind, required this.fields, required this.onChanged});
+  const CustomFieldsEditor({
+    super.key,
+    required this.kind,
+    required this.fields,
+    required this.onChanged,
+    this.hideSecrets = false,
+  });
 
   /// The kind of the item (`itemKindOf(entry)`), which decides which admin fields are offered.
   final String kind;
   final List<CustomField> fields;
   final ValueChanged<List<CustomField>> onChanged;
+
+  /// A grant of a space hides this item's passwords from the account (`hiddenPasswordsProvider`), and with them its hidden fields:
+  /// no Show for them, and a saved one is neither shown nor changed.
+  final bool hideSecrets;
 
   @override
   ConsumerState<CustomFieldsEditor> createState() => _CustomFieldsEditorState();
@@ -171,6 +181,9 @@ class _CustomFieldsEditorState extends ConsumerState<CustomFieldsEditor> {
   /// Shows or hides a hidden value. Showing what was saved asks first who it is when Settings says so, as the card's
   /// sheet does for its code; what was just typed shows at once.
   Future<void> _toggleShown(_Row row) async {
+    if (widget.hideSecrets) {
+      return;
+    }
     if (!row.shown && row.holdsSaved && ref.read(prefsProvider).askBeforeSecret) {
       final reason = context.t('fields.reveal.confirm');
       if (!await ref.read(ownerCheckProvider)(context, ref, reason) || !mounted) {
@@ -211,6 +224,7 @@ class _CustomFieldsEditorState extends ConsumerState<CustomFieldsEditor> {
             onTick: (ticked) => _tick(row, ticked),
             onKind: (kind) => _pickKind(row, kind),
             onToggleShown: () => unawaited(_toggleShown(row)),
+            hideSecrets: widget.hideSecrets,
             onMove: (direction) => _move(row, direction),
             onRemove: () => _remove(row),
           ),
@@ -275,6 +289,7 @@ class _FieldRow extends StatelessWidget {
     required this.onToggleShown,
     required this.onMove,
     required this.onRemove,
+    required this.hideSecrets,
   });
 
   final _Row row;
@@ -295,12 +310,18 @@ class _FieldRow extends StatelessWidget {
   final ValueChanged<int> onMove;
   final VoidCallback onRemove;
 
+  /// A grant of a space hides this item's secrets: a hidden value has no Show, and a saved one is neither read nor changed.
+  final bool hideSecrets;
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final b = context.bmc;
     final field = row.field;
     final label = admin ? field.name : context.t('fields.value');
+    // A saved hidden value that a grant hides is neither shown nor changed, and its kind stays
+    final locked =
+        hideSecrets && field.kind == CustomFieldKind.hidden && row.original.kind == CustomFieldKind.hidden && row.original.value.isNotEmpty;
 
     final Widget control;
     if (field.kind == CustomFieldKind.boolean) {
@@ -319,7 +340,8 @@ class _FieldRow extends StatelessWidget {
           key: ValueKey('field-value-$index'),
           enableIMEPersonalizedLearning: false,
           controller: row.value,
-          obscureText: !row.shown,
+          obscureText: hideSecrets || !row.shown,
+          enabled: !locked,
           autocorrect: false,
           enableSuggestions: false,
           autofillHints: null,
@@ -328,7 +350,7 @@ class _FieldRow extends StatelessWidget {
           onChanged: onWrite,
           decoration: InputDecoration(
             labelText: label,
-            suffixIcon: RevealPasswordButton(shown: row.shown, onPressed: onToggleShown),
+            suffixIcon: hideSecrets ? null : RevealPasswordButton(shown: row.shown, onPressed: onToggleShown),
           ),
         ),
       );
@@ -403,7 +425,7 @@ class _FieldRow extends StatelessWidget {
               ),
             ],
           ),
-          if (!admin)
+          if (!admin && !locked)
             Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 6),
               child: Wrap(

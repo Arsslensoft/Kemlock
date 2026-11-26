@@ -17,6 +17,7 @@ Future<void> _pump(
   List<CustomField> fields, {
   KmCustomFields definitions = KmCustomFields.none,
   FakeSensitiveClipboard? clipboard,
+  bool hideSecrets = false,
 }) async {
   tester.view
     ..physicalSize = const Size(900, 2400)
@@ -24,7 +25,7 @@ Future<void> _pump(
   addTearDown(tester.view.reset);
   await pumpOnPage(
     tester,
-    SingleChildScrollView(child: CustomFieldsView(fields: fields)),
+    SingleChildScrollView(child: CustomFieldsView(fields: fields, hideSecrets: hideSecrets)),
     center: false,
     overrides: [kmCustomFieldsProvider.overrideWith((ref) async => definitions), ?clipboard?.asOverride],
   );
@@ -190,5 +191,17 @@ void main() {
 
     expect(find.text('5678'), findsNothing);
     expect(find.text(_dots), findsOneWidget);
+  });
+
+  testWidgets('a grant that hides passwords hides the hidden fields: masked, with no Show and no Copy', (tester) async {
+    await _pump(tester, [text, hidden], hideSecrets: true);
+
+    expect(find.text('E-42'), findsOneWidget);
+    expect(find.byKey(const ValueKey('field-copy-0')), findsOneWidget);
+    expect(find.text('Locker code'), findsOneWidget);
+    expect(find.text(_dots), findsOneWidget);
+    expect(find.text('1234'), findsNothing);
+    expect(find.byType(RevealPasswordButton), findsNothing);
+    expect(find.byKey(const ValueKey('field-copy-1')), findsNothing);
   });
 }

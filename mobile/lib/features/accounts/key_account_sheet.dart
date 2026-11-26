@@ -13,6 +13,7 @@ import '../../vault/vault_controller.dart';
 import '../fields/custom_fields_editor.dart';
 import '../links/linked_items_section.dart';
 import '../security_keys/key_codes_flow.dart';
+import '../spaces/hidden_passwords.dart';
 import '../sync/kemlock/km_kinds.dart';
 import 'tag_input.dart';
 
@@ -187,6 +188,7 @@ class _KeyAccountSheetState extends ConsumerState<KeyAccountSheet> {
             kind: itemKindOf(account),
             fields: _customFields,
             onChanged: (next) => setState(() => _customFields = next),
+            hideSecrets: hidesSecretsOf(ref, account),
           ),
           const SizedBox(height: 14),
           TagInput(key: _tagInput, value: _tags, onChanged: (next) => setState(() => _tags = next), suggestions: widget.allTags),

@@ -36,9 +36,13 @@ const _dots = '••••••••••';
 /// hidden value says nothing, so it is left out, as a checkbox always says something; an entry this version can't edit
 /// (a `linked` field, one with no name) isn't shown. With nothing to show, this takes no room.
 class CustomFieldsView extends ConsumerStatefulWidget {
-  const CustomFieldsView({super.key, required this.fields});
+  const CustomFieldsView({super.key, required this.fields, this.hideSecrets = false});
 
   final List<CustomField> fields;
+
+  /// A grant of a space hides this item's passwords from the account (`hiddenPasswordsProvider`), and with them its hidden fields:
+  /// they show masked, with no Show and no Copy.
+  final bool hideSecrets;
 
   @override
   ConsumerState<CustomFieldsView> createState() => _CustomFieldsViewState();
@@ -120,7 +124,8 @@ class _CustomFieldsViewState extends ConsumerState<CustomFieldsView> {
       );
     }
     if (field.kind == CustomFieldKind.hidden) {
-      final shown = _shown.contains(index);
+      // A grant that hides passwords hides these too: masked always, with no Show and no Copy
+      final shown = !widget.hideSecrets && _shown.contains(index);
       return GroupRow(
         key: ValueKey('field-$index'),
         first: first,
@@ -130,13 +135,15 @@ class _CustomFieldsViewState extends ConsumerState<CustomFieldsView> {
         secondaryStyle: AppType.mono(),
         secondarySemanticsLabel: shown ? null : context.t('fields.hidden'),
         tag: tag,
-        control: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RevealPasswordButton(shown: shown, onPressed: () => unawaited(_toggle(index))),
-            copyButton(field.value),
-          ],
-        ),
+        control: widget.hideSecrets
+            ? null
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RevealPasswordButton(shown: shown, onPressed: () => unawaited(_toggle(index))),
+                  copyButton(field.value),
+                ],
+              ),
       );
     }
     return GroupRow(

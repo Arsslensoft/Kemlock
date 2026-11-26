@@ -57,10 +57,11 @@ class HiddenPasswords {
   /// stay hidden.
   final Set<String>? webDavSpaces;
 
-  /// Whether [login]'s password is hidden from this account. A login of a space with no reported chain is hidden unless
-  /// the space is a known WebDAV space, and so is one whose chain gives this account no access at all.
-  bool hides(Login login) {
-    final space = login.spaceId;
+  /// Whether the secrets of [entry] are hidden from this account: the password of a login, and the hidden custom fields of any
+  /// item, which a grant of "passwords hidden" covers as it does a password. An entry of a space with no reported chain is hidden
+  /// unless the space is a known WebDAV space, and so is one whose chain gives this account no access at all.
+  bool hides(VaultEntry<Object?> entry) {
+    final space = entry.spaceId;
     if (space == null || space.isEmpty) {
       return false;
     }
@@ -69,7 +70,7 @@ class HiddenPasswords {
     if (hold == null) {
       return !(webDavSpaces?.contains(space) ?? false);
     }
-    final collection = hold.collections[login.id];
+    final collection = hold.collections[entry.id];
     if (collection != null) {
       final access = hold.chain.accessOf(hold.account, collection);
       return access == null || access.hidePasswords;
@@ -157,3 +158,8 @@ class HiddenPasswordsNotifier extends Notifier<HiddenPasswords> {
 /// The server spaces' hidden passwords. Until a run of a space reports its chain, its logins are hidden (see the top of
 /// this file).
 final hiddenPasswordsProvider = NotifierProvider<HiddenPasswordsNotifier, HiddenPasswords>(HiddenPasswordsNotifier.new);
+
+/// Whether the secrets of [entry] (its password, its hidden custom fields) are hidden from this account, for a sheet to watch:
+/// false for an item being added, which no space holds yet.
+bool hidesSecretsOf(WidgetRef ref, VaultEntry<Object?>? entry) =>
+    entry != null && ref.watch(hiddenPasswordsProvider.select((spaces) => spaces.hides(entry)));

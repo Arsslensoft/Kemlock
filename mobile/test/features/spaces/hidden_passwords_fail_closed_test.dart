@@ -4,6 +4,7 @@ import 'package:kemlock/features/spaces/space_types.dart';
 import 'package:kemlock/features/sync/sync.dart';
 import 'package:kemlock/features/sync/webdav.dart';
 import 'package:kemlock/models/login.dart';
+import 'package:kemlock/models/secure_note.dart';
 
 import 'chain_kit.dart';
 
@@ -51,6 +52,15 @@ void main() {
 
     expect(hidden.hides(login(spaceId: 'family')), isFalse);
     expect(hidden.hides(login(spaceId: space)), isTrue);
+  });
+
+  test('the hidden fields of any item follow the same grant: a note of a hiding collection is hidden, one of the vault is not', () {
+    final hiding = const HiddenPasswords().remembering(space, holdFor(CollectionPermission.editHidePasswords));
+    final note = SecureNote(id: 'l1', title: 'Wi-Fi', addedAt: 0, spaceId: space);
+
+    expect(hiding.hides(note), isTrue);
+    expect(hiding.hides(SecureNote(id: 'n2', title: 'Own', addedAt: 0)), isFalse);
+    expect(const HiddenPasswords().hides(note), isTrue, reason: 'no chain reported yet');
   });
 
   test('only a reported grant without hide-passwords releases a login', () {
