@@ -162,7 +162,8 @@ void main() {
 
     await tester.enterText(field(t('notes.field.text')), 'changed');
     await tapOn(tester, find.text('Router'));
-    expect(location(app), '/vault/notes/$second');
+    // A pushed page sits above the one it came from, so the router's location stays the first; the second note is what shows
+    expect(find.widgetWithText(TextField, 'admin'), findsOneWidget);
 
     await tapOn(tester, find.bySemanticsLabel(t('nav.back')));
 

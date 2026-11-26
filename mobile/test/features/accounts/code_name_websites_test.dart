@@ -92,7 +92,9 @@ void main() {
     await tapOn(tester, find.widgetWithText(FilledButton, t('addBackup.save', {'count': 3})));
 
     BackupService service() => app.container.read(vaultControllerProvider).backupServices.single;
-    expect((service().serviceName, service().name, service().websites), ('Google', 'Personal Google', ['google.com']));
+    // A record compares its list by identity, so each member is checked on its own
+    expect((service().serviceName, service().name), ('Google', 'Personal Google'));
+    expect(service().websites, ['google.com']);
     expect(backupTitle(service()), 'Personal Google');
 
     // Its Name and websites sheet changes both

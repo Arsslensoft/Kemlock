@@ -29,10 +29,10 @@ PickedFile _pdf({int size = 2048, String name = 'lease.pdf'}) =>
 void main() {
   late FakeFiles files;
 
-  Future<TestApp> open(WidgetTester tester, {List<Override> overrides = const []}) async {
+  Future<TestApp> open(WidgetTester tester, {List<Override> overrides = const [], Override? sealer}) async {
     files = FakeFiles();
     final app = TestApp();
-    await startApp(tester, app, overrides: [files.asOverride, sealsOnTheSpot, ...overrides]);
+    await startApp(tester, app, overrides: [files.asOverride, sealer ?? sealsOnTheSpot, ...overrides]);
     await createVault(tester);
     await tester.pump(const Duration(seconds: 10));
     await tapOn(tester, tab('nav.vault'));
@@ -86,9 +86,9 @@ void main() {
   testWidgets('a file the sealer refuses for another reason than its size is not called too large', (tester) async {
     final app = await open(
       tester,
-      overrides: [
-        attachmentSealerProvider.overrideWithValue((plain, {required name, type, required now}) => throw ArgumentError.value(name, 'name')),
-      ],
+      sealer: attachmentSealerProvider.overrideWithValue(
+        (plain, {required name, type, required now}) => throw ArgumentError.value(name, 'name'),
+      ),
     );
     files.nextPick = _pdf();
 

@@ -116,8 +116,8 @@ void main() {
 
     // A hidden value copies whole, masked or not
     expect([for (final copy in clipboard.copies) copy.text], ['E-42', '1234', t('fields.yes')]);
-    // Let the toasts go
-    await tester.pump(const Duration(seconds: 10));
+    // Let the toasts go, and the clipboard clear after its 30 s
+    await tester.pump(const Duration(seconds: 31));
   });
 
   testWidgets('an admin\'s field carries the Admin tag and the name the admin has for it now', (tester) async {
