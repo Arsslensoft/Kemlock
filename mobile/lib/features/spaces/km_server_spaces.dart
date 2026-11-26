@@ -41,6 +41,7 @@ import '../sync/kemlock/km_account.dart';
 import '../sync/kemlock/km_api.dart';
 import '../sync/kemlock/km_backend.dart' show KmSyncResult;
 import '../sync/kemlock/km_cache.dart';
+import '../sync/kemlock/km_files.dart' show KmFileStore, KmFiles;
 import '../sync/kemlock/km_kinds.dart' show kmEntriesOf, kmEntryId;
 import '../sync/kemlock/km_move_plan.dart' show kmEntryHash;
 import '../sync/removal_guard.dart' show RemovalChoice;
@@ -105,7 +106,12 @@ class KmServerSpaces implements ServerSpacesSource, SpaceMover {
     this.markNoticeSeen,
     this.leaveFirstFor,
     this.onName,
+    this.files,
   });
+
+  /// The phone's attached files, which a space's notes and File items sync with as the vault's own do (`KmSpaceSync.files`, a
+  /// `KmFiles` over each run's connection). Without it the space's files are neither sent nor fetched.
+  final KmFileStore? files;
 
   /// The account whose app this is.
   final String accountId;
@@ -163,7 +169,9 @@ class KmServerSpaces implements ServerSpacesSource, SpaceMover {
 
   int get _seconds => _millis ~/ 1000;
 
-  KmSpaceSync _sync(String space, KmConnection connection, KmAccount account, {bool joining = false, bool bridged = false}) => KmSpaceSync(
+  KmSpaceSync _sync(String space, KmConnection connection, KmAccount account, {bool joining = false, bool bridged = false}) {
+    final store = files;
+    return KmSpaceSync(
     connection: connection,
     server: connection.server,
     account: account,
@@ -197,7 +205,9 @@ class KmServerSpaces implements ServerSpacesSource, SpaceMover {
     carriesClosure: bridged,
     homeDown: homeDown,
     homeUrl: homeUrl,
-  );
+    files: store == null ? null : KmFiles(store: store, connection: connection, server: connection.server),
+    );
+  }
 
   /// The account's spaces, as the server lists them.
   Future<List<ListedSpace>> _listed(KmConnection connection) async {
