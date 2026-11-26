@@ -1,6 +1,6 @@
 // What the "Link an item" picker offers for an item (the web vault's `linkCandidates`): the items of the vault, in the person's
 // own vault and in the spaces they can write to, that are not the item itself and are not linked to it already, narrowed by what
-// they typed. A link writes both items, so an item the person may not change is not offered. Pure Dart, no widgets.
+// they typed. A link writes both items, so an item the person may not change is not offered, nor one with no item id yet. Pure Dart.
 
 import 'package:kemlock_core/vault/item_links.dart';
 
@@ -19,6 +19,12 @@ List<VaultEntry<Object?>> linkCandidates(
   bool Function(VaultEntry<Object?> candidate)? canEdit,
   Owner? account,
 }) {
+  // A link names the item id of both ends: an entry that has none yet (its id is not a UUID, and no Kemlock Server account can make
+  // one) is linked to nothing, and nothing is linked to it
+  bool hasItemId(VaultEntry<Object?> candidate) => isLinkId(linkIdOf(candidate, account: account));
+  if (!hasItemId(entry)) {
+    return const [];
+  }
   final linked = linkedItemsOf(lists, entry, account: account);
   final taken = {
     for (final item in linked)
@@ -37,6 +43,7 @@ List<VaultEntry<Object?>> linkCandidates(
     for (final candidate in entriesOf(lists))
       if (!(candidate.runtimeType == entry.runtimeType && candidate.id == entry.id) &&
           !taken.contains((candidate.runtimeType, candidate.id)) &&
+          hasItemId(candidate) &&
           (canEdit?.call(candidate) ?? true) &&
           matches(candidate))
         candidate,

@@ -3351,6 +3351,7 @@
   "links.picker.noMatch": "No item matches your search.",
   "links.picker.more": "More items match. Type to narrow the list.",
   "links.snack.failed": "Couldn’t save the link. Nothing was changed.",
+  "links.snack.nothing": "Nothing was linked: these two items are linked already, or one of them can’t be linked yet.",
   "links.snack.readOnly": "You can’t change one of these items, so they can’t be linked.",
   "links.snack.cannotOpen": "This kind of item can’t be opened from here yet.",
   "links.kind.login": "Login",

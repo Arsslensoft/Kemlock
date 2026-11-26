@@ -67,4 +67,13 @@ void main() {
     expect(names(lists, note(), query: 'ada@example'), ['Me']);
     expect(names(lists, note(), query: 'nothing like it'), isEmpty);
   });
+
+  test('leaves out an item with no item id yet, and offers nothing to link one to', () {
+    // An id that is not a UUID has no item id until a Kemlock Server account makes one
+    const legacy = SecureNote(id: 'legacy-note', title: 'Old note', addedAt: 0);
+    final lists = Lists(logins: [login()], notes: [note(), legacy]);
+
+    expect(names(lists, login()), ['Recovery plan']);
+    expect(names(lists, legacy), isEmpty);
+  });
 }

@@ -153,6 +153,21 @@ void main() {
     });
   });
 
+  group('a link that changes nothing', () {
+    test('says so, and returns false, for an item with no item id yet', () async {
+      await openNew();
+      await controller().addLogin(_login(_loginId));
+      // An id that is not a UUID has no item id, and there is no Kemlock Server account to make one
+      await controller().addNote(SecureNote(id: 'legacy-note', title: 'Old', addedAt: 0));
+
+      expect(await controller().linkItems(login(), note()), isFalse);
+
+      expect(toast()?.message, t('links.snack.nothing'));
+      expect(login().links, isEmpty);
+      expect(note().links, isEmpty);
+    });
+  });
+
   group('saving an edit from a copy older than a link', () {
     test('a note saved from the page that opened before the link keeps the link', () async {
       await openNew();

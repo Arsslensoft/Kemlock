@@ -53,7 +53,9 @@ class LinkedItemsSection extends ConsumerWidget {
         final byName = a.entry == null ? 0 : entryName(a.entry!).toLowerCase().compareTo(entryName(b.entry!).toLowerCase());
         return byName != 0 ? byName : a.id.compareTo(b.id);
       });
-    final mayChange = access.canEdit(held);
+    // Linking writes this item and the one picked; one with no item id yet (an id that is not a UUID, with no Kemlock Server account
+    // to make one) can't be named by a link, so it offers none
+    final mayChange = access.canEdit(held) && isLinkId(linkIdOf(held, account: account));
     if (linked.isEmpty && !mayChange) {
       return const SizedBox.shrink();
     }

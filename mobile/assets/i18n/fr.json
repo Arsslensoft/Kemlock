@@ -3351,6 +3351,7 @@
   "links.picker.noMatch": "Aucun élément ne correspond à votre recherche.",
   "links.picker.more": "D’autres éléments correspondent. Précisez la recherche.",
   "links.snack.failed": "Le lien n’a pas pu être enregistré. Rien n’a été modifié.",
+  "links.snack.nothing": "Rien n’a été lié : ces deux éléments sont déjà liés, ou l’un d’eux ne peut pas encore l’être.",
   "links.snack.readOnly": "Vous ne pouvez pas modifier l’un de ces éléments : ils ne peuvent donc pas être liés.",
   "links.snack.cannotOpen": "Ce type d’élément ne peut pas encore être ouvert d’ici.",
   "links.kind.login": "Identifiant",

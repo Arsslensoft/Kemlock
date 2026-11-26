@@ -113,6 +113,19 @@ void main() {
     expect(inLogin(find.text('Everyday Visa')), findsOneWidget);
   });
 
+  testWidgets('an item with no item id yet offers no Link an item', (tester) async {
+    // An id that is not a UUID has no item id, and the test vault has no Kemlock Server account to make one
+    await open(
+      tester,
+      login: const Login(id: 'legacy-login', name: 'Proton', username: 'sam', password: 'pw', addedAt: 0),
+      card: _visa,
+    );
+    await tapOn(tester, find.text('Proton'));
+
+    expect(find.byType(LoginSheet), findsOneWidget);
+    expect(inLogin(find.text(t('links.add'))), findsNothing);
+  });
+
   testWidgets('the picker does not offer an item that is linked already', (tester) async {
     await open(tester, login: _proton(), card: _visa, linked: true);
     await tapOn(tester, find.text('Proton'));

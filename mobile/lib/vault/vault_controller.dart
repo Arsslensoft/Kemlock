@@ -1549,6 +1549,11 @@ class VaultController extends Notifier<VaultState> {
     final first = _held(a);
     final second = _held(b);
     final linked = linkEntries(first, second, now: _now, account: _linkAccount);
+    if (identical(linked.a, first) && identical(linked.b, second)) {
+      // Nothing to write: they are linked already, or one has no item id yet. Say so rather than look as if it worked
+      _toast('links.snack.nothing', const {}, ToastSeverity.error);
+      return Future.value(false);
+    }
     return _saveLinked(first, second, linked.a, linked.b);
   }
 
