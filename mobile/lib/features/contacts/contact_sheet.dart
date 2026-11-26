@@ -22,6 +22,7 @@ import '../keys/key_bridge.dart';
 import '../keys/key_standing.dart';
 import '../keys/key_widgets.dart';
 import '../sync/kemlock/km_kinds.dart';
+import '../links/linked_items_section.dart';
 import 'add_contact_sheet.dart';
 import 'contact_check.dart';
 import 'contact_keys.dart';
@@ -333,6 +334,7 @@ class _ContactSheetState extends ConsumerState<ContactSheet> {
                   fields: _customFields,
                   onChanged: (next) => setState(() => _customFields = next),
                 ),
+                LinkedItemsSection(entry: contact),
                 const SizedBox(height: 8),
                 Group(
                   children: [

@@ -19,6 +19,7 @@ import '../backup/coverage.dart';
 import '../breaches/breach_widgets.dart';
 import '../fields/custom_fields_editor.dart';
 import '../fields/custom_fields_view.dart';
+import '../links/linked_items_section.dart';
 import '../logins/account_login.dart';
 import '../settings/prefs.dart';
 import '../sync/kemlock/km_kinds.dart';
@@ -372,6 +373,7 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
           KeyTransferActions(account: account),
 
           if (_panel != _Panel.edit) CustomFieldsView(fields: account.fields),
+          LinkedItemsSection(entry: account),
 
           Padding(
             padding: const EdgeInsets.only(top: 16),

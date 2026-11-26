@@ -25,6 +25,7 @@ import '../accounts/tag_input.dart';
 import '../export/space_export.dart';
 import '../fields/custom_fields_editor.dart';
 import '../sync/kemlock/km_kinds.dart';
+import '../links/linked_items_section.dart';
 import '../sync/space_picker.dart';
 import '../sync/sync_store.dart';
 import '../vault/owner_check.dart';
@@ -503,6 +504,7 @@ class _KeySheetState extends ConsumerState<KeySheet> {
                   const SizedBox(height: 14),
                   SpacePicker(value: _spaceId, onChanged: (id) => setState(() => _spaceId = id)),
                 ],
+                LinkedItemsSection(entry: key),
                 const SizedBox(height: 8),
                 Group(
                   children: [

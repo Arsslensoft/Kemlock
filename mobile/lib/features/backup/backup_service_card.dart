@@ -15,6 +15,7 @@ import '../accounts/service_tile.dart';
 import '../fields/custom_fields_editor.dart';
 import '../fields/custom_fields_view.dart';
 import '../sync/kemlock/km_kinds.dart';
+import '../links/linked_items_section.dart';
 import '../sync/space_picker.dart';
 import '../sync/sync_store.dart';
 import 'backup_codes.dart';
@@ -346,6 +347,7 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
               value: _service.spaceId,
               onChanged: (spaceId) => widget.onUpdate(_service.copyWith(spaceId: spaceId ?? unset)),
             ),
+            LinkedItemsSection(entry: _service),
           ],
         ),
       ),

@@ -12,6 +12,7 @@ import '../../platform/secret_clipboard.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
 import '../fields/custom_fields_view.dart';
+import '../links/linked_items_section.dart';
 import '../lock/gate_widgets.dart';
 import '../settings/prefs.dart';
 import '../vault/owner_check.dart';
@@ -213,6 +214,7 @@ class _CardSheetState extends ConsumerState<CardSheet> {
                     child: Text(tags.join(' · '), style: AppType.caption.copyWith(color: p.textSecondary)),
                   ),
                 CustomFieldsView(fields: card.fields),
+                LinkedItemsSection(entry: card),
                 const SizedBox(height: 16),
                 OutlinedButton(
                   style: largeButtonStyle,
