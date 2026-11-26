@@ -153,6 +153,36 @@ void main() {
     });
   });
 
+  group('saving an edit from a copy older than a link', () {
+    test('a note saved from the page that opened before the link keeps the link', () async {
+      await openNew();
+      await controller().addNote(_note(_noteId));
+      await controller().addLogin(_login(_loginId));
+      // The note page holds this copy from when it opened
+      final stale = note();
+      await controller().linkItems(login(), note());
+
+      expect(await controller().updateNote(stale.copyWith(title: 'Renamed')), isTrue);
+
+      expect(note().title, 'Renamed');
+      expect(note().links.ids, {_loginId});
+      expect(linksOfLogin(), {_noteId});
+    });
+
+    test('a login saved from an old copy keeps its links too', () async {
+      await openNew();
+      await controller().addLogin(_login(_loginId));
+      await controller().addNote(_note(_noteId));
+      final stale = login();
+      await controller().linkItems(login(), note());
+
+      expect(await controller().updateLogin(stale.copyWith(name: 'Renamed')), isTrue);
+
+      expect(login().name, 'Renamed');
+      expect(linksOfLogin(), {_noteId});
+    });
+  });
+
   group('unlinking', () {
     test('removes both ends', () async {
       await openNew();

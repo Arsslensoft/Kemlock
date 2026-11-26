@@ -540,7 +540,7 @@ class VaultController extends Notifier<VaultState> {
     final session = state.session;
     if (session == null) return;
     final previous = state.accounts;
-    final next = _touchAccounts([for (final a in previous) a.id == updated.id ? updated : a]);
+    final next = _touchAccounts([for (final a in previous) a.id == updated.id ? _keepingLinks(updated, a) : a]);
     state = state.copyWith(accounts: next);
     try {
       await _store.saveAccounts(next, session);
@@ -716,7 +716,7 @@ class VaultController extends Notifier<VaultState> {
     final session = state.session;
     if (session == null) return;
     final previous = state.backupServices;
-    final next = _touchServices([for (final s in previous) s.id == updated.id ? updated : s]);
+    final next = _touchServices([for (final s in previous) s.id == updated.id ? _keepingLinks(updated, s) : s]);
     state = state.copyWith(backupServices: next);
     try {
       await _store.saveBackupServices(next, session);
@@ -1201,10 +1201,13 @@ class VaultController extends Notifier<VaultState> {
   /// Saves [next] as what the vault remembers of the accounts on keys,
   /// stamping what changed. False, with the list as it was, when the save
   /// failed; true without saving when nothing changed.
-  Future<bool> saveKeyAccounts(List<KeyAccount> next) async {
+  Future<bool> saveKeyAccounts(List<KeyAccount> given) async {
     final session = state.session;
     if (session == null) return false;
     var previous = state.keyAccounts;
+    // A sheet's copy of an account is as old as the sheet: a link made since is kept
+    final heldAccounts = {for (final account in previous) account.id: account};
+    final next = [for (final account in given) _keepingLinks(account, heldAccounts[account.id])];
     var stamped = stampChanged(next, previous, now: _now);
     if (canonical([for (final a in stamped) a.toJson()]) == canonical([for (final a in previous) a.toJson()])) return true;
     // The accounts that go are no longer named by the items linked to them
@@ -1395,7 +1398,11 @@ class VaultController extends Notifier<VaultState> {
     final session = state.session;
     if (session == null) return false;
     final previous = kind.read(state);
-    final next = stampChanged([for (final item in previous) item.id == updated.id ? updated : item], previous, now: _now);
+    final next = stampChanged(
+      [for (final item in previous) item.id == updated.id ? _keepingLinks(updated, item) : item],
+      previous,
+      now: _now,
+    );
     state = kind.write(state, next);
     try {
       await kind.save(next, session);
@@ -1461,6 +1468,12 @@ class VaultController extends Notifier<VaultState> {
   }
 
   // Links between items (docs/crypto.md, "Item bodies", `links`; the web vault's links.ts and relink.ts)
+
+  /// [updated] with the links the vault [held] for it now. A sheet's copy of an item is as old as the sheet, and the Linked items
+  /// section writes the vault, not that copy, so saving an edit from the copy must not take back a link made since. Links change
+  /// only through [linkItems], [unlinkItems] and what deletes and merges items, never through an edit.
+  T _keepingLinks<T extends VaultEntry<T>>(T updated, T? held) =>
+      held == null || const ListEquality<ItemLink>().equals(held.links, updated.links) ? updated : updated.withLinks(held.links);
 
   /// The vault's Kemlock Server account as an owner, for the `account:` of the core's link functions; null when the vault
   /// does not sync to a server.

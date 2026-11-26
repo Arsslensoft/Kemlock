@@ -416,6 +416,8 @@ class _NotePageState extends ConsumerState<NotePage> {
     final allTags = {for (final note in ref.watch(vaultControllerProvider.select((state) => state.notes))) ...?note.tags}.toList()..sort();
     final hasSpaces = ref.watch(syncProvider.select((sync) => sync.settings?.spaces.isNotEmpty ?? false));
     final stored = !_isNew || ref.watch(vaultControllerProvider.select((state) => state.notes.any((note) => note.id == _saved.id)));
+    // The vault's copy of the note, which holds the links made since this page opened
+    final held = ref.watch(vaultControllerProvider.select((state) => state.notes.firstWhereOrNull((n) => n.id == _saved.id))) ?? _saved;
 
     return PopScope(
       canPop: !_dirty,
@@ -508,7 +510,7 @@ class _NotePageState extends ConsumerState<NotePage> {
                           offline: ref.watch(offlineProvider),
                           preview: (file, size) => PictureThumb(image: _image(file), size: size),
                         ),
-                        if (stored) LinkedItemsSection(entry: _saved),
+                        if (stored) LinkedItemsSection(entry: held),
                         const SizedBox(height: 8),
                         const SizedBox(height: 8),
                         Group(
