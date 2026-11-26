@@ -5,11 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/messages.dart';
+import '../../models/custom_field.dart';
 import '../../models/json.dart';
 import '../../models/key_account.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
+import '../fields/custom_fields_editor.dart';
 import '../security_keys/key_codes_flow.dart';
+import '../sync/kemlock/km_kinds.dart';
 import 'tag_input.dart';
 
 /// Opens the sheet of an account kept on a security key (openspec:
@@ -40,6 +43,7 @@ class KeyAccountSheet extends ConsumerStatefulWidget {
 class _KeyAccountSheetState extends ConsumerState<KeyAccountSheet> {
   late final _note = TextEditingController(text: widget.account.note ?? '');
   late var _tags = widget.account.tags ?? const <String>[];
+  late var _customFields = <CustomField>[...widget.account.fields];
   final _tagInput = GlobalKey<TagInputState>();
 
   @override
@@ -55,7 +59,9 @@ class _KeyAccountSheetState extends ConsumerState<KeyAccountSheet> {
   }
 
   bool _changed(KeyAccount account) =>
-      _note.text.trim() != (account.note ?? '') || !const ListEquality<String>().equals(_tags, account.tags ?? const []);
+      _note.text.trim() != (account.note ?? '') ||
+      !const ListEquality<String>().equals(_tags, account.tags ?? const []) ||
+      !jsonEquals(writeFields(_customFields), writeFields(account.fields));
 
   Future<void> _save(KeyAccount account) async {
     // A tag still in the field counts, as leaving the field would have added it
@@ -63,7 +69,9 @@ class _KeyAccountSheetState extends ConsumerState<KeyAccountSheet> {
     final note = _note.text.trim();
     final saved = await ref
         .read(vaultControllerProvider.notifier)
-        .updateKeyAccount(account.copyWith(note: note.isNotEmpty ? note : unset, tags: tags.isNotEmpty ? tags : unset));
+        .updateKeyAccount(
+          account.copyWith(note: note.isNotEmpty ? note : unset, tags: tags.isNotEmpty ? tags : unset, fields: _customFields),
+        );
     if (saved && mounted) setState(() => _tags = tags);
   }
 
@@ -172,6 +180,12 @@ class _KeyAccountSheetState extends ConsumerState<KeyAccountSheet> {
               hintText: context.t('accountSheet.notePlaceholder'),
               alignLabelWithHint: true,
             ),
+          ),
+          const SizedBox(height: 14),
+          CustomFieldsEditor(
+            kind: itemKindOf(account),
+            fields: _customFields,
+            onChanged: (next) => setState(() => _customFields = next),
           ),
           const SizedBox(height: 14),
           TagInput(key: _tagInput, value: _tags, onChanged: (next) => setState(() => _tags = next), suggestions: widget.allTags),
