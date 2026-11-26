@@ -19,6 +19,7 @@ import '../../models/passkey.dart';
 import '../../models/payment_card.dart';
 import '../../models/secure_note.dart';
 import '../../models/vault_entry.dart';
+import '../../models/vault_file.dart';
 import '../../models/vault_key.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
@@ -26,6 +27,7 @@ import '../accounts/account_sheet.dart';
 import '../accounts/key_account_sheet.dart';
 import '../cards/card_sheet.dart';
 import '../contacts/contact_sheet.dart';
+import '../files/file_sheet.dart';
 import '../identities/identity_sheet.dart';
 import '../keys/key_sheet.dart';
 import '../logins/login_sheet.dart';
@@ -65,8 +67,9 @@ Future<void> openLinkedEntry(BuildContext context, WidgetRef ref, VaultEntry<Obj
         Uri(path: '/backup', queryParameters: {'open': service.id, 'at': '${++_backupRequests}'}).toString(),
         tab: '/backup',
       );
+    case final VaultFile file:
+      await showFileSheet(context, file);
     default:
-      // TODO(file-items): a File item opens its own sheet here (`case final VaultFile file: await showFileSheet(context, file)`).
       ref.read(toastsProvider.notifier).show(context.t('links.snack.cannotOpen'), severity: ToastSeverity.info);
   }
 }

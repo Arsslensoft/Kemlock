@@ -15,6 +15,7 @@ import '../../platform/network.dart';
 import '../../ui/ui.dart';
 import '../../vault/attachment_store.dart';
 import '../../vault/vault_controller.dart';
+import '../links/linked_items_section.dart';
 import '../notes/note_files.dart';
 import '../sync/attachment_downloads.dart';
 import 'file_edit_sheet.dart';
@@ -268,7 +269,7 @@ class _FileSheetState extends ConsumerState<FileSheet> {
                   ],
                 ),
                 // custom fields: none for files
-                // linked items section
+                LinkedItemsSection(entry: item),
                 const SizedBox(height: 16),
                 OutlinedButton(
                   style: largeButtonStyle,

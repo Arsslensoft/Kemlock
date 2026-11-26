@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kemlock/crypto/attachment_format.dart';
 import 'package:kemlock/features/cards/card_sheet.dart';
+import 'package:kemlock/features/files/file_sheet.dart';
 import 'package:kemlock/features/links/link_picker_sheet.dart';
 import 'package:kemlock/features/logins/login_sheet.dart';
 import 'package:kemlock/models/login.dart';
 import 'package:kemlock/models/payment_card.dart';
+import 'package:kemlock/models/vault_file.dart';
 import 'package:kemlock/vault/vault_controller.dart';
 import 'package:kemlock_core/models/item_link.dart';
 import 'package:kemlock_core/vault/item_links.dart';
@@ -16,6 +19,7 @@ import '../../helpers/test_app.dart';
 // The Linked items section of an item's sheet: a login and a card here, which are linked to each other
 const _loginId = '11111111-1111-4111-8111-111111111111';
 const _cardId = '22222222-2222-4222-8222-222222222222';
+const _fileId = '33333333-3333-4333-8333-333333333333';
 const _goneId = '99999999-9999-4999-8999-999999999999';
 
 const _visa = PaymentCard(id: _cardId, name: 'Everyday Visa', cardholder: 'Ada Lovelace', number: '4111111111111111', addedAt: 0);
@@ -158,5 +162,22 @@ void main() {
     expect(vault(app).cards, isEmpty);
     expect(vault(app).logins.single.links, isEmpty);
     expect(linkedItemsOf(vault(app).lists, vault(app).logins.single), isEmpty);
+  });
+
+  testWidgets('a login linked to a file opens the File sheet, which lists the login too', (tester) async {
+    final app = await open(tester, login: _proton());
+    const entry = NoteAttachment(id: 'a1', name: 'lease.pdf', size: 10, type: 'application/pdf', key: 'AA==', addedAt: 2);
+    final controller = app.container.read(vaultControllerProvider.notifier);
+    await controller.addFile(const VaultFile(id: _fileId, name: 'Lease', file: entry, addedAt: 2));
+    await controller.linkItems(vault(app).logins.single, vault(app).files.single);
+    await tester.pump(const Duration(seconds: 10));
+    await tapOn(tester, find.text('Proton'));
+
+    expect(inLogin(find.text('Lease')), findsOneWidget);
+    await tapOn(tester, inLogin(find.text('Lease')));
+
+    expect(find.byType(FileSheet), findsOneWidget);
+    expect(find.descendant(of: find.byType(FileSheet), matching: find.text('Proton')), findsOneWidget);
+    expect(vault(app).files.single.links.ids, {_loginId});
   });
 }

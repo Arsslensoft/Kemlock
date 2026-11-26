@@ -540,11 +540,13 @@ class VaultController extends Notifier<VaultState> {
     final session = state.session;
     if (session == null) return;
     final previous = state.accounts;
+    final before = previous.firstWhereOrNull((a) => a.id == updated.id);
     final next = _touchAccounts([for (final a in previous) a.id == updated.id ? _keepingLinks(updated, a) : a]);
     state = state.copyWith(accounts: next);
     try {
       await _store.saveAccounts(next, session);
       _bump();
+      await _relinkAfterMove(before, updated);
     } catch (_) {
       state = state.copyWith(accounts: previous);
       _toast('app.snack.accountUpdateFailed', const {}, ToastSeverity.error);
@@ -712,11 +714,13 @@ class VaultController extends Notifier<VaultState> {
     final session = state.session;
     if (session == null) return;
     final previous = state.backupServices;
+    final before = previous.firstWhereOrNull((s) => s.id == updated.id);
     final next = _touchServices([for (final s in previous) s.id == updated.id ? _keepingLinks(updated, s) : s]);
     state = state.copyWith(backupServices: next);
     try {
       await _store.saveBackupServices(next, session);
       _bump();
+      await _relinkAfterMove(before, updated);
     } catch (_) {
       state = state.copyWith(backupServices: previous);
       _toast('app.snack.backupUpdateFailed', const {}, ToastSeverity.error);
@@ -1384,6 +1388,7 @@ class VaultController extends Notifier<VaultState> {
     final session = state.session;
     if (session == null) return false;
     final previous = kind.read(state);
+    final before = previous.firstWhereOrNull((item) => item.id == updated.id);
     final next = stampChanged(
       [for (final item in previous) item.id == updated.id ? _keepingLinks(updated, item) : item],
       previous,
@@ -1393,6 +1398,7 @@ class VaultController extends Notifier<VaultState> {
     try {
       await kind.save(next, session);
       _bump();
+      await _relinkAfterMove(before, updated);
       return true;
     } catch (_) {
       state = kind.write(state, previous);
@@ -1455,6 +1461,27 @@ class VaultController extends Notifier<VaultState> {
   /// only through [linkItems], [unlinkItems] and what deletes and merges items, never through an edit.
   T _keepingLinks<T extends VaultEntry<T>>(T updated, T? held) =>
       held == null || const ListEquality<ItemLink>().equals(held.links, updated.links) ? updated : updated.withLinks(held.links);
+
+  /// After [updated] moved between the vault and a space (its `spaceId` is not what [before] had), the entries that named it by the
+  /// item id it had name it by the one it has now: an id that is not a UUID is made into an item id for its owner, the account or
+  /// the space, so it changes with the move. A save that fails leaves one-way links, which the item sheet offers to mend.
+  Future<void> _relinkAfterMove(VaultEntry<Object?>? before, VaultEntry<Object?> updated) async {
+    if (before == null || (before.spaceId ?? '') == (updated.spaceId ?? '')) return;
+    final account = _linkAccount;
+    final oldLinkId = linkIdOf(before, account: account);
+    final newLinkId = linkIdOf(updated, account: account);
+    if (oldLinkId == newLinkId) return;
+    List<VaultEntry<Object?>> renamed() => relinkedAfterMove(state.lists, oldLinkId: oldLinkId, newLinkId: newLinkId, now: _now);
+    final edits = [
+      for (final other in renamed())
+        if (_mayWrite(other))
+          _Edit(
+            other,
+            (held) => renamed().firstWhereOrNull((next) => next.runtimeType == held.runtimeType && next.id == held.id) ?? held,
+          ),
+    ];
+    await _saveEdits(edits);
+  }
 
   /// The vault's Kemlock Server account as an owner, for the `account:` of the core's link functions; null when the vault
   /// does not sync to a server.
