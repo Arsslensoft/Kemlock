@@ -73,13 +73,7 @@ class _Row {
 /// same [CustomField]: only the one the person changes is replaced, through `copyWith`. The editor keeps the list it
 /// edits, so it is read at the start only; [onChanged] gets the whole list after each change.
 class CustomFieldsEditor extends ConsumerStatefulWidget {
-  const CustomFieldsEditor({
-    super.key,
-    required this.kind,
-    required this.fields,
-    required this.onChanged,
-    this.hideSecrets = false,
-  });
+  const CustomFieldsEditor({super.key, required this.kind, required this.fields, required this.onChanged, this.hideSecrets = false});
 
   /// The kind of the item (`itemKindOf(entry)`), which decides which admin fields are offered.
   final String kind;
@@ -246,12 +240,7 @@ class _CustomFieldsEditorState extends ConsumerState<CustomFieldsEditor> {
                     ),
                 ],
                 if (offered.isNotEmpty && allowOwn) const PopupMenuDivider(),
-                if (allowOwn)
-                  PopupMenuItem<Object>(
-                    key: const ValueKey('fields-own'),
-                    value: 'own',
-                    child: Text(context.t('fields.own')),
-                  ),
+                if (allowOwn) PopupMenuItem<Object>(key: const ValueKey('fields-own'), value: 'own', child: Text(context.t('fields.own'))),
               ],
               child: IgnorePointer(
                 child: TextButton.icon(

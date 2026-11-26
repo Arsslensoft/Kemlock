@@ -74,7 +74,11 @@ void main() {
 
   test('the custom fields arrive on the new entry', () async {
     const field = CustomField(name: 'Seed owner', value: 'ada', kind: CustomFieldKind.text);
-    final rig = await _rig(accounts: [totp.copyWith(fields: const [field])]);
+    final rig = await _rig(
+      accounts: [
+        totp.copyWith(fields: const [field]),
+      ],
+    );
 
     await _put0(rig, _held(rig, 'Forge'), KeyTransfer.move);
 

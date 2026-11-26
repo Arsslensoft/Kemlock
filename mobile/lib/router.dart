@@ -67,10 +67,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/backup',
             // `?open=<id>` opens that service's card, as a link to backup codes does; `at` tells one such request from the last
-            pageBuilder: (_, state) => _rise(
-              state,
-              BackupPage(openId: state.uri.queryParameters['open'], request: state.uri.queryParameters['at']),
-            ),
+            pageBuilder: (_, state) =>
+                _rise(state, BackupPage(openId: state.uri.queryParameters['open'], request: state.uri.queryParameters['at'])),
           ),
           GoRoute(
             path: '/vault',

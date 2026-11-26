@@ -18,6 +18,7 @@ import 'package:kemlock/models/login.dart';
 import 'package:kemlock/models/otp_account.dart';
 import 'package:kemlock/models/passkey.dart';
 import 'package:kemlock/models/payment_card.dart';
+import 'package:kemlock/models/vault_entry.dart';
 import 'package:kemlock/platform/credential_exchange.dart';
 import 'package:kemlock/vault/vault_controller.dart';
 
@@ -89,7 +90,7 @@ class _HidesLogin extends HiddenPasswords {
   final String id;
 
   @override
-  bool hides(Login login) => login.id == id;
+  bool hides(VaultEntry<Object?> entry) => entry.id == id;
 }
 
 /// A [HiddenPasswordsNotifier] a test can change while a sheet is up.

@@ -9,6 +9,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kemlock_core/models/item_link.dart';
 import 'package:kemlock_core/vault/item_links.dart';
 
 import '../../crypto/account/encoding.dart' show Owner;
@@ -124,24 +125,14 @@ bool mayUnlinkLink(LinkedItem item, VaultEntry<Object?> held, bool Function(Vaul
   if (other == null) {
     return false;
   }
-  return [
-    if (_names(held, other, account)) held,
-    if (_names(other, held, account)) other,
-  ].every(canEdit);
+  return [if (_names(held, other, account)) held, if (_names(other, held, account)) other].every(canEdit);
 }
 
 enum _RowAction { fix, unlink }
 
 /// One linked item: its row, and the menu of what can be done to the link.
 class _LinkRow extends ConsumerWidget {
-  const _LinkRow({
-    super.key,
-    required this.first,
-    required this.item,
-    required this.entry,
-    required this.canFix,
-    required this.canUnlink,
-  });
+  const _LinkRow({super.key, required this.first, required this.item, required this.entry, required this.canFix, required this.canUnlink});
 
   final bool first;
   final LinkedItem item;

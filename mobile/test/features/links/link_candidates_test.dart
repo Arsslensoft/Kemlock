@@ -43,9 +43,13 @@ void main() {
   test('leaves out the items already linked to it, from whichever end names the link', () {
     // The login names the note; the card names the login
     final lists = Lists(
-      logins: [login(links: const [ItemLink(_note)])],
+      logins: [
+        login(links: const [ItemLink(_note)]),
+      ],
       notes: [note()],
-      cards: [card.withLinks(const [ItemLink(_login)])],
+      cards: [
+        card.withLinks(const [ItemLink(_login)]),
+      ],
       identities: const [identity],
     );
 

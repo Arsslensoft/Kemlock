@@ -15,8 +15,11 @@ import '../sync/sync_merge.dart' show canonical;
 import 'new_file.dart';
 
 /// Opens the sheet that edits [file]: its name, notes, favourite and space, and the file itself, which can be replaced.
-Future<void> showFileEditSheet(BuildContext context, VaultFile file) =>
-    showAppBottomSheet<void>(context, label: context.t('files.edit.title'), builder: (_) => FileEditSheet(file: file));
+Future<void> showFileEditSheet(BuildContext context, VaultFile file) => showAppBottomSheet<void>(
+  context,
+  label: context.t('files.edit.title'),
+  builder: (_) => FileEditSheet(file: file),
+);
 
 /// A File item's fields. The name needs to be filled; a replaced file is encrypted and stored as soon as it is chosen, and becomes the
 /// item's file when it is saved. While the name is still the old file's, it follows the new one.

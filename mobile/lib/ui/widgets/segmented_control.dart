@@ -76,8 +76,7 @@ class SegmentedControl<T> extends StatelessWidget {
               maxLines: 1,
               textDirection: direction,
               textScaler: scaler,
-            )..layout())
-                .width +
+            )..layout()).width +
             (option.icon != null ? 23 : 0) +
             24,
     ];

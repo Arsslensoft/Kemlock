@@ -54,13 +54,7 @@ class _LinkPickerState extends ConsumerState<LinkPicker> {
     final b = context.bmc;
     final lists = ref.watch(vaultControllerProvider).lists;
     final access = ref.watch(hiddenPasswordsProvider);
-    final found = linkCandidates(
-      lists,
-      widget.entry,
-      query: _query.text,
-      canEdit: access.canEdit,
-      account: ref.watch(linkAccountProvider),
-    );
+    final found = linkCandidates(lists, widget.entry, query: _query.text, canEdit: access.canEdit, account: ref.watch(linkAccountProvider));
     final shown = found.take(linkPickerLimit).toList();
     return Column(
       mainAxisSize: MainAxisSize.min,

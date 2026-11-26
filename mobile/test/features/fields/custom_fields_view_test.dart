@@ -25,7 +25,9 @@ Future<void> _pump(
   addTearDown(tester.view.reset);
   await pumpOnPage(
     tester,
-    SingleChildScrollView(child: CustomFieldsView(fields: fields, hideSecrets: hideSecrets)),
+    SingleChildScrollView(
+      child: CustomFieldsView(fields: fields, hideSecrets: hideSecrets),
+    ),
     center: false,
     overrides: [kmCustomFieldsProvider.overrideWith((ref) async => definitions), ?clipboard?.asOverride],
   );
@@ -92,7 +94,12 @@ void main() {
     expect(find.byType(Group), findsNothing);
     expect(find.text(t('fields.title').toUpperCase()), findsNothing);
 
-    await _pump(tester, readFields([{'name': 'Empty', 'value': '', 'kind': 'text'}]));
+    await _pump(
+      tester,
+      readFields([
+        {'name': 'Empty', 'value': '', 'kind': 'text'},
+      ]),
+    );
     expect(find.byType(Group), findsNothing);
   });
 

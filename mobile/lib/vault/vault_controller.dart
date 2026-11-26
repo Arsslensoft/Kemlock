@@ -219,7 +219,11 @@ final vaultControllerProvider = NotifierProvider<VaultController, VaultState>(Va
 /// Two entries are the same account when issuer and secret match.
 String _accountKey(OtpAccount a) => '${a.issuer}::${a.secret}';
 
-String _displayName(OtpAccount a) => (a.name?.trim().isNotEmpty ?? false) ? a.name!.trim() : a.issuer.isNotEmpty ? a.issuer : a.label;
+String _displayName(OtpAccount a) => (a.name?.trim().isNotEmpty ?? false)
+    ? a.name!.trim()
+    : a.issuer.isNotEmpty
+    ? a.issuer
+    : a.label;
 
 /// The vault's state machine and every change to its contents, as `App.tsx`
 /// kept them: open, lock and switch vaults; add, edit, reorder and remove
@@ -1475,10 +1479,7 @@ class VaultController extends Notifier<VaultState> {
     final edits = [
       for (final other in renamed())
         if (_mayWrite(other))
-          _Edit(
-            other,
-            (held) => renamed().firstWhereOrNull((next) => next.runtimeType == held.runtimeType && next.id == held.id) ?? held,
-          ),
+          _Edit(other, (held) => renamed().firstWhereOrNull((next) => next.runtimeType == held.runtimeType && next.id == held.id) ?? held),
     ];
     await _saveEdits(edits);
   }
@@ -1654,9 +1655,12 @@ class VaultController extends Notifier<VaultState> {
   VaultEntry<Object?> _droppingLinksTo(VaultEntry<Object?> held, List<VaultEntry<Object?>> removed) {
     VaultEntry<Object?>? dropped;
     for (final entry in removed) {
-      final result = droppedLinksTo(state.lists, entry, now: _now, account: _linkAccount).firstWhereOrNull(
-        (other) => other.runtimeType == held.runtimeType && other.id == held.id,
-      );
+      final result = droppedLinksTo(
+        state.lists,
+        entry,
+        now: _now,
+        account: _linkAccount,
+      ).firstWhereOrNull((other) => other.runtimeType == held.runtimeType && other.id == held.id);
       if (result == null) continue;
       // What another removed entry named too is taken out of the result, as the core made it for one entry at a time
       dropped = dropped == null ? result : _withoutNames(dropped, _linkNamesOf([entry]));
@@ -1806,7 +1810,13 @@ class VaultController extends Notifier<VaultState> {
     return switch (first) {
       KeyAccount() => _applyMerge(_keyAccounts, session, put: put.cast<KeyAccount>(), remove: remove.cast<KeyAccount>(), edits: edits),
       OtpAccount() => _applyMerge(_accounts, session, put: put.cast<OtpAccount>(), remove: remove.cast<OtpAccount>(), edits: edits),
-      BackupService() => _applyMerge(_services, session, put: put.cast<BackupService>(), remove: remove.cast<BackupService>(), edits: edits),
+      BackupService() => _applyMerge(
+        _services,
+        session,
+        put: put.cast<BackupService>(),
+        remove: remove.cast<BackupService>(),
+        edits: edits,
+      ),
       SecureNote() => _applyMerge(_notes, session, put: put.cast<SecureNote>(), remove: remove.cast<SecureNote>(), edits: edits),
       Passkey() => _applyMerge(_passkeys, session, put: put.cast<Passkey>(), remove: remove.cast<Passkey>(), edits: edits),
       VaultKey() => _applyMerge(_keys, session, put: put.cast<VaultKey>(), remove: remove.cast<VaultKey>(), edits: edits),
@@ -1948,17 +1958,17 @@ class VaultController extends Notifier<VaultState> {
       // The links the merge moved go back to the items they were taken from
       final relinkUndo = [for (final json in record.relinkUndo) RelinkUndo.fromJson(json)];
       if (relinkUndo.isNotEmpty) {
-        final members = {for (final item in [kept, ...removed]) if (item is VaultEntry<Object?>) (item.runtimeType, item.id)};
+        final members = {
+          for (final item in [kept, ...removed])
+            if (item is VaultEntry<Object?>) (item.runtimeType, item.id),
+        };
         List<VaultEntry<Object?>> undone() => [
           for (final other in undoRelink(state.lists, relinkUndo, now: _now))
             if (!members.contains((other.runtimeType, other.id)) && _mayWrite(other)) other,
         ];
         final edits = [
           for (final other in undone())
-            _Edit(
-              other,
-              (held) => undone().firstWhereOrNull((next) => next.runtimeType == held.runtimeType && next.id == held.id) ?? held,
-            ),
+            _Edit(other, (held) => undone().firstWhereOrNull((next) => next.runtimeType == held.runtimeType && next.id == held.id) ?? held),
         ];
         if (edits.isNotEmpty) {
           undo.add(await _applyEntries(session, edits: edits));

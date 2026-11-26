@@ -237,9 +237,7 @@ void main() {
 
   testWidgets('a key for the email of a person with no key says so', (tester) async {
     final contacts = await open(tester);
-    await contacts.hold(
-      const Contact(id: 'p1', name: 'Grace P', source: ContactSource.manual, email: ' Grace@Example.org ', addedAt: 1),
-    );
+    await contacts.hold(const Contact(id: 'p1', name: 'Grace P', source: ContactSource.manual, email: ' Grace@Example.org ', addedAt: 1));
 
     await contacts.review([grace1]);
 

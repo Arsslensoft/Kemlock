@@ -82,10 +82,7 @@ class ManualEntry extends StatelessWidget {
           controller: form.name,
           textInputAction: TextInputAction.next,
           textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(
-            labelText: context.t('accounts.field.name'),
-            hintText: context.t('accounts.field.namePlaceholder'),
-          ),
+          decoration: InputDecoration(labelText: context.t('accounts.field.name'), hintText: context.t('accounts.field.namePlaceholder')),
         ),
         const SizedBox(height: 14),
         TextField(

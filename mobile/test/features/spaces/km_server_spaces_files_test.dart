@@ -15,12 +15,8 @@ const _target = KemlockTarget(
   deviceId: 'device-1',
 );
 
-KmHost _host({VaultKmFiles? files}) => KmHost(
-  values: KmMemoryValues(),
-  clientFor: (_) => throw UnimplementedError(),
-  proofsFor: (_) async => null,
-  fileStore: files,
-);
+KmHost _host({VaultKmFiles? files}) =>
+    KmHost(values: KmMemoryValues(), clientFor: (_) => throw UnimplementedError(), proofsFor: (_) async => null, fileStore: files);
 
 void main() {
   test('the spaces of a host that keeps files are given its file store', () {

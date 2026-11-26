@@ -45,7 +45,12 @@ Future<({ProviderContainer container, FakeKemlockServer server})> _open({Kemlock
   server.respond = (request) async => request.url.path == '/kem/v1/custom-fields' ? _answer() : server.handle(request);
   final container = ProviderContainer(
     overrides: [
-      fakeSync(SyncSnapshot(settings: SyncSettings(kemlock: target), running: running)),
+      fakeSync(
+        SyncSnapshot(
+          settings: SyncSettings(kemlock: target),
+          running: running,
+        ),
+      ),
       kemlockHostProvider.overrideWith(() => KmHostHolder(host)),
     ],
   );

@@ -172,40 +172,40 @@ class KmServerSpaces implements ServerSpacesSource, SpaceMover {
   KmSpaceSync _sync(String space, KmConnection connection, KmAccount account, {bool joining = false, bool bridged = false}) {
     final store = files;
     return KmSpaceSync(
-    connection: connection,
-    server: connection.server,
-    account: account,
-    space: space,
-    loadCache: () async => KmCache.fromJson(await loadValue(kmSpaceCacheKey(space))),
-    saveCache: (cache) => saveValue(kmSpaceCacheKey(space), cache.toJson()),
-    loadAnchor: (id) async {
-      final load = loadAnchors;
-      return load == null ? null : SpaceAnchors.fromJson(await load()).of(id);
-    },
-    loadCompared: (id) async {
-      final load = loadAnchors;
-      return load != null && SpaceAnchors.fromJson(await load()).hasCompared(id);
-    },
-    saveAnchor: (id, anchor, {afterFence = false, compared = false}) async {
-      final load = loadAnchors;
-      final save = saveAnchors;
-      if (load == null || save == null) {
-        return;
-      }
-      final held = SpaceAnchors.fromJson(await load());
-      await save(held.remembering(id, anchor, afterFence: afterFence, compared: compared).toJson());
-    },
-    chainCrypto: chainCrypto,
-    manifestCrypto: manifestCrypto,
-    signRecord: signRecord,
-    clock: clock,
-    onChain: onChain,
-    onComparedChain: onComparedChain,
-    joining: joining,
-    carriesClosure: bridged,
-    homeDown: homeDown,
-    homeUrl: homeUrl,
-    files: store == null ? null : KmFiles(store: store, connection: connection, server: connection.server),
+      connection: connection,
+      server: connection.server,
+      account: account,
+      space: space,
+      loadCache: () async => KmCache.fromJson(await loadValue(kmSpaceCacheKey(space))),
+      saveCache: (cache) => saveValue(kmSpaceCacheKey(space), cache.toJson()),
+      loadAnchor: (id) async {
+        final load = loadAnchors;
+        return load == null ? null : SpaceAnchors.fromJson(await load()).of(id);
+      },
+      loadCompared: (id) async {
+        final load = loadAnchors;
+        return load != null && SpaceAnchors.fromJson(await load()).hasCompared(id);
+      },
+      saveAnchor: (id, anchor, {afterFence = false, compared = false}) async {
+        final load = loadAnchors;
+        final save = saveAnchors;
+        if (load == null || save == null) {
+          return;
+        }
+        final held = SpaceAnchors.fromJson(await load());
+        await save(held.remembering(id, anchor, afterFence: afterFence, compared: compared).toJson());
+      },
+      chainCrypto: chainCrypto,
+      manifestCrypto: manifestCrypto,
+      signRecord: signRecord,
+      clock: clock,
+      onChain: onChain,
+      onComparedChain: onComparedChain,
+      joining: joining,
+      carriesClosure: bridged,
+      homeDown: homeDown,
+      homeUrl: homeUrl,
+      files: store == null ? null : KmFiles(store: store, connection: connection, server: connection.server),
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kemlock/features/accounts/account_websites.dart';
 import 'package:kemlock/models/login.dart';
@@ -72,7 +73,12 @@ void main() {
     const login = Login(id: '11111111-1111-4111-8111-111111111111', name: 'Proton', websites: ['proton.me'], addedAt: 1);
     final linked = github.copyWith(websites: ['own.example.org']).withLinks([ItemLink(login.id)]);
     final vault = FakeVaultController(
-      VaultState(phase: VaultPhase.unlocked, accounts: [linked], logins: const [login], vault: const VaultInfo(id: 'vault')),
+      VaultState(
+        phase: VaultPhase.unlocked,
+        accounts: [linked],
+        logins: const [login],
+        vault: const VaultInfo(id: 'vault'),
+      ),
     );
     await pump(tester, linked, overrides: [fakeVault(vault)]);
 

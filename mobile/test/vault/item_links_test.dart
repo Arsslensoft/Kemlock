@@ -36,15 +36,8 @@ const _otherLoginId = '22222222-2222-4222-8222-222222222222';
 const _noteId = '33333333-3333-4333-8333-333333333333';
 const _goneId = '99999999-9999-4999-8999-999999999999';
 
-Login _login(String id, {String name = 'Proton', List<ItemLink> links = const []}) => Login(
-  id: id,
-  name: name,
-  username: 'sam',
-  password: 'pw',
-  websites: const ['proton.me'],
-  links: links,
-  addedAt: 0,
-);
+Login _login(String id, {String name = 'Proton', List<ItemLink> links = const []}) =>
+    Login(id: id, name: name, username: 'sam', password: 'pw', websites: const ['proton.me'], links: links, addedAt: 0);
 
 SecureNote _note(String id, {List<ItemLink> links = const []}) => SecureNote(id: id, title: 'Recovery plan', links: links, addedAt: 0);
 
@@ -176,7 +169,6 @@ void main() {
       expect(note().links.ids, {_loginId});
       expect(linksOfLogin(), {_noteId});
     });
-
   });
 
   group('a link that changes nothing', () {

@@ -6,7 +6,9 @@ import 'package:kemlock/models/identity.dart';
 
 // What the duplicate finder tells a contact, a key and an identity by
 void main() {
-  List<TagKind> kinds(Object item, {String? identity}) => [for (final input in tagInputsOf(item, keyIdentityOf: (_) => identity)) input.kind];
+  List<TagKind> kinds(Object item, {String? identity}) => [
+    for (final input in tagInputsOf(item, keyIdentityOf: (_) => identity)) input.kind,
+  ];
 
   test('a person with an email or a phone is told by it, and one with a key by the key as well', () {
     const person = Contact(id: 'p1', name: 'Ada', source: ContactSource.manual, email: 'ada@example.org', addedAt: 0);

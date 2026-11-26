@@ -193,7 +193,11 @@ void main() {
 
     testWidgets('a code on a security key is offered the fields that name codes, and every kind', (tester) async {
       final codes = _definition('d-otp', 'Seed owner', CustomFieldKind.text, [KmKind.otp]);
-      await _pump(tester, kind: KmKind.keyOtp, definitions: KmCustomFields(fields: [everywhere, codes, loginsAndCards]));
+      await _pump(
+        tester,
+        kind: KmKind.keyOtp,
+        definitions: KmCustomFields(fields: [everywhere, codes, loginsAndCards]),
+      );
       await _openMenu(tester);
 
       expect(find.byKey(const ValueKey('fields-offer-d-all')), findsOneWidget);
@@ -203,7 +207,11 @@ void main() {
 
     testWidgets('a plain key is offered only the fields that name every kind', (tester) async {
       final codes = _definition('d-otp', 'Seed owner', CustomFieldKind.text, [KmKind.otp]);
-      await _pump(tester, kind: KmKind.key, definitions: KmCustomFields(fields: [everywhere, codes, loginsAndCards]));
+      await _pump(
+        tester,
+        kind: KmKind.key,
+        definitions: KmCustomFields(fields: [everywhere, codes, loginsAndCards]),
+      );
       await _openMenu(tester);
 
       expect(find.byKey(const ValueKey('fields-offer-d-all')), findsOneWidget);
@@ -329,10 +337,7 @@ void main() {
       await _pump(
         tester,
         initial: held,
-        definitions: KmCustomFields(
-          fields: [_definition('d-all', 'Employee ID', CustomFieldKind.text)],
-          allowOwn: false,
-        ),
+        definitions: KmCustomFields(fields: [_definition('d-all', 'Employee ID', CustomFieldKind.text)], allowOwn: false),
       );
 
       expect(find.byKey(const ValueKey('field-name-0')), findsOneWidget);

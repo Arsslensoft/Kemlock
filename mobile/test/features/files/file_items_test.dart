@@ -196,14 +196,25 @@ void main() {
       expect([for (final item in all.pinned) item.title], ['Apple receipt']);
 
       final filtered = vaultListItems(state, filter: VaultFilter.files);
-      expect([for (final item in [...filtered.pinned, ...filtered.rest]) item.title], ['Apple receipt', 'Lease']);
+      expect(
+        [
+          for (final item in [...filtered.pinned, ...filtered.rest]) item.title,
+        ],
+        ['Apple receipt', 'Lease'],
+      );
       expect(VaultFilter.values.indexOf(VaultFilter.files), VaultFilter.values.indexOf(VaultFilter.notes) + 1);
     });
 
     test("finds a File item by its name, notes, and its file's name and type", () {
       for (final query in ['lease', 'signed', 'scan-0042', 'application/pdf']) {
         final found = vaultListItems(state, query: query);
-        expect([for (final item in [...found.pinned, ...found.rest]) item.kind], contains(VaultItemKind.file), reason: query);
+        expect(
+          [
+            for (final item in [...found.pinned, ...found.rest]) item.kind,
+          ],
+          contains(VaultItemKind.file),
+          reason: query,
+        );
       }
       final none = vaultListItems(state, query: 'wi-fi', filter: VaultFilter.files);
       expect([...none.pinned, ...none.rest], isEmpty);

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kemlock/crypto/attachment_format.dart';
 import 'package:kemlock/features/cards/card_sheet.dart';
 import 'package:kemlock/features/files/file_sheet.dart';
 import 'package:kemlock/features/links/link_picker_sheet.dart';
 import 'package:kemlock/features/logins/login_sheet.dart';
 import 'package:kemlock/models/login.dart';
 import 'package:kemlock/models/payment_card.dart';
+import 'package:kemlock/models/secure_note.dart';
 import 'package:kemlock/models/vault_file.dart';
 import 'package:kemlock/vault/vault_controller.dart';
 import 'package:kemlock_core/models/item_link.dart';

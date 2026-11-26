@@ -23,8 +23,11 @@ import 'file_edit_sheet.dart';
 import 'file_size.dart';
 
 /// Opens a File item from the Vault tab.
-Future<void> showFileSheet(BuildContext context, VaultFile file) =>
-    showAppBottomSheet<void>(context, label: file.name, builder: (_) => FileSheet(fileId: file.id));
+Future<void> showFileSheet(BuildContext context, VaultFile file) => showAppBottomSheet<void>(
+  context,
+  label: file.name,
+  builder: (_) => FileSheet(fileId: file.id),
+);
 
 /// A File item: its name, size, type and the day it was added, its notes, and what can be done with the file: open it when it is a
 /// picture, share it or save a copy to the phone, once the person has read that the copy isn't encrypted. A file this phone doesn't

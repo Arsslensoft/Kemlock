@@ -28,7 +28,10 @@ void main() {
     test('Fix writes the other end: offered when that one is the person\'s, not when it is read only', () {
       final mine = login(links: const [ItemLink(_cardId)]);
       final writable = Lists(logins: [mine], cards: [card()]);
-      final readOnly = Lists(logins: [mine], cards: [card(spaceId: 'read')]);
+      final readOnly = Lists(
+        logins: [mine],
+        cards: [card(spaceId: 'read')],
+      );
 
       expect(mayFixLink(itemOf(writable, mine), mine, canEdit, null), isTrue);
       expect(mayFixLink(itemOf(readOnly, mine), mine, canEdit, null), isFalse);
@@ -36,7 +39,10 @@ void main() {
 
     test('Unlink writes only this end: offered although the other end is read only', () {
       final mine = login(links: const [ItemLink(_cardId)]);
-      final lists = Lists(logins: [mine], cards: [card(spaceId: 'read')]);
+      final lists = Lists(
+        logins: [mine],
+        cards: [card(spaceId: 'read')],
+      );
 
       expect(mayUnlinkLink(itemOf(lists, mine), mine, canEdit, null), isTrue);
     });
@@ -67,7 +73,12 @@ void main() {
       final mine = login(links: const [ItemLink(_cardId)]);
       final theirs = card(links: const [ItemLink(_loginId)]);
       final writable = Lists(logins: [mine], cards: [theirs]);
-      final readOnly = Lists(logins: [mine], cards: [card(links: const [ItemLink(_loginId)], spaceId: 'read')]);
+      final readOnly = Lists(
+        logins: [mine],
+        cards: [
+          card(links: const [ItemLink(_loginId)], spaceId: 'read'),
+        ],
+      );
 
       expect(mayFixLink(itemOf(writable, mine), mine, canEdit, null), isFalse);
       expect(mayUnlinkLink(itemOf(writable, mine), mine, canEdit, null), isTrue);
@@ -84,7 +95,10 @@ void main() {
       linkedLoginId: _loginId,
       addedAt: 0,
     );
-    final lists = Lists(logins: [login(spaceId: 'read')], accounts: const [code]);
+    final lists = Lists(
+      logins: [login(spaceId: 'read')],
+      accounts: const [code],
+    );
 
     // Only the code holds the pointer, so a read only login doesn't stop the unlink
     expect(mayUnlinkLink(itemOf(lists, code), code, canEdit, null), isTrue);
