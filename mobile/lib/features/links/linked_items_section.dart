@@ -11,7 +11,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kemlock_core/vault/item_links.dart';
 
+import '../../crypto/account/encoding.dart' show Owner;
 import '../../i18n/messages.dart';
+import '../../models/login.dart';
+import '../../models/otp_account.dart';
 import '../../models/vault_entry.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
@@ -72,7 +75,9 @@ class LinkedItemsSection extends ConsumerWidget {
                 first: i == 0,
                 item: item,
                 entry: held,
-                canChange: mayChange && item.entry != null && access.canEdit(item.entry!),
+                // Only the ends the action writes need to be the person's to change
+                canFix: mayFixLink(item, held, access.canEdit, account),
+                canUnlink: mayUnlinkLink(item, held, access.canEdit, account),
               ),
             if (mayChange)
               GroupRow(
@@ -90,11 +95,53 @@ class LinkedItemsSection extends ConsumerWidget {
   }
 }
 
+/// Whether [from] names [to]: in its `links`, or by the pointer a code and its login keep (`linkedLoginId`, `accountId`).
+bool _names(VaultEntry<Object?> from, VaultEntry<Object?> to, Owner? account) {
+  final names = {linkIdOf(to, account: account).toLowerCase(), to.id.toLowerCase()};
+  if (from.links.ids.any(names.contains)) {
+    return true;
+  }
+  return switch (from) {
+    OtpAccount(:final linkedLoginId?) => names.contains(linkedLoginId.toLowerCase()),
+    Login(:final accountId?) => to is OtpAccount && accountId == to.id,
+    _ => false,
+  };
+}
+
+/// Whether Fix is offered for [item] of [held]: the link has one end only, and the end that doesn't name the other, which Fix
+/// writes, is the person's to change.
+bool mayFixLink(LinkedItem item, VaultEntry<Object?> held, bool Function(VaultEntry<Object?>) canEdit, Owner? account) {
+  final other = item.entry;
+  if (other == null || !item.oneWay) {
+    return false;
+  }
+  return canEdit(_names(held, other, account) ? other : held);
+}
+
+/// Whether Unlink is offered for [item] of [held]: every end that names the other, which Unlink writes, is the person's to change.
+bool mayUnlinkLink(LinkedItem item, VaultEntry<Object?> held, bool Function(VaultEntry<Object?>) canEdit, Owner? account) {
+  final other = item.entry;
+  if (other == null) {
+    return false;
+  }
+  return [
+    if (_names(held, other, account)) held,
+    if (_names(other, held, account)) other,
+  ].every(canEdit);
+}
+
 enum _RowAction { fix, unlink }
 
 /// One linked item: its row, and the menu of what can be done to the link.
 class _LinkRow extends ConsumerWidget {
-  const _LinkRow({super.key, required this.first, required this.item, required this.entry, required this.canChange});
+  const _LinkRow({
+    super.key,
+    required this.first,
+    required this.item,
+    required this.entry,
+    required this.canFix,
+    required this.canUnlink,
+  });
 
   final bool first;
   final LinkedItem item;
@@ -102,8 +149,11 @@ class _LinkRow extends ConsumerWidget {
   /// The item whose sheet this is.
   final VaultEntry<Object?> entry;
 
-  /// The person may change both ends, so the link can be unlinked or mended.
-  final bool canChange;
+  /// The link can be mended: the end it lacks is the person's to change.
+  final bool canFix;
+
+  /// The link can be removed: the ends that name it are the person's to change.
+  final bool canUnlink;
 
   Future<void> _act(WidgetRef ref, _RowAction action) {
     final other = item.entry!;
@@ -131,7 +181,7 @@ class _LinkRow extends ConsumerWidget {
     final kind = context.t(entryKindLabelId(other));
     final secondary = item.oneWay ? '$kind · ${context.t('links.oneWay')}' : kind;
     void open() => unawaited(openLinkedEntry(context, ref, other));
-    if (!canChange) {
+    if (!canFix && !canUnlink) {
       return GroupRow(first: first, icon: Icon(entryIcon(other)), primary: name, secondary: secondary, onTap: open);
     }
     return Semantics(
@@ -149,8 +199,8 @@ class _LinkRow extends ConsumerWidget {
             icon: Icon(Icons.more_horiz_rounded, color: context.bmc.faint),
             onSelected: (action) => unawaited(_act(ref, action)),
             itemBuilder: (_) => [
-              if (item.oneWay) PopupMenuItem(value: _RowAction.fix, child: Text(context.t('links.fix'))),
-              PopupMenuItem(value: _RowAction.unlink, child: Text(context.t('links.unlink'))),
+              if (canFix) PopupMenuItem(value: _RowAction.fix, child: Text(context.t('links.fix'))),
+              if (canUnlink) PopupMenuItem(value: _RowAction.unlink, child: Text(context.t('links.unlink'))),
             ],
           ),
         ),
