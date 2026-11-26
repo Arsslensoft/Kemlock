@@ -573,22 +573,18 @@ class VaultController extends Notifier<VaultState> {
     final session = state.session;
     if (session == null) return;
     final index = state.accounts.indexWhere((a) => a.id == removed.id);
-    _DroppedLinks? dropped;
     try {
-      dropped = await _dropLinksTo(session, [removed]);
-      final next = [...state.accounts.where((a) => a.id != removed.id)];
-      await _store.saveAccounts(next, session);
-      state = state.copyWith(accounts: next);
+      // The account and the links to it go in one save of each list, all or none
+      final dropped = await _removeEntries(session, [removed]);
       _bump();
       ref
           .read(toastsProvider.notifier)
           .show(
             _t('app.snack.accountRemoved', {'name': _displayName(removed)}),
             actionLabel: _t('app.undo'),
-            onAction: () => unawaited(_restoreAccount(removed, index, session, relinked: dropped?.ids ?? const [])),
+            onAction: () => unawaited(_restoreAccount(removed, index, session, relinked: dropped.ids)),
           );
     } catch (_) {
-      await dropped?.undo().then<void>((_) {}, onError: (Object _) {});
       _toast('app.snack.accountRemoveFailed', const {}, ToastSeverity.error);
     }
   }
@@ -744,16 +740,14 @@ class VaultController extends Notifier<VaultState> {
     final session = state.session;
     if (session == null) return;
     final removed = state.backupServices.firstWhereOrNull((s) => s.id == id);
-    _DroppedLinks? dropped;
     try {
-      if (removed != null) dropped = await _dropLinksTo(session, [removed]);
-      final next = [...state.backupServices.where((s) => s.id != id)];
-      await _store.saveBackupServices(next, session);
-      state = state.copyWith(backupServices: next);
+      if (removed != null) {
+        // The entry and the links to it go in one save of each list, all or none
+        await _removeEntries(session, [removed]);
+      }
       _bump();
       _toast('app.snack.backupDeleted');
     } catch (_) {
-      await dropped?.undo().then<void>((_) {}, onError: (Object _) {});
       _toast('app.snack.backupDeleteFailed', const {}, ToastSeverity.error);
     }
   }
@@ -1204,11 +1198,11 @@ class VaultController extends Notifier<VaultState> {
   Future<bool> saveKeyAccounts(List<KeyAccount> given) async {
     final session = state.session;
     if (session == null) return false;
-    var previous = state.keyAccounts;
+    final previous = state.keyAccounts;
     // A sheet's copy of an account is as old as the sheet: a link made since is kept
     final heldAccounts = {for (final account in previous) account.id: account};
     final next = [for (final account in given) _keepingLinks(account, heldAccounts[account.id])];
-    var stamped = stampChanged(next, previous, now: _now);
+    final stamped = stampChanged(next, previous, now: _now);
     if (canonical([for (final a in stamped) a.toJson()]) == canonical([for (final a in previous) a.toJson()])) return true;
     // The accounts that go are no longer named by the items linked to them
     final keptIds = {for (final account in next) account.id};
@@ -1216,27 +1210,19 @@ class VaultController extends Notifier<VaultState> {
       for (final account in previous)
         if (!keptIds.contains(account.id)) account,
     ];
-    _DroppedLinks? dropped;
-    try {
-      if (removed.isNotEmpty) {
-        dropped = await _dropLinksTo(session, removed);
-        if (dropped != null) {
-          // Another account of these may have been among the items that named them
-          final held = {for (final account in state.keyAccounts) account.id: account};
-          previous = state.keyAccounts;
-          final rebased = [
-            for (final account in next)
-              if (held[account.id]?.links case final links? when !const ListEquality<ItemLink>().equals(links, account.links))
-                account.withLinks(links)
-              else
-                account,
-          ];
-          stamped = stampChanged(rebased, previous, now: _now);
-        }
+    if (removed.isNotEmpty) {
+      // The accounts and the links to them go in one save of each list, all or none; the accounts that stay are saved with them
+      try {
+        await _removeEntries(session, removed, put: next);
+      } catch (_) {
+        return false;
       }
+      _bump();
+      return true;
+    }
+    try {
       await _store.saveKeyAccounts(stamped, session);
     } catch (_) {
-      await dropped?.undo().then<void>((_) {}, onError: (Object _) {});
       return false;
     }
     state = state.copyWith(keyAccounts: stamped);
@@ -1420,23 +1406,18 @@ class VaultController extends Notifier<VaultState> {
     final session = state.session;
     if (session == null) return;
     final index = kind.read(state).indexWhere((item) => item.id == removed.id);
-    _DroppedLinks? dropped;
     try {
-      // The items that named it are saved first, so the list below is read as they left it
-      dropped = await _dropLinksTo(session, [removed]);
-      final next = [...kind.read(state).where((item) => item.id != removed.id)];
-      await kind.save(next, session);
-      state = kind.write(state, next);
+      // The item and the links to it go in one save of each list, all or none
+      final dropped = await _removeEntries(session, [removed]);
       _bump();
       ref
           .read(toastsProvider.notifier)
           .show(
             _t(kind.messages.removed, {'name': kind.name(removed)}),
             actionLabel: _t('app.undo'),
-            onAction: () => unawaited(_restoreItem(kind, removed, index, session, relinked: dropped?.ids ?? const [])),
+            onAction: () => unawaited(_restoreItem(kind, removed, index, session, relinked: dropped.ids)),
           );
     } catch (_) {
-      await dropped?.undo().then<void>((_) {}, onError: (Object _) {});
       _toast(kind.messages.removeFailed, const {}, ToastSeverity.error);
     }
   }
@@ -1628,27 +1609,46 @@ class VaultController extends Notifier<VaultState> {
     return entry.withLinks(links) as VaultEntry<Object?>;
   }
 
-  /// The entries that name one of [removed] in their `links`: the ones the person may change.
-  /// The link of a code and its login (`linkedLoginId`, `accountId`) is not in `links` and is left alone.
-  List<VaultEntry<Object?>> _withoutLinksTo(List<VaultEntry<Object?>> removed) {
-    // A vault with no link at all has nothing to drop, and needs no account to tell
-    if (!entriesOf(state.lists).any((entry) => entry.links.isNotEmpty)) return const [];
-    final names = _linkNamesOf(removed);
+  /// The entries that name one of [removed], from the core's `droppedLinksTo`: the ones the person may change, and that are not
+  /// going themselves.
+  List<VaultEntry<Object?>> _linkedTo(List<VaultEntry<Object?>> removed) {
     final going = {for (final entry in removed) (entry.runtimeType, entry.id)};
-    return [
-      for (final other in entriesOf(state.lists))
-        if (!going.contains((other.runtimeType, other.id)) && other.links.ids.any(names.contains) && _mayWrite(other)) other,
-    ];
+    final found = <(Type, String), VaultEntry<Object?>>{};
+    for (final entry in removed) {
+      for (final other in droppedLinksTo(state.lists, entry, now: _now, account: _linkAccount)) {
+        final key = (other.runtimeType, other.id);
+        if (!going.contains(key) && _mayWrite(other)) found[key] = other;
+      }
+    }
+    return found.values.toList();
   }
 
-  /// Takes [removed] out of the `links` of the entries that name them, saved together; null when none does. The step it gives puts
-  /// them back as they were; a failed save puts them back and throws.
-  Future<_DroppedLinks?> _dropLinksTo(VaultSession session, List<VaultEntry<Object?>> removed) async {
-    final others = _withoutLinksTo(removed);
-    if (others.isEmpty) return null;
-    final names = _linkNamesOf(removed);
-    final edits = [for (final other in others) _Edit(other, (held) => _withoutNames(held, names))];
-    return _DroppedLinks(await _applyEntries(session, edits: edits), [for (final other in others) other.id]);
+  /// [held] without the links to [removed], as the core's `droppedLinksTo` makes it; [held] as it is when none was named.
+  VaultEntry<Object?> _droppingLinksTo(VaultEntry<Object?> held, List<VaultEntry<Object?>> removed) {
+    VaultEntry<Object?>? dropped;
+    for (final entry in removed) {
+      final result = droppedLinksTo(state.lists, entry, now: _now, account: _linkAccount).firstWhereOrNull(
+        (other) => other.runtimeType == held.runtimeType && other.id == held.id,
+      );
+      if (result == null) continue;
+      // What another removed entry named too is taken out of the result, as the core made it for one entry at a time
+      dropped = dropped == null ? result : _withoutNames(dropped, _linkNamesOf([entry]));
+    }
+    return dropped ?? held;
+  }
+
+  /// Removes [removed] from their lists, with [put] saved beside them, and takes them out of the `links` of the entries that
+  /// name them, all in one save of each list: all or none, and a failed save puts the changed entries back and throws. Gives the
+  /// step that puts them back as they were, and the ids of the entries that named them.
+  Future<_DroppedLinks> _removeEntries(
+    VaultSession session,
+    List<VaultEntry<Object?>> removed, {
+    Iterable<VaultEntry<Object?>> put = const [],
+  }) async {
+    final others = _linkedTo(removed);
+    final edits = [for (final other in others) _Edit(other, (held) => _droppingLinksTo(held, removed))];
+    final undo = await _applyEntries(session, put: put, remove: removed, edits: edits);
+    return _DroppedLinks(undo, [for (final other in others) other.id]);
   }
 
   /// After Undo put [restored] back: the entries of [ids], which named it before it was removed, name it again, as far as
@@ -1763,7 +1763,7 @@ class VaultController extends Notifier<VaultState> {
       [
         for (final item in before)
           if (!removing.contains(item.id))
-            if (editing[item.id] case final change?) change(item) as T else putting[item.id] ?? item,
+            if (editing[item.id] case final change?) change(putting[item.id] ?? item) as T else putting[item.id] ?? item,
         for (final item in put)
           if (!held.contains(item.id)) item,
       ],

@@ -291,6 +291,22 @@ void main() {
       expect(note().links.ids, {_loginId});
     });
 
+    test('saves a list once when the item and the item that named it are in it', () async {
+      await openNew();
+      await controller().addLogin(_login(_loginId));
+      await controller().addLogin(_login(_otherLoginId, name: 'Other'));
+      await controller().linkItems(login(), login(_otherLoginId));
+      var writes = 0;
+      final stop = store.listen('backmycodes_login_data', () => writes++);
+      addTearDown(stop);
+
+      await controller().deleteLogin(login(_otherLoginId));
+
+      expect(writes, 1);
+      expect(state().logins.map((login) => login.id), [_loginId]);
+      expect(login().links, isEmpty);
+    });
+
     test('does so for a one-way link too, and for a code', () async {
       await openNew();
       await controller().addAccount(OtpAccount(id: 'code', issuer: 'Proton', label: 'sam', secret: 'JBSWY3DPEHPK3PXP', addedAt: 0));
