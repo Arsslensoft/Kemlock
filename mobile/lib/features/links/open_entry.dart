@@ -60,12 +60,19 @@ Future<void> openLinkedEntry(BuildContext context, WidgetRef ref, VaultEntry<Obj
     case final SecureNote note:
       _openPage(context, '/vault/notes/${note.id}');
     case final BackupService service:
-      _openPage(context, Uri(path: '/backup', queryParameters: {'open': service.id}).toString(), tab: '/backup');
+      _openPage(
+        context,
+        Uri(path: '/backup', queryParameters: {'open': service.id, 'at': '${++_backupRequests}'}).toString(),
+        tab: '/backup',
+      );
     default:
       // TODO(file-items): a File item opens its own sheet here (`case final VaultFile file: await showFileSheet(context, file)`).
       ref.read(toastsProvider.notifier).show(context.t('links.snack.cannotOpen'), severity: ToastSeverity.info);
   }
 }
+
+/// How many times a link has asked the Backup tab to open a card, so each asks again even for the card that is open.
+var _backupRequests = 0;
 
 /// Opens the page at [location] with the sheets above the current page closed. The page goes on top of the one the link was
 /// followed from, so what that page holds unsaved (a note being written, with its link to this one) is still there when the person
