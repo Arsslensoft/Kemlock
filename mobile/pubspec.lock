@@ -590,9 +590,11 @@ packages:
   kemlock_core:
     dependency: "direct main"
     description:
-      path: "../../kemlock-core-wt/integration"
-      relative: true
-    source: path
+      path: "."
+      ref: "61a27f0aca2e2a03018c8d40dc9d6ce930312600"
+      resolved-ref: "61a27f0aca2e2a03018c8d40dc9d6ce930312600"
+      url: "https://github.com/Arsslensoft/Kemlock-core.git"
+    source: git
     version: "0.1.0"
   kemlock_parts:
     dependency: "direct main"
