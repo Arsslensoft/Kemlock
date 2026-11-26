@@ -11,7 +11,10 @@ import '../../models/otp_account.dart';
 import '../../models/passkey.dart';
 import '../../models/payment_card.dart';
 import '../../models/secure_note.dart';
+import '../../models/vault_file.dart';
 import '../../models/vault_key.dart';
+import '../accounts/account_sheet.dart' show displayName;
+import '../backup/backup_details_sheet.dart' show backupTitle;
 import 'duplicate_matcher.dart';
 
 /// What the Duplicates screen can be narrowed to.
@@ -43,17 +46,18 @@ List<DuplicateGroup> filtered(DuplicateFilter filter, List<DuplicateGroup> group
     if (filterMatches(filter, group)) group,
 ];
 
-/// What a person calls [item] in the list: its name, a code's issuer and label together.
+/// What a person calls [item] in the list: its name, as the Codes tab and the Backup tab call a code and a backup-codes entry.
 String duplicateName(Object item) => switch (item) {
   Login(:final name) => name,
-  OtpAccount(:final issuer, :final label) => [issuer, label].where((part) => part.isNotEmpty).join(' · '),
+  OtpAccount() => displayName(item),
   SecureNote(:final title) => title,
-  BackupService(:final serviceName) => serviceName,
+  BackupService() => backupTitle(item),
   Passkey() => item.displayName,
   VaultKey(:final name) => name,
   Contact(:final name) => name,
   PaymentCard(:final name) => name,
   Identity(:final name) => name,
+  VaultFile(:final name) => name,
   _ => '',
 };
 

@@ -144,7 +144,15 @@ Future<KeyCodesResult> putOnKey(
               type: entry.type == OathType.hotp ? KeyAccountType.hotp : KeyAccountType.totp,
               algorithm: entry.algorithm.label,
             ),
-      KeyAccountSeen(name: name, type: type, algorithm: algorithm.label, touch: touch, tags: account.tags, note: account.note),
+      KeyAccountSeen(
+        name: name,
+        type: type,
+        algorithm: algorithm.label,
+        touch: touch,
+        tags: account.tags,
+        note: account.note,
+        fields: account.fields,
+      ),
     ]);
     if (mode == KeyTransfer.move) await vault.deleteAccount(account);
     return KeyCodesResult(KeyCodesOutcome.done, device: device);

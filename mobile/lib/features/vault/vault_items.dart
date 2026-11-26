@@ -7,9 +7,11 @@ import '../../models/login.dart';
 import '../../models/passkey.dart';
 import '../../models/payment_card.dart';
 import '../../models/secure_note.dart';
+import '../../models/vault_file.dart';
 import '../../models/vault_key.dart';
 import '../../ui/ui.dart' show StatusTone;
 import '../../vault/vault_controller.dart';
+import '../files/file_added.dart';
 import '../keys/key_bridge.dart';
 import '../keys/key_standing.dart';
 import '../keys/ssh_fingerprint.dart';
@@ -22,6 +24,7 @@ enum VaultFilter {
   identities('vault.filter.identities'),
   keys('vault.filter.keys'),
   notes('vault.filter.notes'),
+  files('files.filter'),
   passkeys('vault.filter.passkeys');
 
   const VaultFilter(this.labelId);
@@ -36,6 +39,7 @@ enum VaultItemKind {
   identity(Icons.badge_outlined, VaultFilter.identities),
   key(Icons.key_rounded, VaultFilter.keys),
   note(Icons.sticky_note_2_outlined, VaultFilter.notes),
+  file(Icons.insert_drive_file_outlined, VaultFilter.files),
   passkey(Icons.fingerprint_rounded, VaultFilter.passkeys),
 
   /// Someone else's public key, listed under Keys in a section of its own.
@@ -223,6 +227,17 @@ class VaultListItem {
     );
   }
 
+  /// A File item: its name, and [line] (its size and date) under it, found by its name, notes, tags, the file's name and type.
+  factory VaultListItem.file(VaultFile item, {String? line}) => VaultListItem(
+    kind: VaultItemKind.file,
+    id: item.id,
+    title: item.name,
+    subtitle: line,
+    pinned: item.pinned == true || item.favorite == true,
+    addedAt: fileAddedAt(item),
+    searchText: [item.name, ?item.notes, ...?item.tags, item.file.name, ?item.file.type],
+  );
+
   /// A key: its name and algorithm, found by those, its note and tags. A PGP
   /// key that is expiring, expired or revoked carries a tag saying so, and
   /// is found by the tag's words and by its address. An SSH key shows its
@@ -265,13 +280,23 @@ class VaultListItem {
   /// was checked, and its initials for the tile; found by its name, every
   /// user ID of its key and its fingerprint. A key that expired or was
   /// revoked carries the tag a PGP key of the vault's own does.
+  /// A person with no key is listed by their company or email and found by their company, email and phone too.
   factory VaultListItem.contact(Contact contact, [ContactListing listing = const ContactListing()]) => VaultListItem(
     kind: VaultItemKind.contact,
     id: contact.id,
     title: contact.name,
     subtitle: listing.line,
     addedAt: contact.addedAt,
-    searchText: [contact.name, ...listing.userIds, ?listing.fingerprint, ?contact.note, ?listing.tag],
+    searchText: [
+      contact.name,
+      ?contact.company,
+      ?contact.email,
+      ?contact.phone,
+      ...listing.userIds,
+      ?listing.fingerprint,
+      ?contact.note,
+      ?listing.tag,
+    ],
     standing: listing.standing,
     tag: listing.tag,
     unchecked: !listing.checked,
@@ -371,6 +396,7 @@ vaultListItems(
   Map<String, ContactListing> contactListings = const {},
   Map<String, LoginListing> loginListings = const {},
   Map<String, String> cardTags = const {},
+  Map<String, String> fileLines = const {},
 }) {
   final all = [
     for (final login in state.logins) VaultListItem.login(login, loginListings[login.id] ?? const LoginListing()),
@@ -378,6 +404,7 @@ vaultListItems(
     for (final identity in state.identities) VaultListItem.identity(identity),
     for (final key in state.keys) VaultListItem.key(key, keyListings[key.id] ?? const KeyListing()),
     for (final note in state.notes) VaultListItem.note(note),
+    for (final file in state.files) VaultListItem.file(file, line: fileLines[file.id]),
     for (final passkey in state.passkeys) VaultListItem.passkey(passkey),
   ];
   bool show(VaultListItem item) =>

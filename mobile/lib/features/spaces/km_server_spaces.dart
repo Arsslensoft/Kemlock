@@ -41,6 +41,7 @@ import '../sync/kemlock/km_account.dart';
 import '../sync/kemlock/km_api.dart';
 import '../sync/kemlock/km_backend.dart' show KmSyncResult;
 import '../sync/kemlock/km_cache.dart';
+import '../sync/kemlock/km_files.dart' show KmFileStore, KmFiles;
 import '../sync/kemlock/km_kinds.dart' show kmEntriesOf, kmEntryId;
 import '../sync/kemlock/km_move_plan.dart' show kmEntryHash;
 import '../sync/removal_guard.dart' show RemovalChoice;
@@ -105,7 +106,12 @@ class KmServerSpaces implements ServerSpacesSource, SpaceMover {
     this.markNoticeSeen,
     this.leaveFirstFor,
     this.onName,
+    this.files,
   });
+
+  /// The phone's attached files, which a space's notes and File items sync with as the vault's own do (`KmSpaceSync.files`, a
+  /// `KmFiles` over each run's connection). Without it the space's files are neither sent nor fetched.
+  final KmFileStore? files;
 
   /// The account whose app this is.
   final String accountId;
@@ -163,41 +169,45 @@ class KmServerSpaces implements ServerSpacesSource, SpaceMover {
 
   int get _seconds => _millis ~/ 1000;
 
-  KmSpaceSync _sync(String space, KmConnection connection, KmAccount account, {bool joining = false, bool bridged = false}) => KmSpaceSync(
-    connection: connection,
-    server: connection.server,
-    account: account,
-    space: space,
-    loadCache: () async => KmCache.fromJson(await loadValue(kmSpaceCacheKey(space))),
-    saveCache: (cache) => saveValue(kmSpaceCacheKey(space), cache.toJson()),
-    loadAnchor: (id) async {
-      final load = loadAnchors;
-      return load == null ? null : SpaceAnchors.fromJson(await load()).of(id);
-    },
-    loadCompared: (id) async {
-      final load = loadAnchors;
-      return load != null && SpaceAnchors.fromJson(await load()).hasCompared(id);
-    },
-    saveAnchor: (id, anchor, {afterFence = false, compared = false}) async {
-      final load = loadAnchors;
-      final save = saveAnchors;
-      if (load == null || save == null) {
-        return;
-      }
-      final held = SpaceAnchors.fromJson(await load());
-      await save(held.remembering(id, anchor, afterFence: afterFence, compared: compared).toJson());
-    },
-    chainCrypto: chainCrypto,
-    manifestCrypto: manifestCrypto,
-    signRecord: signRecord,
-    clock: clock,
-    onChain: onChain,
-    onComparedChain: onComparedChain,
-    joining: joining,
-    carriesClosure: bridged,
-    homeDown: homeDown,
-    homeUrl: homeUrl,
-  );
+  KmSpaceSync _sync(String space, KmConnection connection, KmAccount account, {bool joining = false, bool bridged = false}) {
+    final store = files;
+    return KmSpaceSync(
+      connection: connection,
+      server: connection.server,
+      account: account,
+      space: space,
+      loadCache: () async => KmCache.fromJson(await loadValue(kmSpaceCacheKey(space))),
+      saveCache: (cache) => saveValue(kmSpaceCacheKey(space), cache.toJson()),
+      loadAnchor: (id) async {
+        final load = loadAnchors;
+        return load == null ? null : SpaceAnchors.fromJson(await load()).of(id);
+      },
+      loadCompared: (id) async {
+        final load = loadAnchors;
+        return load != null && SpaceAnchors.fromJson(await load()).hasCompared(id);
+      },
+      saveAnchor: (id, anchor, {afterFence = false, compared = false}) async {
+        final load = loadAnchors;
+        final save = saveAnchors;
+        if (load == null || save == null) {
+          return;
+        }
+        final held = SpaceAnchors.fromJson(await load());
+        await save(held.remembering(id, anchor, afterFence: afterFence, compared: compared).toJson());
+      },
+      chainCrypto: chainCrypto,
+      manifestCrypto: manifestCrypto,
+      signRecord: signRecord,
+      clock: clock,
+      onChain: onChain,
+      onComparedChain: onComparedChain,
+      joining: joining,
+      carriesClosure: bridged,
+      homeDown: homeDown,
+      homeUrl: homeUrl,
+      files: store == null ? null : KmFiles(store: store, connection: connection, server: connection.server),
+    );
+  }
 
   /// The account's spaces, as the server lists them.
   Future<List<ListedSpace>> _listed(KmConnection connection) async {

@@ -27,6 +27,7 @@ import '../../models/otp_account.dart';
 import '../../models/passkey.dart';
 import '../../models/payment_card.dart';
 import '../../models/secure_note.dart';
+import '../../models/vault_file.dart';
 import '../../models/vault_key.dart';
 import '../../vault/vault_controller.dart';
 import '../spaces/remembered_export_policies.dart';
@@ -76,6 +77,7 @@ class ExportableVault {
     required this.logins,
     required this.cards,
     required this.identities,
+    required this.files,
     required this.blocked,
     required this.unknown,
   });
@@ -110,6 +112,7 @@ class ExportableVault {
       logins: codesOnly ? const [] : keep<Login>(vault.logins, (item) => item.spaceId),
       cards: codesOnly ? const [] : keep<PaymentCard>(vault.cards, (item) => item.spaceId),
       identities: codesOnly ? const [] : keep<Identity>(vault.identities, (item) => item.spaceId),
+      files: codesOnly ? const [] : keep<VaultFile>(vault.files, (item) => item.spaceId),
       blocked: blocked,
       unknown: unknown,
     );
@@ -123,6 +126,7 @@ class ExportableVault {
   final List<Login> logins;
   final List<PaymentCard> cards;
   final List<Identity> identities;
+  final List<VaultFile> files;
 
   /// How many items of each space whose policy forbids export were left out, by the space's name.
   final Map<String, int> blocked;

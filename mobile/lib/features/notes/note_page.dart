@@ -13,16 +13,22 @@ import '../../core/toasts.dart';
 import '../../crypto/bytes.dart';
 import '../../features/sync/sync_merge.dart' show canonical;
 import '../../i18n/messages.dart';
+import '../../models/custom_field.dart';
 import '../../models/json.dart';
 import '../../models/secure_note.dart';
 import '../../platform/files.dart';
 import '../../platform/network.dart';
 import '../../ui/ui.dart';
+import '../../vault/attachment_sealer.dart';
 import '../../vault/attachment_store.dart';
 import '../../vault/vault_controller.dart';
 import '../accounts/tag_input.dart';
+import '../fields/custom_fields_editor.dart';
+import '../links/linked_items_section.dart';
 import '../sends/new_send_sheet.dart';
+import '../spaces/hidden_passwords.dart';
 import '../sync/attachment_downloads.dart';
+import '../sync/kemlock/km_kinds.dart';
 import '../sync/space_picker.dart';
 import '../sync/sync_store.dart';
 import '../vault/owner_check.dart';
@@ -67,6 +73,9 @@ class _NotePageState extends ConsumerState<NotePage> {
   var _files = <NoteAttachment>[];
   var _attaching = false;
 
+  /// The custom fields, as the editor last gave them.
+  var _customFields = <CustomField>[];
+
   /// Which of the note's files this phone holds, by attachment id, once looked.
   final _stored = <String, bool>{};
 
@@ -86,6 +95,7 @@ class _NotePageState extends ConsumerState<NotePage> {
     _pinned = _saved.isPinned;
     _spaceId = _saved.spaceId;
     _files = [..._saved.files];
+    _customFields = [..._saved.fields];
     unawaited(_lookForFiles());
     _title.addListener(_changed);
     _text.addListener(_changed);
@@ -115,6 +125,7 @@ class _NotePageState extends ConsumerState<NotePage> {
     pinned: _pinned ? true : unset,
     spaceId: _spaceId ?? unset,
     attachments: _files.isEmpty && _saved.attachments == null ? unset : [..._files],
+    fields: _customFields,
   );
 
   bool get _dirty => canonical(_draft.toJson()) != canonical(_saved.toJson());
@@ -159,11 +170,14 @@ class _NotePageState extends ConsumerState<NotePage> {
     if (picked == null || !mounted) return;
     if (picked.bytes.length > attachmentSizeLimit) return _error('notes.attach.tooLarge', {'size': attachmentSizeLimit ~/ (1024 * 1024)});
     final vaultId = ref.read(vaultControllerProvider).vault.id;
-    final id = newAttachmentId();
-    final key = randomBytes(32);
+    final now = ref.read(clockProvider)().millisecondsSinceEpoch;
+    final NoteAttachment file;
     setState(() => _attaching = true);
     try {
-      await ref.read(attachmentStoreProvider).write(vaultId, id, picked.bytes, key);
+      // Sealed as a File item's file is, so the entry carries the SHA-256 the duplicate finder reads
+      final sealed = await ref.read(attachmentSealerProvider)(picked.bytes, name: picked.name, type: picked.mimeType, now: now);
+      await ref.read(attachmentStoreProvider).writeSealed(vaultId, sealed.entry.id, sealed.sealed);
+      file = sealed.entry;
     } catch (_) {
       if (mounted) _error('notes.attach.failed');
       return;
@@ -171,14 +185,6 @@ class _NotePageState extends ConsumerState<NotePage> {
       if (mounted) setState(() => _attaching = false);
     }
     if (!mounted) return;
-    final file = NoteAttachment(
-      id: id,
-      name: picked.name,
-      size: picked.bytes.length,
-      type: picked.mimeType,
-      key: b64(key),
-      addedAt: ref.read(clockProvider)().millisecondsSinceEpoch,
-    );
     setState(() => _files = [..._files, file]);
   }
 
@@ -410,6 +416,8 @@ class _NotePageState extends ConsumerState<NotePage> {
     final allTags = {for (final note in ref.watch(vaultControllerProvider.select((state) => state.notes))) ...?note.tags}.toList()..sort();
     final hasSpaces = ref.watch(syncProvider.select((sync) => sync.settings?.spaces.isNotEmpty ?? false));
     final stored = !_isNew || ref.watch(vaultControllerProvider.select((state) => state.notes.any((note) => note.id == _saved.id)));
+    // The vault's copy of the note, which holds the links made since this page opened
+    final held = ref.watch(vaultControllerProvider.select((state) => state.notes.firstWhereOrNull((n) => n.id == _saved.id))) ?? _saved;
 
     return PopScope(
       canPop: !_dirty,
@@ -480,6 +488,13 @@ class _NotePageState extends ConsumerState<NotePage> {
                           ),
                         ),
                         const SizedBox(height: 20),
+                        CustomFieldsEditor(
+                          kind: itemKindOf(_saved),
+                          fields: _customFields,
+                          onChanged: (next) => setState(() => _customFields = next),
+                          hideSecrets: hidesSecretsOf(ref, _saved),
+                        ),
+                        const SizedBox(height: 20),
                         TagInput(value: _tags, onChanged: (tags) => setState(() => _tags = tags), suggestions: allTags),
                         // Shared with a space's members, files and all, as an account is
                         if (hasSpaces || _spaceId != null) ...[
@@ -495,6 +510,7 @@ class _NotePageState extends ConsumerState<NotePage> {
                           offline: ref.watch(offlineProvider),
                           preview: (file, size) => PictureThumb(image: _image(file), size: size),
                         ),
+                        if (stored) LinkedItemsSection(entry: held),
                         const SizedBox(height: 8),
                         const SizedBox(height: 8),
                         Group(

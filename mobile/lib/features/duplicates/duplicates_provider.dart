@@ -81,6 +81,7 @@ Object? _signature(VaultState state) => (
   state.logins,
   state.cards,
   state.identities,
+  state.files,
 );
 
 class DuplicatesController extends Notifier<DuplicatesState> {
@@ -131,6 +132,7 @@ class DuplicatesController extends Notifier<DuplicatesState> {
         cards: vault.cards,
         identities: vault.identities,
         contacts: vault.contacts,
+        files: vault.files,
       );
       final sites = siteResolver(suffixes: suffixes);
       final store = DedupStore(ref.read(vaultStoreProvider));

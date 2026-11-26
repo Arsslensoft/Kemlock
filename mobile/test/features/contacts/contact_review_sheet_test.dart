@@ -235,6 +235,29 @@ void main() {
     expect(find.text(t('contacts.review.sameEmail.unchecked', {'email': 'grace@example.org', 'name': 'Grace'})), findsOneWidget);
   });
 
+  testWidgets('a key for the email of a person with no key says so', (tester) async {
+    final contacts = await open(tester);
+    await contacts.hold(const Contact(id: 'p1', name: 'Grace P', source: ContactSource.manual, email: ' Grace@Example.org ', addedAt: 1));
+
+    await contacts.review([grace1]);
+
+    expect(find.text(t('contacts.review.sameEmail.person', {'email': 'grace@example.org', 'name': 'Grace P'})), findsOneWidget);
+  });
+
+  testWidgets('a key given to a person with no key that another contact holds says so, and changes neither', (tester) async {
+    final contacts = await open(tester);
+    await contacts.hold(contactOf(grace1, name: 'Grace', checkedAt: 1));
+    await contacts.hold(const Contact(id: 'p1', name: 'Grace P', source: ContactSource.manual, email: 'gp@example.org', addedAt: 1));
+    final before = contacts.contacts.map((contact) => contact.toJson()).toList();
+
+    await contacts.review([grace1], replacingId: 'p1');
+
+    expect(find.text(t('contacts.person.addKey.heldElsewhere', {'holder': 'Grace', 'name': 'Grace P'})), findsOneWidget);
+    expect(find.text(t('contacts.update.title')), findsNothing);
+    await contacts.tap(find.widgetWithText(FilledButton, t('contacts.review.close')));
+    expect(contacts.contacts.map((contact) => contact.toJson()).toList(), before);
+  });
+
   testWidgets('of two keys, skipping one and confirming the other adds one', (tester) async {
     final contacts = await open(tester);
     await contacts.review([twoKeys], source: ContactSource.file);

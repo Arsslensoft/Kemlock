@@ -20,7 +20,14 @@ import 'coverage_card.dart';
 /// open. "Use next code" copies the first unused code and crosses it off,
 /// with Undo in the toast.
 class BackupPage extends ConsumerStatefulWidget {
-  const BackupPage({super.key});
+  const BackupPage({super.key, this.openId, this.request});
+
+  /// The service whose card starts open, when the page was opened for it (a link to it); null for the first one.
+  final String? openId;
+
+  /// What tells this request to open [openId] from the one before it: a link to the card that is open already, or that the person
+  /// closed, is another request with the same [openId], and opens it again.
+  final String? request;
 
   @override
   ConsumerState<BackupPage> createState() => _BackupPageState();
@@ -28,8 +35,17 @@ class BackupPage extends ConsumerStatefulWidget {
 
 class _BackupPageState extends ConsumerState<BackupPage> {
   /// Until a card is opened or closed, the first service starts open (also right after the first add).
-  bool _chosen = false;
-  String? _openId;
+  late bool _chosen = widget.openId != null;
+  late String? _openId = widget.openId;
+
+  @override
+  void didUpdateWidget(BackupPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.openId != null && (widget.openId != oldWidget.openId || widget.request != oldWidget.request)) {
+      _chosen = true;
+      _openId = widget.openId;
+    }
+  }
 
   VaultController get _vault => ref.read(vaultControllerProvider.notifier);
 

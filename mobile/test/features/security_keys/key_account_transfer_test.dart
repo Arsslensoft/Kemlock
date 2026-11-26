@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kemlock/features/accounts/otp.dart';
 import 'package:kemlock/features/security_keys/key_account_transfer.dart';
 import 'package:kemlock/features/security_keys/key_codes.dart';
+import 'package:kemlock/models/custom_field.dart';
 import 'package:kemlock/models/otp_account.dart';
 
 import '../../fakes/fake_oath_key.dart';
@@ -69,6 +70,19 @@ void main() {
     expect(entry.tags, ['work']);
     expect(entry.note, 'Recovery codes in the safe');
     expect(rig.vaultState.keyAccounts, hasLength(5));
+  });
+
+  test('the custom fields arrive on the new entry', () async {
+    const field = CustomField(name: 'Seed owner', value: 'ada', kind: CustomFieldKind.text);
+    final rig = await _rig(
+      accounts: [
+        totp.copyWith(fields: const [field]),
+      ],
+    );
+
+    await _put0(rig, _held(rig, 'Forge'), KeyTransfer.move);
+
+    expect(rig.remembered('Forge:ada').fields, [field]);
   });
 
   test('a copy keeps the account in the vault too', () async {

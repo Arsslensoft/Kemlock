@@ -5,14 +5,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ids.dart';
 import '../../i18n/messages.dart';
+import '../../models/custom_field.dart';
 import '../../models/json.dart';
 import '../../models/payment_card.dart';
 import '../../platform/secret_selection.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
 import '../accounts/tag_input.dart';
+import '../fields/custom_fields_editor.dart';
 import '../lock/gate_widgets.dart';
 import '../settings/prefs.dart';
+import '../spaces/hidden_passwords.dart';
+import '../sync/kemlock/km_kinds.dart';
 import '../vault/owner_check.dart';
 import 'card_number.dart';
 
@@ -57,6 +61,9 @@ class _CardEditSheetState extends ConsumerState<CardEditSheet> {
   late final _pin = TextEditingController(text: widget.card?.pin ?? '');
   late final _note = TextEditingController(text: widget.card?.note ?? '');
   late var _tags = <String>[...?widget.card?.tags];
+
+  /// The custom fields, as the editor last gave them.
+  late var _customFields = <CustomField>[...?widget.card?.fields];
 
   /// The brand the person picked; until they pick one, the brand follows the number.
   late String? _brand = widget.card?.brand;
@@ -110,6 +117,7 @@ class _CardEditSheetState extends ConsumerState<CardEditSheet> {
       validFromYear: from.year ?? unset,
       note: text(_note) ?? unset,
       tags: _tags.isEmpty ? unset : [..._tags],
+      fields: _customFields,
     );
   }
 
@@ -276,6 +284,12 @@ class _CardEditSheetState extends ConsumerState<CardEditSheet> {
                   maxLines: 6,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(labelText: context.t('cards.field.note'), alignLabelWithHint: true),
+                ),
+                CustomFieldsEditor(
+                  kind: itemKindOf(draft),
+                  fields: _customFields,
+                  onChanged: (next) => setState(() => _customFields = next),
+                  hideSecrets: hidesSecretsOf(ref, widget.card),
                 ),
                 TagInput(value: _tags, onChanged: (tags) => setState(() => _tags = tags), suggestions: allTags),
                 FilledButton(

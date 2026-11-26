@@ -394,6 +394,7 @@ class _ImportSheetState extends ConsumerState<ImportSheet> {
     // A card from another app matches on its number and expiry too, as the cleaner shows them
     final cards = _detected?.source == ImportSource.cxf ? planCards(preview, vault.cards).adds : newCards(preview, vault.cards);
     final identities = newIdentities(preview, vault.identities);
+    final files = newFiles(preview, vault.files);
     final controller = ref.read(vaultControllerProvider.notifier);
     final attachments = ref.read(attachmentStoreProvider);
     final reader = ref.read(publicKeyReaderProvider);
@@ -402,7 +403,10 @@ class _ImportSheetState extends ConsumerState<ImportSheet> {
     final keepChecks = _keepChecks;
     Navigator.of(context).pop();
     // The new notes' files first, so a note never names a file the store could have had
-    if (archive != null) await _storeFiles(attachments, vault.vault.id, notes, archive, plain: plain);
+    if (archive != null) {
+      final attached = [for (final note in notes) ...note.files, for (final item in files) item.file];
+      await _storeFiles(attachments, vault.vault.id, attached, archive, plain: plain);
+    }
     // A file is outside input: each key it brings is read and checked again before it is kept,
     // and comes in not checked unless the person kept the checks the file records
     final contacts = [
@@ -419,36 +423,35 @@ class _ImportSheetState extends ConsumerState<ImportSheet> {
       logins: logins,
       cards: cards,
       identities: identities,
+      files: files,
     );
   }
 
-  /// Stores each file of [notes] the archive holds and its key opens: as it
+  /// Stores each file of [attached], the files of notes and File items, that the archive holds and its key opens: as it
   /// is from an encrypted export, encrypted under its key from a plain one.
   /// A file that is missing or doesn't open is left out, and its note
   /// shows it as missing.
   static Future<void> _storeFiles(
     AttachmentStore store,
     String vaultId,
-    List<SecureNote> notes,
+    List<NoteAttachment> attached,
     ExportArchive archive, {
     required bool plain,
   }) async {
-    for (final note in notes) {
-      for (final file in note.files) {
-        final read = archive.files[file.id];
-        if (read == null || await store.exists(vaultId, file.id)) continue;
-        try {
-          final bytes = read();
-          final key = unb64(file.key);
-          if (plain) {
-            await store.write(vaultId, file.id, bytes, key);
-          } else {
-            await kma1Decrypt(bytes, key);
-            await store.writeSealed(vaultId, file.id, bytes);
-          }
-        } catch (_) {
-          // Damaged, or no room: the note comes in without it
+    for (final file in attached) {
+      final read = archive.files[file.id];
+      if (read == null || await store.exists(vaultId, file.id)) continue;
+      try {
+        final bytes = read();
+        final key = unb64(file.key);
+        if (plain) {
+          await store.write(vaultId, file.id, bytes, key);
+        } else {
+          await kma1Decrypt(bytes, key);
+          await store.writeSealed(vaultId, file.id, bytes);
         }
+      } catch (_) {
+        // Damaged, or no room: the note or File item comes in without it
       }
     }
   }
@@ -483,13 +486,16 @@ class _ImportSheetState extends ConsumerState<ImportSheet> {
             : newKeyAccounts(preview, vault.keyAccounts).length +
                   newLogins(preview, vault.logins, accounts: vault.accounts, mode: _mode, sites: sites).length +
                   newCards(preview, vault.cards).length +
-                  newIdentities(preview, vault.identities).length);
+                  newIdentities(preview, vault.identities).length +
+                  newFiles(preview, vault.files).length);
     final missingFiles = preview == null
         ? const <String>[]
         : [
             for (final note in preview.notes)
               for (final file in note.files)
                 if (!(_archive?.files.containsKey(file.id) ?? false)) '${note.title} › ${file.name}',
+            for (final item in newFiles(preview, vault.files))
+              if (!(_archive?.files.containsKey(item.file.id) ?? false)) item.name,
           ];
     final merge = _mode == ImportMode.merge;
     final codes = preview != null && preview.accounts.length + preview.backupServices.length > 0;

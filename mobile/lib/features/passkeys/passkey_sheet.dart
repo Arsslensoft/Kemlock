@@ -11,6 +11,7 @@ import '../../models/passkey.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
 import '../accounts/tag_input.dart';
+import '../links/linked_items_section.dart';
 
 /// Opens a passkey from the Vault tab.
 Future<void> showPasskeySheet(BuildContext context, Passkey passkey) => showAppBottomSheet<void>(
@@ -148,6 +149,7 @@ class _PasskeySheetState extends ConsumerState<PasskeySheet> {
                 ),
                 const SizedBox(height: 14),
                 TagInput(value: _tags, onChanged: (tags) => setState(() => _tags = tags), suggestions: allTags),
+                LinkedItemsSection(entry: passkey),
                 const SizedBox(height: 8),
                 Group(
                   children: [

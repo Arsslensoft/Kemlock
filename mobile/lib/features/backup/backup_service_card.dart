@@ -7,13 +7,20 @@ import 'package:intl/intl.dart';
 import '../../core/providers.dart';
 import '../../i18n/messages.dart';
 import '../../models/backup_service.dart';
+import '../../models/custom_field.dart';
 import '../../models/json.dart';
 import '../../platform/links.dart';
 import '../../ui/ui.dart';
 import '../accounts/service_tile.dart';
+import '../fields/custom_fields_editor.dart';
+import '../fields/custom_fields_view.dart';
+import '../links/linked_items_section.dart';
+import '../spaces/hidden_passwords.dart';
+import '../sync/kemlock/km_kinds.dart';
 import '../sync/space_picker.dart';
 import '../sync/sync_store.dart';
 import 'backup_codes.dart';
+import 'backup_details_sheet.dart';
 import 'code_import_button.dart';
 import 'two_factor_directory.dart';
 
@@ -54,6 +61,10 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
   final _noteDraft = TextEditingController();
   bool _adding = false;
   bool _editingNote = false;
+  bool _editingFields = false;
+
+  /// The custom fields as the editor last gave them, while they are being edited.
+  var _draftFields = <CustomField>[];
 
   BackupService get _service => widget.service;
 
@@ -77,6 +88,11 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
     final note = _noteDraft.text.trim();
     widget.onUpdate(_service.copyWith(note: note.isEmpty ? unset : note));
     setState(() => _editingNote = false);
+  }
+
+  void _saveFields() {
+    widget.onUpdate(_service.copyWith(fields: _draftFields));
+    setState(() => _editingFields = false);
   }
 
   void _addCodes(List<String> fresh) {
@@ -121,7 +137,7 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
         child: Semantics(
           container: true,
           explicitChildNodes: true,
-          label: _service.serviceName,
+          label: backupTitle(_service),
           child: Material(
             color: p.paper,
             shape: RoundedRectangleBorder(
@@ -176,7 +192,7 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _service.serviceName,
+                        backupTitle(_service),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -314,11 +330,29 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
               )
             else
               Padding(padding: const EdgeInsets.only(top: 12), child: _codeGrid(context)),
+            if (_editingFields)
+              _fieldsEditor(context)
+            else
+              CustomFieldsView(fields: _service.fields, hideSecrets: hidesSecretsOf(ref, _service)),
             if (_adding) _addForm(context) else _actions(context),
+            if (!_editingFields)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  key: const ValueKey('fields-edit'),
+                  onPressed: () => setState(() {
+                    _draftFields = [..._service.fields];
+                    _editingFields = true;
+                  }),
+                  icon: const Icon(Icons.list_alt_rounded, size: 18),
+                  label: Text(context.t('fields.edit')),
+                ),
+              ),
             _SpaceRow(
               value: _service.spaceId,
               onChanged: (spaceId) => widget.onUpdate(_service.copyWith(spaceId: spaceId ?? unset)),
             ),
+            LinkedItemsSection(entry: _service),
           ],
         ),
       ),
@@ -447,6 +481,30 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
     ),
   );
 
+  /// The custom fields' editor, with Cancel and Save under it as the note's has.
+  Widget _fieldsEditor(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CustomFieldsEditor(
+          key: const ValueKey('fields-editor'),
+          kind: itemKindOf(_service),
+          fields: _draftFields,
+          onChanged: (next) => _draftFields = next,
+          hideSecrets: hidesSecretsOf(ref, _service),
+        ),
+        const SizedBox(height: 8),
+        _FormButtons(
+          cancelLabel: context.t('backupCard.cancel'),
+          onCancel: () => setState(() => _editingFields = false),
+          confirmLabel: context.t('accountSheet.save'),
+          onConfirm: _saveFields,
+        ),
+      ],
+    ),
+  );
+
   Widget _addForm(BuildContext context) {
     final p = context.palette;
     final parsed = parseCodes(_newCodes.text);
@@ -546,6 +604,14 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
               _noteDraft.text = _service.note ?? '';
               setState(() => _editingNote = true);
             },
+          ),
+          const SizedBox(width: 8),
+          _SquareButton(
+            icon: Icons.edit_outlined,
+            tooltip: context.t('accounts.backup.details'),
+            background: b.raised,
+            foreground: (_service.name?.isNotEmpty ?? false) || (_service.websites?.isNotEmpty ?? false) ? b.accentText : p.text,
+            onPressed: () => unawaited(showBackupDetailsSheet(context, _service, widget.onUpdate)),
           ),
           const SizedBox(width: 8),
           _SquareButton(

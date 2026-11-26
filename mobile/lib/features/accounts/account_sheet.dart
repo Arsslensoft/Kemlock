@@ -9,6 +9,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/now.dart';
 import '../../i18n/messages.dart';
+import '../../models/custom_field.dart';
 import '../../models/json.dart' show unset;
 import '../../models/otp_account.dart';
 import '../../platform/secret_clipboard.dart';
@@ -16,8 +17,13 @@ import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
 import '../backup/coverage.dart';
 import '../breaches/breach_widgets.dart';
+import '../fields/custom_fields_editor.dart';
+import '../fields/custom_fields_view.dart';
+import '../links/linked_items_section.dart';
 import '../logins/account_login.dart';
 import '../settings/prefs.dart';
+import '../spaces/hidden_passwords.dart';
+import '../sync/kemlock/km_kinds.dart';
 import '../sync/space_picker.dart';
 import '../sync/sync_store.dart';
 import '../sync/vaultwarden/vaultwarden_login.dart';
@@ -29,8 +35,21 @@ import 'otpauth.dart';
 import 'service_tile.dart';
 import 'tag_input.dart';
 
-/// What the list calls an account: its issuer, else its label.
-String displayName(OtpAccount account) => account.issuer.isNotEmpty ? account.issuer : account.label;
+/// What the list calls an account: its name when it has one, else its issuer, else its label.
+String displayName(OtpAccount account) {
+  final name = account.name?.trim() ?? '';
+  if (name.isNotEmpty) return name;
+  return account.issuer.isNotEmpty ? account.issuer : account.label;
+}
+
+/// The line under [displayName]: an account's label under its issuer, and for one that has a name, its issuer and label.
+String accountSubLabel(OtpAccount account) {
+  if (account.name?.trim().isNotEmpty ?? false) return [account.issuer, account.label].where((part) => part.isNotEmpty).join(' · ');
+  return account.issuer.isNotEmpty ? account.label : '';
+}
+
+/// What an account's tile is drawn from: its issuer, which names the service, else what it is called.
+String accountTileName(OtpAccount account) => account.issuer.isNotEmpty ? account.issuer : displayName(account);
 
 /// [displayName], or "Unknown" for an account with neither.
 String accountTitle(BuildContext context, OtpAccount account) {
@@ -102,7 +121,7 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
         ref.watch(vaultControllerProvider.select((s) => s.accounts.firstWhereOrNull((a) => a.id == widget.account.id))) ?? widget.account;
     final nowSec = ref.watch(nowSecondsProvider);
     final name = accountTitle(context, account);
-    final subLabel = account.issuer.isNotEmpty ? account.label : '';
+    final subLabel = accountSubLabel(account);
     final timeBased = isTimeBased(account);
     final remaining = remainingIn(nowSec, account.period);
     final urgent = timeBased && remaining <= 5;
@@ -123,7 +142,7 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
           // Header
           Row(
             children: [
-              ServiceTile(name: name, size: 54),
+              ServiceTile(name: accountTileName(account), size: 54),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -366,6 +385,9 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
           VaultwardenLoginPanel(account: account),
 
           KeyTransferActions(account: account),
+
+          if (_panel != _Panel.edit) CustomFieldsView(fields: account.fields, hideSecrets: hidesSecretsOf(ref, account)),
+          LinkedItemsSection(entry: account),
 
           Padding(
             padding: const EdgeInsets.only(top: 16),
@@ -968,16 +990,19 @@ class _EditPanel extends ConsumerStatefulWidget {
 }
 
 class _EditPanelState extends ConsumerState<_EditPanel> {
+  late final _name = TextEditingController(text: widget.account.name ?? '');
   late final _issuer = TextEditingController(text: widget.account.issuer);
   late final _label = TextEditingController(text: widget.account.label);
   late final _note = TextEditingController(text: widget.account.note ?? '');
   late var _tags = widget.account.tags ?? const <String>[];
   late String? _spaceId = widget.account.spaceId;
   late var _noCodes = widget.account.noBackupCodes ?? false;
+  late var _customFields = <CustomField>[...widget.account.fields];
   final _tagInput = GlobalKey<TagInputState>();
 
   @override
   void dispose() {
+    _name.dispose();
     _issuer.dispose();
     _label.dispose();
     _note.dispose();
@@ -993,12 +1018,14 @@ class _EditPanelState extends ConsumerState<_EditPanel> {
     final note = _note.text.trim();
     widget.onSave(
       widget.account.copyWith(
+        name: _name.text.trim().isNotEmpty ? _name.text.trim() : unset,
         issuer: _issuer.text.trim(),
         label: _label.text.trim(),
         note: note.isNotEmpty ? note : unset,
         tags: tags.isNotEmpty ? tags : unset,
         spaceId: _spaceId ?? unset,
         noBackupCodes: _noCodes ? true : unset,
+        fields: _customFields,
       ),
     );
   }
@@ -1015,6 +1042,16 @@ class _EditPanelState extends ConsumerState<_EditPanel> {
         builder: (context, _) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            TextField(
+              enableIMEPersonalizedLearning: false,
+              controller: _name,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                labelText: context.t('accounts.field.name'),
+                hintText: context.t('accounts.field.namePlaceholder'),
+              ),
+            ),
+            const SizedBox(height: 14),
             TextField(
               enableIMEPersonalizedLearning: false,
               controller: _issuer,
@@ -1041,6 +1078,13 @@ class _EditPanelState extends ConsumerState<_EditPanel> {
                 hintText: context.t('accountSheet.notePlaceholder'),
                 alignLabelWithHint: true,
               ),
+            ),
+            const SizedBox(height: 14),
+            CustomFieldsEditor(
+              kind: itemKindOf(widget.account),
+              fields: _customFields,
+              onChanged: (next) => setState(() => _customFields = next),
+              hideSecrets: hidesSecretsOf(ref, widget.account),
             ),
             const SizedBox(height: 14),
             TagInput(key: _tagInput, value: _tags, onChanged: (next) => setState(() => _tags = next), suggestions: widget.allTags),

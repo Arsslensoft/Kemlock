@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kemlock/features/backup/add_backup_service_sheet.dart';
 
+import '../../flows/flow_kit.dart' show goTo;
 import '../../helpers/test_app.dart';
 import 'backup_test_kit.dart';
 
@@ -51,6 +52,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('2345 6789'), findsNothing);
     expect(find.text('bbbbb-22222'), findsNothing);
+  });
+
+  testWidgets('a link to a card opens it each time, even when the location is the same', (tester) async {
+    final app = await openBackupTab(tester, services: [github, google]);
+
+    await goTo(tester, app, '/backup?open=go&at=1');
+    expect(find.text('2345 6789'), findsOneWidget);
+
+    // The person closes it, and the next link to it, at the same address but for the request number, opens it again
+    await tester.tap(find.text('Google'));
+    await tester.pumpAndSettle();
+    expect(find.text('2345 6789'), findsNothing);
+    await goTo(tester, app, '/backup?open=go&at=2');
+    expect(find.text('2345 6789'), findsOneWidget);
   });
 
   testWidgets('copies the next code and crosses it off, with Undo', (tester) async {

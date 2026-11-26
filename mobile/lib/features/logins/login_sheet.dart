@@ -19,6 +19,8 @@ import '../accounts/add_account_sheet.dart' show showAddAccountSheet;
 import '../accounts/otp.dart';
 import '../autofill/website_rule_fields.dart' show websiteRuleId;
 import '../backup/coverage.dart';
+import '../fields/custom_fields_view.dart';
+import '../links/linked_items_section.dart';
 import '../lock/gate_widgets.dart';
 import '../lock/password_strength.dart';
 import '../sends/new_send_sheet.dart';
@@ -338,6 +340,8 @@ class _LoginSheetState extends ConsumerState<LoginSheet> {
                     style: AppType.caption.copyWith(color: b.faint),
                   ),
                 ),
+                CustomFieldsView(fields: login.fields, hideSecrets: hidden),
+                LinkedItemsSection(entry: login),
                 const SizedBox(height: 16),
                 OutlinedButton(
                   style: largeButtonStyle,

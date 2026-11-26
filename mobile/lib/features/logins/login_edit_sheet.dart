@@ -8,6 +8,7 @@ import '../../core/ids.dart';
 import '../../core/public_suffixes.dart';
 import '../../core/website_rules.dart';
 import '../../i18n/messages.dart';
+import '../../models/custom_field.dart';
 import '../../models/json.dart';
 import '../../models/login.dart';
 import '../../models/website_rule.dart';
@@ -19,11 +20,13 @@ import '../accounts/tag_input.dart';
 import '../autofill/website_hints.dart';
 import '../autofill/website_rule_fields.dart';
 import '../backup/two_factor_directory.dart';
+import '../fields/custom_fields_editor.dart';
 import '../generator/generator_sheet.dart';
 import '../lock/gate_widgets.dart';
 import '../lock/password_strength.dart';
 import '../settings/prefs.dart';
 import '../spaces/hidden_passwords.dart';
+import '../sync/kemlock/km_kinds.dart';
 import '../vault/owner_check.dart';
 import 'code_picker.dart';
 import 'login_sites.dart';
@@ -71,6 +74,9 @@ class _LoginEditSheetState extends ConsumerState<LoginEditSheet> {
   /// The row added last, which takes the focus.
   WebsiteRuleController? _fresh;
   late var _tags = <String>[...?widget.login?.tags];
+
+  /// The custom fields, as the editor last gave them.
+  late var _fields = <CustomField>[...?widget.login?.fields];
 
   /// The account the person picked, '' for none; null while it hasn't been picked.
   late String? _picked = widget.login != null ? (widget.login!.accountId ?? '') : widget.accountId;
@@ -142,6 +148,7 @@ class _LoginEditSheetState extends ConsumerState<LoginEditSheet> {
       note: text(_note) ?? unset,
       tags: _tags.isEmpty ? unset : [..._tags],
       accountId: _accountId(found) ?? unset,
+      fields: _fields,
     );
     // A hidden password is never touched; any other is kept as typed, spaces too
     if (_hidden) {
@@ -352,6 +359,12 @@ class _LoginEditSheetState extends ConsumerState<LoginEditSheet> {
                   maxLines: 6,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(labelText: context.t('logins.field.note'), alignLabelWithHint: true),
+                ),
+                CustomFieldsEditor(
+                  kind: itemKindOf(draft),
+                  fields: _fields,
+                  onChanged: (next) => setState(() => _fields = next),
+                  hideSecrets: hidden,
                 ),
                 TagInput(value: _tags, onChanged: (tags) => setState(() => _tags = tags), suggestions: allTags),
                 FilledButton(

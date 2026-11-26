@@ -24,6 +24,7 @@ import '../../models/otp_account.dart';
 import '../../models/passkey.dart';
 import '../../models/payment_card.dart';
 import '../../models/secure_note.dart';
+import '../../models/vault_file.dart';
 import '../../models/vault_key.dart';
 import '../../models/website_rule.dart';
 import 'dedup_cache.dart';
@@ -55,6 +56,7 @@ List<MergeField> mergeFieldsOf(Object item) => switch (item) {
     MergeField('cardholder', (item) => (item as PaymentCard).cardholder),
   ],
   Identity() => [MergeField('name', (item) => (item as Identity).name)],
+  VaultFile() => [MergeField('name', (item) => (item as VaultFile).name)],
   VaultKey() => [MergeField('name', (item) => (item as VaultKey).name)],
   Contact() => [MergeField('name', (item) => (item as Contact).name)],
   _ => const [],
@@ -169,6 +171,7 @@ final class MergeChoices {
         cardholder: text.containsKey('cardholder') ? text['cardholder'] ?? unset : keep,
       ),
       final Identity identity => identity.copyWith(name: value('name', identity.name) ?? ''),
+      final VaultFile file => file.copyWith(name: value('name', file.name) ?? ''),
       final VaultKey key => key.copyWith(name: value('name', key.name) ?? ''),
       final Contact contact => contact.copyWith(name: value('name', contact.name) ?? ''),
       _ => keptItem,
@@ -298,6 +301,7 @@ String mergeKindOf(Object item) => switch (item) {
   Login() => 'login',
   PaymentCard() => 'card',
   Identity() => 'identity',
+  VaultFile() => 'file',
   _ => throw ArgumentError.value(item, 'item', 'is not an item a merge keeps'),
 };
 
@@ -312,6 +316,7 @@ Map<String, Object?> mergeJsonOf(Object item) => switch (item) {
   final Login item => item.toJson(),
   final PaymentCard item => item.toJson(),
   final Identity item => item.toJson(),
+  final VaultFile item => item.toJson(),
   _ => throw ArgumentError.value(item, 'item', 'is not an item a merge keeps'),
 };
 
@@ -326,6 +331,7 @@ Object? mergeItemOf(String kind, Map<String, Object?> json) => switch (kind) {
   'login' => Login.fromJson(json),
   'card' => PaymentCard.fromJson(json),
   'identity' => Identity.fromJson(json),
+  'file' => VaultFile.fromJson(json),
   _ => null,
 };
 
@@ -378,6 +384,7 @@ final class MergeRecord {
     required this.kept,
     required this.removed,
     this.relinked = const [],
+    this.relinkUndo = const [],
     this.extra = const {},
   });
 
@@ -392,6 +399,7 @@ final class MergeRecord {
     final kept = json['kept'];
     final removed = json['removed'];
     final relinked = json['relinked'];
+    final relinkUndo = json['relinkUndo'];
     if (id is! String || at is! int || kind is! String || kept is! Map || removed is! List) {
       return null;
     }
@@ -411,7 +419,13 @@ final class MergeRecord {
                 if (item is Map) object(item),
             ]
           : const [],
-      extra: extraKeys(Map<String, Object?>.from(json), const {'id', 'at', 'kind', 'kept', 'removed', 'relinked'}),
+      relinkUndo: relinkUndo is List
+          ? [
+              for (final item in relinkUndo)
+                if (item is Map) object(item),
+            ]
+          : const [],
+      extra: extraKeys(Map<String, Object?>.from(json), const {'id', 'at', 'kind', 'kept', 'removed', 'relinked', 'relinkUndo'}),
     );
   }
 
@@ -432,6 +446,10 @@ final class MergeRecord {
   /// The logins that were relinked to the code that stayed, before the merge.
   final List<Map<String, Object?>> relinked;
 
+  /// What the merge changed in the links of the other items (the core's `RelinkUndo`s as JSON), which Undo puts back. Left out of
+  /// the record when the merge moved no link.
+  final List<Map<String, Object?>> relinkUndo;
+
   /// Keys this version doesn't know, kept as they were.
   final Map<String, Object?> extra;
 
@@ -449,5 +467,14 @@ final class MergeRecord {
   /// Whether Undo is still offered at [now] (epoch ms).
   bool undoable(int now) => now - at < const Duration(days: mergeUndoDays).inMilliseconds;
 
-  Map<String, Object?> toJson() => {'id': id, 'at': at, 'kind': kind, 'kept': kept, 'removed': removed, 'relinked': relinked, ...extra};
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'at': at,
+    'kind': kind,
+    'kept': kept,
+    'removed': removed,
+    'relinked': relinked,
+    if (relinkUndo.isNotEmpty) 'relinkUndo': relinkUndo,
+    ...extra,
+  };
 }

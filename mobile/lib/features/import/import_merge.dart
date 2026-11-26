@@ -13,6 +13,7 @@ import '../../models/otp_account.dart';
 import '../../models/passkey.dart';
 import '../../models/payment_card.dart';
 import '../../models/secure_note.dart';
+import '../../models/vault_file.dart';
 import '../../models/vault_key.dart';
 import '../../vault/vault_export.dart' show VaultExportPayload;
 import '../contacts/contact_standing.dart' show contactKeyInfo;
@@ -55,6 +56,7 @@ class ImportPreview {
     this.logins = const [],
     this.cards = const [],
     this.identities = const [],
+    this.files = const [],
     this.skips = const [],
     this.notices = const [],
     this.units = const [],
@@ -95,6 +97,7 @@ class ImportPreview {
         logins: payload.logins,
         cards: payload.cards,
         identities: payload.identities,
+        files: payload.files,
       );
 
   /// The accounts kept on a security key, by name: "on your key, not in
@@ -120,6 +123,9 @@ class ImportPreview {
   /// Cards and identities, which an import only ever adds too.
   final List<PaymentCard> cards;
   final List<Identity> identities;
+
+  /// File items, which an import only ever adds too. The attached files come beside them, as they do for notes.
+  final List<VaultFile> files;
 
   /// Each credential and item a Credential Exchange payload held that
   /// Kemlock doesn't keep, with the reason; entries kept with a caveat; the
@@ -298,16 +304,31 @@ List<Identity> newIdentities(ImportPreview preview, List<Identity> current) {
   ];
 }
 
+/// The File items of [preview] that [current] doesn't hold, by id, each once.
+List<VaultFile> newFiles(ImportPreview preview, List<VaultFile> current) {
+  final held = {for (final file in current) file.id};
+  return [
+    for (final file in preview.files)
+      if (held.add(file.id)) file,
+  ];
+}
+
 /// The contacts of [preview] whose key [current] doesn't hold, by
 /// fingerprint, each key once. A contact the vault already has is left as
-/// it is, check and all; one whose key can't be read is left out.
+/// it is, check and all; one whose key can't be read is left out. A person with no key is new when no contact has their id.
 List<Contact> newContacts(ImportPreview preview, List<Contact> current) {
   String? fingerprint(Contact contact) => contactKeyInfo(contact)?.primary.fingerprintHex;
   final held = {for (final contact in current) ?fingerprint(contact)};
-  return [
-    for (final contact in preview.contacts)
-      if (fingerprint(contact) case final print? when held.add(print)) contact,
-  ];
+  final heldIds = {for (final contact in current) contact.id};
+  final fresh = <Contact>[];
+  for (final contact in preview.contacts) {
+    if (!contact.hasKey) {
+      if (heldIds.add(contact.id)) fresh.add(contact);
+    } else if (fingerprint(contact) case final print? when held.add(print)) {
+      fresh.add(contact);
+    }
+  }
+  return fresh;
 }
 
 /// What to do with an imported entry the vault holds already.

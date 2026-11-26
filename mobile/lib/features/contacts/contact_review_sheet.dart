@@ -64,6 +64,15 @@ class _Replace extends _Plan {
   final Contact contact;
 }
 
+/// The key was given for [person], who has no key, and another contact already holds it: it is not added to [person], and the
+/// other contact is not changed.
+class _HeldElsewhere extends _Plan {
+  const _HeldElsewhere({required this.holder, required this.person});
+
+  final Contact holder;
+  final Contact person;
+}
+
 /// A key the vault doesn't hold. [sameEmail] is a contact whose key names
 /// the address [email] too.
 class _New extends _Plan {
@@ -125,6 +134,12 @@ class _ContactReviewSheetState extends ConsumerState<ContactReviewSheet> {
     }
     String? fingerprintOf(Contact contact) => ref.read(contactKeyInfoProvider(contact.id))?.primary.fingerprintHex;
     final held = state.contacts.firstWhereOrNull((contact) => fingerprintOf(contact) == _fingerprint);
+    final person = state.contacts.firstWhereOrNull((contact) => contact.id == widget.replacingId && !contact.hasKey);
+    if (held != null && person != null && held.id != person.id) {
+      // The key was meant for a person with no key, and is another contact's: say so rather than change that contact
+      _plan = _HeldElsewhere(holder: held, person: person);
+      return;
+    }
     if (held != null) {
       _plan = _Update(held);
       unawaited(_merge(held));
@@ -137,7 +152,12 @@ class _ContactReviewSheetState extends ConsumerState<ContactReviewSheet> {
     }
     final addresses = keyAddresses(_key.info);
     for (final contact in state.contacts) {
-      final shared = keyAddresses(ref.read(contactKeyInfoProvider(contact.id))).intersection(addresses);
+      // A person with no key is known by the email they were saved with
+      final email = contact.hasKey ? null : contact.email?.trim().toLowerCase();
+      final shared = {
+        ...keyAddresses(ref.read(contactKeyInfoProvider(contact.id))).intersection(addresses),
+        if (email != null && addresses.contains(email)) email,
+      };
       if (shared.isNotEmpty) {
         _plan = _New(sameEmail: contact, email: shared.first);
         return;
@@ -233,7 +253,8 @@ class _ContactReviewSheetState extends ConsumerState<ContactReviewSheet> {
     final many = widget.keys.length > 1;
     final title = switch (plan) {
       _Update() => 'contacts.update.title',
-      _Replace() => 'contacts.replace.title',
+      _HeldElsewhere() => 'contacts.person.addKey.title',
+      _Replace(:final contact) => contact.hasKey ? 'contacts.replace.title' : 'contacts.person.addKey.title',
       _ => 'contacts.review.title',
     };
     return Column(
@@ -389,6 +410,17 @@ class _ContactReviewSheetState extends ConsumerState<ContactReviewSheet> {
           alert(AlertSeverity.error, context.t('contacts.review.own', {'name': own.name}), key: 'review-own'),
           close(),
         ];
+      case _HeldElsewhere(:final holder, :final person):
+        return [
+          facts,
+          fingerprint(_fingerprint),
+          alert(
+            AlertSeverity.warning,
+            context.t('contacts.person.addKey.heldElsewhere', {'holder': holder.name, 'name': person.name}),
+            key: 'review-held-elsewhere',
+          ),
+          close(),
+        ];
       case _New(:final sameEmail, :final email):
         return [
           facts,
@@ -399,7 +431,11 @@ class _ContactReviewSheetState extends ConsumerState<ContactReviewSheet> {
             alert(
               AlertSeverity.info,
               context.t(
-                contactStanding(sameEmail, now).checked ? 'contacts.review.sameEmail.checked' : 'contacts.review.sameEmail.unchecked',
+                !sameEmail.hasKey
+                    ? 'contacts.review.sameEmail.person'
+                    : contactStanding(sameEmail, now).checked
+                    ? 'contacts.review.sameEmail.checked'
+                    : 'contacts.review.sameEmail.unchecked',
                 {'email': email ?? '', 'name': sameEmail.name},
               ),
               key: 'review-same-email',
@@ -414,7 +450,10 @@ class _ContactReviewSheetState extends ConsumerState<ContactReviewSheet> {
           ...userIds(info.userIds),
           if (current != null) fingerprint(current, label: context.t('contacts.replace.current'), key: 'replace-current'),
           fingerprint(_fingerprint, label: context.t('contacts.replace.next'), key: 'replace-next'),
-          alert(AlertSeverity.error, context.t('contacts.replace.warning', {'name': contact.name}), key: 'replace-warning'),
+          if (contact.hasKey)
+            alert(AlertSeverity.error, context.t('contacts.replace.warning', {'name': contact.name}), key: 'replace-warning')
+          else
+            alert(AlertSeverity.info, context.t('contacts.person.addKey.review', {'name': contact.name}), key: 'add-key-info'),
           ?over,
           advice,
           ...answers(

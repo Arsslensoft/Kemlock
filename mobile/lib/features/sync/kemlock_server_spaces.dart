@@ -115,6 +115,7 @@ KmServerSpaces kmServerSpacesOf(
   saveValue: host.values.save,
   loadAnchors: host.anchors?.load,
   saveAnchors: host.anchors?.save,
+  files: host.fileStore,
   homeDown: () {
     try {
       host.requireHome(target);

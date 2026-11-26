@@ -13,6 +13,7 @@ import '../../core/toasts.dart';
 import '../../crypto/bytes.dart';
 import '../../crypto/keys/keys.dart' as crypto;
 import '../../i18n/messages.dart';
+import '../../models/custom_field.dart';
 import '../../models/json.dart';
 import '../../models/vault_key.dart';
 import '../../platform/files.dart';
@@ -22,6 +23,10 @@ import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
 import '../accounts/tag_input.dart';
 import '../export/space_export.dart';
+import '../fields/custom_fields_editor.dart';
+import '../links/linked_items_section.dart';
+import '../spaces/hidden_passwords.dart';
+import '../sync/kemlock/km_kinds.dart';
 import '../sync/space_picker.dart';
 import '../sync/sync_store.dart';
 import '../vault/owner_check.dart';
@@ -75,6 +80,9 @@ class _KeySheetState extends ConsumerState<KeySheet> {
   late final _name = TextEditingController(text: _initial?.name ?? '');
   late final _note = TextEditingController(text: _initial?.note ?? '');
   late var _tags = <String>[...?_initial?.tags];
+
+  /// The custom fields, as the editor last gave them.
+  late var _customFields = <CustomField>[...?_initial?.fields];
   late String? _spaceId = _initial?.spaceId;
 
   /// A change was saved while the sheet is open (openspec: add-pgp-key-editing).
@@ -105,6 +113,7 @@ class _KeySheetState extends ConsumerState<KeySheet> {
       note: note.isEmpty ? unset : note,
       tags: _tags.isEmpty ? unset : [..._tags],
       spaceId: _spaceId ?? unset,
+      fields: _customFields,
     );
   }
 
@@ -484,12 +493,20 @@ class _KeySheetState extends ConsumerState<KeySheet> {
                   decoration: InputDecoration(labelText: context.t('passkeys.note'), alignLabelWithHint: true),
                 ),
                 const SizedBox(height: 14),
+                CustomFieldsEditor(
+                  kind: itemKindOf(key),
+                  fields: _customFields,
+                  onChanged: (next) => setState(() => _customFields = next),
+                  hideSecrets: hidesSecretsOf(ref, key),
+                ),
+                const SizedBox(height: 14),
                 TagInput(value: _tags, onChanged: (tags) => setState(() => _tags = tags), suggestions: allTags),
                 // A space's members get the key, private half and all, as they get an account
                 if (hasSpaces || _spaceId != null) ...[
                   const SizedBox(height: 14),
                   SpacePicker(value: _spaceId, onChanged: (id) => setState(() => _spaceId = id)),
                 ],
+                LinkedItemsSection(entry: key),
                 const SizedBox(height: 8),
                 Group(
                   children: [

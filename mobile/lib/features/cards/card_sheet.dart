@@ -11,8 +11,11 @@ import '../../models/payment_card.dart';
 import '../../platform/secret_clipboard.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
+import '../fields/custom_fields_view.dart';
+import '../links/linked_items_section.dart';
 import '../lock/gate_widgets.dart';
 import '../settings/prefs.dart';
+import '../spaces/hidden_passwords.dart';
 import '../vault/owner_check.dart';
 import 'card_edit_sheet.dart';
 import 'card_number.dart';
@@ -211,6 +214,8 @@ class _CardSheetState extends ConsumerState<CardSheet> {
                     padding: const EdgeInsets.fromLTRB(6, 10, 6, 0),
                     child: Text(tags.join(' · '), style: AppType.caption.copyWith(color: p.textSecondary)),
                   ),
+                CustomFieldsView(fields: card.fields, hideSecrets: hidesSecretsOf(ref, card)),
+                LinkedItemsSection(entry: card),
                 const SizedBox(height: 16),
                 OutlinedButton(
                   style: largeButtonStyle,
