@@ -42,7 +42,7 @@ final class DuplicateTag {
   String toString() => 'DuplicateTag(${kind.name})';
 }
 
-/// The text that tells a key or a contact, which is the fingerprint of a PGP key. Reading it takes
+/// The text that tells a key or a contact's key, which is the fingerprint of a PGP key. Reading it takes
 /// the key apart, so the caller does that; null for an item it can't read, which makes no tag.
 typedef KeyIdentityOf = String? Function(Object item);
 
@@ -54,9 +54,10 @@ List<TagInput> tagInputsOf(Object item, {SiteResolver sites = const SiteResolver
   Passkey() => [passkeyTagInput(item)],
   PaymentCard() => [?cardTagInput(item)],
   SecureNote() => [?noteTagInput(item)],
-  VaultKey() || Contact() => [?keyTagInput(keyIdentityOf?.call(item))],
+  VaultKey() => [?keyTagInput(keyIdentityOf?.call(item))],
+  Contact() => [?contactTagInput(item), ?keyTagInput(keyIdentityOf?.call(item))],
   BackupService() => [?codesTagInput(item)],
-  Identity() => [?identityTagInput(item)],
+  Identity() => [?identityTagInput(item), ...documentTagInputs(item)].take(maxTagsPerItem).toList(),
   VaultFile() => [?fileTagInput(item)],
   _ => const [],
 };

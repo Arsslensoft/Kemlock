@@ -510,6 +510,8 @@
   "duplicates.reason.sameKey": "Même clé",
   "duplicates.reason.sameCodes": "Mêmes codes de secours",
   "duplicates.reason.sameIdentity": "Même identité",
+  "duplicates.reason.sameContact": "Même contact",
+  "duplicates.reason.sameDocument": "Même document",
   "duplicates.reason.sameFile": "Même fichier",
   "duplicates.reason.inTwoPlaces": "À deux endroits",
   "duplicates.place.vault": "Votre coffre",

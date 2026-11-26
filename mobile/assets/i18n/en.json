@@ -510,6 +510,8 @@
   "duplicates.reason.sameKey": "Same key",
   "duplicates.reason.sameCodes": "Same backup codes",
   "duplicates.reason.sameIdentity": "Same identity",
+  "duplicates.reason.sameContact": "Same contact",
+  "duplicates.reason.sameDocument": "Same document",
   "duplicates.reason.sameFile": "Same file",
   "duplicates.reason.inTwoPlaces": "In two places",
   "duplicates.place.vault": "Your vault",
