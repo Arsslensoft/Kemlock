@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,6 +47,15 @@ class CustomFieldsView extends ConsumerStatefulWidget {
 class _CustomFieldsViewState extends ConsumerState<CustomFieldsView> {
   /// The hidden fields shown now, by their place in the item's list.
   final _shown = <int>{};
+
+  @override
+  void didUpdateWidget(CustomFieldsView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A place in the list names another field once the list changes (one removed, one added, one reordered), and must not show it
+    if (!listEquals(oldWidget.fields, widget.fields)) {
+      _shown.clear();
+    }
+  }
 
   Future<void> _toggle(int index) async {
     if (!_shown.contains(index) && ref.read(prefsProvider).askBeforeSecret) {

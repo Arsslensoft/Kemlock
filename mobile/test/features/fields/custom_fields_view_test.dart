@@ -158,4 +158,37 @@ void main() {
     expect(find.text(_dots), findsOneWidget);
     expect(find.text(t('fields.admin').toUpperCase()), findsNWidgets(2));
   });
+
+  testWidgets('a value shown stays masked when the list changes and its place names another field', (tester) async {
+    tester.view
+      ..physicalSize = const Size(900, 2400)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    const other = CustomField(name: 'Alarm code', value: '5678', kind: CustomFieldKind.hidden);
+    final fields = ValueNotifier<List<CustomField>>([hidden, other]);
+    addTearDown(fields.dispose);
+    await pumpOnPage(
+      tester,
+      SingleChildScrollView(
+        child: ValueListenableBuilder<List<CustomField>>(
+          valueListenable: fields,
+          builder: (context, list, _) => CustomFieldsView(fields: list),
+        ),
+      ),
+      center: false,
+      overrides: [kmCustomFieldsProvider.overrideWith((ref) async => KmCustomFields.none)],
+    );
+    await tester.pump();
+
+    await tester.tap(find.byType(RevealPasswordButton).first);
+    await tester.pump();
+    expect(find.text('1234'), findsOneWidget);
+
+    // The first field is removed: what was second is first now, and was never shown
+    fields.value = [other];
+    await tester.pump();
+
+    expect(find.text('5678'), findsNothing);
+    expect(find.text(_dots), findsOneWidget);
+  });
 }
