@@ -14,6 +14,7 @@ import 'package:kemlock/models/otp_account.dart';
 import 'package:kemlock/models/passkey.dart';
 import 'package:kemlock/models/payment_card.dart';
 import 'package:kemlock/models/secure_note.dart';
+import 'package:kemlock/models/vault_file.dart';
 import 'package:kemlock/models/vault_key.dart';
 import 'package:kemlock/vault/vault_controller.dart';
 import 'package:kemlock/vault/vault_store.dart';
@@ -100,6 +101,7 @@ class RecordingVault extends VaultController {
     List<Login> logins = const [],
     List<PaymentCard> cards = const [],
     List<Identity> identities = const [],
+    List<VaultFile> files = const [],
   }) async {
     imports.add((accounts: accounts, backupServices: services));
     loginImports.add(logins);
@@ -116,6 +118,7 @@ class RecordingVault extends VaultController {
       logins: [...state.logins, ...logins],
       cards: [...state.cards, ...cards],
       identities: [...state.identities, ...identities],
+      files: [...state.files, ...files],
     );
   }
 

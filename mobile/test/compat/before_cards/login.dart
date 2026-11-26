@@ -5,6 +5,7 @@
 // with it, as such a phone does. Never update it.
 import 'package:kemlock/models/json.dart';
 import 'package:kemlock/models/vault_entry.dart';
+import 'package:kemlock_core/models/item_link.dart';
 
 /// The most previous passwords a login keeps, newest first.
 const previousPasswordsKept = 5;
@@ -253,6 +254,14 @@ class Login implements VaultEntry<Login> {
 
   @override
   Login inSpace(String? scope) => copyWith(spaceId: scope != null && scope.isNotEmpty ? scope : unset);
+
+  // Added only so the frozen copy still implements VaultEntry, which gained links in the item-format port:
+  // a phone of this version keeps a body's `links` in [extra] and knows none of its own.
+  @override
+  List<ItemLink> get links => const [];
+
+  @override
+  Login withLinks(List<ItemLink> links) => this;
 
   /// Never the username or the password, which logs and test failures would show.
   @override
