@@ -3423,6 +3423,8 @@
   "contacts.person.addKey.body": "Sa clé publique PGP, depuis un code QR, un fichier, un texte ou une recherche par e-mail",
   "contacts.person.addKey.title": "Ajouter cette clé ?",
   "contacts.person.addKey.review": "Cette clé sera gardée sous le nom de {name}, avec les informations déjà présentes.",
+  "contacts.person.addKey.heldElsewhere": "Cette clé est déjà conservée sous {holder} : elle ne peut pas être ajoutée à {name}. Ouvrez ce contact pour la modifier.",
+  "contacts.review.sameEmail.person": "{name} figure dans vos contacts avec {email} et n’a pas encore de clé. Il s’agit d’une nouvelle clé ; vous pouvez aussi l’ajouter à {name} depuis sa page.",
   "contacts.person.removeKey": "Retirer la clé",
   "contacts.person.removeKey.body": "Garder la personne et ses informations, sans clé",
   "contacts.person.removeKey.title": "Retirer cette clé ?",

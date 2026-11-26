@@ -3423,6 +3423,8 @@
   "contacts.person.addKey.body": "Their PGP public key, from a QR code, a file, text or an email lookup",
   "contacts.person.addKey.title": "Add this key?",
   "contacts.person.addKey.review": "This key will be kept under {name}, with the details already there.",
+  "contacts.person.addKey.heldElsewhere": "This key is already kept under {holder}, so it can’t be added to {name}. Open that contact to change it.",
+  "contacts.review.sameEmail.person": "{name} is in your contacts with {email} and has no key yet. This is a new key; you can also add it to {name} from their page.",
   "contacts.person.removeKey": "Remove the key",
   "contacts.person.removeKey.body": "Keep the person and their details, without a key",
   "contacts.person.removeKey.title": "Remove this key?",
