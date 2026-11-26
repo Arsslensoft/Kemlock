@@ -20,6 +20,7 @@ import '../accounts/otp.dart';
 import '../autofill/website_rule_fields.dart' show websiteRuleId;
 import '../backup/coverage.dart';
 import '../lock/gate_widgets.dart';
+import '../links/linked_items_section.dart';
 import '../lock/password_strength.dart';
 import '../sends/new_send_sheet.dart';
 import '../settings/prefs.dart';
@@ -338,6 +339,7 @@ class _LoginSheetState extends ConsumerState<LoginSheet> {
                     style: AppType.caption.copyWith(color: b.faint),
                   ),
                 ),
+                LinkedItemsSection(entry: login),
                 const SizedBox(height: 16),
                 OutlinedButton(
                   style: largeButtonStyle,

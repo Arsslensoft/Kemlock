@@ -9,6 +9,7 @@ import '../../models/json.dart';
 import '../../models/key_account.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
+import '../links/linked_items_section.dart';
 import '../security_keys/key_codes_flow.dart';
 import 'tag_input.dart';
 
@@ -177,6 +178,7 @@ class _KeyAccountSheetState extends ConsumerState<KeyAccountSheet> {
           TagInput(key: _tagInput, value: _tags, onChanged: (next) => setState(() => _tags = next), suggestions: widget.allTags),
           const SizedBox(height: 8),
           Text(context.t('keyCodes.sheet.tagsNote'), style: AppType.caption.copyWith(color: b.faint)),
+          LinkedItemsSection(entry: account),
           const SizedBox(height: 14),
           FilledButton(
             onPressed: _changed(account) ? () => unawaited(_save(account)) : null,

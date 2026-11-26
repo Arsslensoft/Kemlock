@@ -21,6 +21,7 @@ import '../../ui/ui.dart';
 import '../../vault/attachment_store.dart';
 import '../../vault/vault_controller.dart';
 import '../accounts/tag_input.dart';
+import '../links/linked_items_section.dart';
 import '../sends/new_send_sheet.dart';
 import '../sync/attachment_downloads.dart';
 import '../sync/space_picker.dart';
@@ -495,6 +496,7 @@ class _NotePageState extends ConsumerState<NotePage> {
                           offline: ref.watch(offlineProvider),
                           preview: (file, size) => PictureThumb(image: _image(file), size: size),
                         ),
+                        if (stored) LinkedItemsSection(entry: _saved),
                         const SizedBox(height: 8),
                         const SizedBox(height: 8),
                         Group(

@@ -12,6 +12,7 @@ import '../../models/identity.dart';
 import '../../platform/secret_clipboard.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
+import '../links/linked_items_section.dart';
 import '../lock/gate_widgets.dart';
 import '../settings/prefs.dart';
 import '../vault/owner_check.dart';
@@ -219,6 +220,7 @@ class _IdentitySheetState extends ConsumerState<IdentitySheet> {
                     padding: const EdgeInsets.fromLTRB(6, 10, 6, 0),
                     child: Text(tags.join(' · '), style: AppType.caption.copyWith(color: p.textSecondary)),
                   ),
+                LinkedItemsSection(entry: identity),
                 const SizedBox(height: 16),
                 OutlinedButton(
                   style: largeButtonStyle,

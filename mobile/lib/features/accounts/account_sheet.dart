@@ -16,6 +16,7 @@ import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
 import '../backup/coverage.dart';
 import '../breaches/breach_widgets.dart';
+import '../links/linked_items_section.dart';
 import '../logins/account_login.dart';
 import '../settings/prefs.dart';
 import '../sync/space_picker.dart';
@@ -366,6 +367,8 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
           VaultwardenLoginPanel(account: account),
 
           KeyTransferActions(account: account),
+
+          LinkedItemsSection(entry: account),
 
           Padding(
             padding: const EdgeInsets.only(top: 16),

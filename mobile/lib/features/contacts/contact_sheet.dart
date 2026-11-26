@@ -19,6 +19,7 @@ import '../../vault/vault_controller.dart';
 import '../keys/key_bridge.dart';
 import '../keys/key_standing.dart';
 import '../keys/key_widgets.dart';
+import '../links/linked_items_section.dart';
 import 'add_contact_sheet.dart';
 import 'contact_check.dart';
 import 'contact_keys.dart';
@@ -321,6 +322,7 @@ class _ContactSheetState extends ConsumerState<ContactSheet> {
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(labelText: context.t('passkeys.note'), alignLabelWithHint: true),
                 ),
+                LinkedItemsSection(entry: contact),
                 const SizedBox(height: 8),
                 Group(
                   children: [
