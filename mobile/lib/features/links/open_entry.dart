@@ -58,20 +58,26 @@ Future<void> openLinkedEntry(BuildContext context, WidgetRef ref, VaultEntry<Obj
         onDelete: (id) => unawaited(_confirmDeleteAccount(context, ref, id)),
       );
     case final SecureNote note:
-      _goTo(context, '/vault/notes/${note.id}');
+      _openPage(context, '/vault/notes/${note.id}');
     case final BackupService service:
-      _goTo(context, Uri(path: '/backup', queryParameters: {'open': service.id}).toString());
+      _openPage(context, Uri(path: '/backup', queryParameters: {'open': service.id}).toString(), tab: '/backup');
     default:
       // TODO(file-items): a File item opens its own sheet here (`case final VaultFile file: await showFileSheet(context, file)`).
       ref.read(toastsProvider.notifier).show(context.t('links.snack.cannotOpen'), severity: ToastSeverity.info);
   }
 }
 
-/// Goes to [location] with the sheets above the current page closed, as a tap in the Vault tab would.
-void _goTo(BuildContext context, String location) {
+/// Opens the page at [location] with the sheets above the current page closed. The page goes on top of the one the link was
+/// followed from, so what that page holds unsaved (a note being written, with its link to this one) is still there when the person
+/// comes back. A page that is a tab ([tab]) the person is on already is the one place it replaces itself: it is told what to open.
+void _openPage(BuildContext context, String location, {String? tab}) {
   final router = GoRouter.of(context);
   Navigator.of(context, rootNavigator: true).popUntil((route) => route is! PopupRoute);
-  router.go(location);
+  if (tab != null && router.routeInformationProvider.value.uri.path == tab) {
+    router.go(location);
+  } else {
+    unawaited(router.push<void>(location));
+  }
 }
 
 /// Asks, then removes the account [id]: the sheet that opened it already closed, as the Codes tab's own sheet does.

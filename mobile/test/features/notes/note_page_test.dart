@@ -147,4 +147,26 @@ void main() {
 
     expect(find.text(t('notes.missing')), findsOneWidget);
   });
+
+  testWidgets('opening a linked note from a note being edited keeps the edit under it', (tester) async {
+    const first = '11111111-1111-4111-8111-111111111111';
+    const second = '22222222-2222-4222-8222-222222222222';
+    final app = await startApp(tester, TestApp());
+    await createVault(tester);
+    final vault = app.container.read(vaultControllerProvider.notifier);
+    await vault.addNote(const SecureNote(id: first, title: 'Wi-Fi', text: 'hunter2', addedAt: 0));
+    await vault.addNote(const SecureNote(id: second, title: 'Router', text: 'admin', addedAt: 0));
+    await vault.linkItems(notes(app).first, notes(app).last);
+    await tester.pump(const Duration(seconds: 10));
+    await goTo(tester, app, '/vault/notes/$first');
+
+    await tester.enterText(field(t('notes.field.text')), 'changed');
+    await tapOn(tester, find.text('Router'));
+    expect(location(app), '/vault/notes/$second');
+
+    await tapOn(tester, find.bySemanticsLabel(t('nav.back')));
+
+    expect(location(app), '/vault/notes/$first');
+    expect(find.widgetWithText(TextField, 'changed'), findsOneWidget);
+  });
 }
