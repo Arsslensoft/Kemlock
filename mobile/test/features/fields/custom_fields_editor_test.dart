@@ -188,6 +188,26 @@ void main() {
       expect(find.text('Cost center · ${t('fields.kind.hidden')}'), findsNothing);
     });
 
+    testWidgets('a code on a security key is offered the fields that name codes, and every kind', (tester) async {
+      final codes = _definition('d-otp', 'Seed owner', CustomFieldKind.text, [KmKind.otp]);
+      await _pump(tester, kind: KmKind.keyOtp, definitions: KmCustomFields(fields: [everywhere, codes, loginsAndCards]));
+      await _openMenu(tester);
+
+      expect(find.byKey(const ValueKey('fields-offer-d-all')), findsOneWidget);
+      expect(find.byKey(const ValueKey('fields-offer-d-otp')), findsOneWidget);
+      expect(find.byKey(const ValueKey('fields-offer-d-lc')), findsNothing);
+    });
+
+    testWidgets('a plain key is offered only the fields that name every kind', (tester) async {
+      final codes = _definition('d-otp', 'Seed owner', CustomFieldKind.text, [KmKind.otp]);
+      await _pump(tester, kind: KmKind.key, definitions: KmCustomFields(fields: [everywhere, codes, loginsAndCards]));
+      await _openMenu(tester);
+
+      expect(find.byKey(const ValueKey('fields-offer-d-all')), findsOneWidget);
+      expect(find.byKey(const ValueKey('fields-offer-d-otp')), findsNothing);
+      expect(find.byKey(const ValueKey('fields-offer-d-lc')), findsNothing);
+    });
+
     testWidgets('a field picked has the admin\'s name and kind, and the person fills in the value', (tester) async {
       final changes = await _pump(tester, kind: KmKind.login, definitions: definitions);
       await _openMenu(tester);

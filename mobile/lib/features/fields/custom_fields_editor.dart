@@ -11,6 +11,7 @@ import '../../ui/ui.dart';
 import '../lock/gate_widgets.dart';
 import '../settings/prefs.dart';
 import '../sync/kemlock/km_custom_fields.dart';
+import '../sync/kemlock/km_kinds.dart';
 import '../vault/owner_check.dart';
 import 'custom_fields_provider.dart';
 
@@ -20,6 +21,10 @@ String fieldKindId(String kind) => switch (kind) {
   CustomFieldKind.boolean => 'fields.kind.boolean',
   _ => 'fields.kind.text',
 };
+
+/// The kind of item an admin's definition names for an item of [kind] (`itemKindOf`): an on-key code is a code (`otp`), as the server
+/// knows it. Any other kind that the definitions don't list (a plain `key`) is offered the definitions that name every kind only.
+String _definitionKind(String kind) => kind == KmKind.keyOtp ? KmKind.otp : kind;
 
 /// A new field of the person's own: no name yet, which is left out until it has one.
 const _ownField = CustomField(name: '', value: '', kind: CustomFieldKind.text);
@@ -181,7 +186,7 @@ class _CustomFieldsEditorState extends ConsumerState<CustomFieldsEditor> {
     final allowOwn = definitions?.allowOwn ?? true;
     final held = {for (final row in _rows) ?row.field.adminField};
     final offered = [
-      for (final definition in definitions?.definitionsFor(widget.kind) ?? const <KmFieldDefinition>[])
+      for (final definition in definitions?.definitionsFor(_definitionKind(widget.kind)) ?? const <KmFieldDefinition>[])
         if (!held.contains(definition.id)) definition,
     ];
     final editable = _rows.where((row) => row.field.isEditable).toList();
