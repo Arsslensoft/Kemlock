@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/messages.dart';
+import '../../models/custom_field.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
+import '../fields/custom_fields_editor.dart';
+import '../sync/kemlock/km_kinds.dart' show KmKind;
 import 'backup_codes.dart';
 import 'code_import_button.dart';
 import 'code_readers.dart';
@@ -34,6 +37,9 @@ class _AddBackupServiceSheetState extends ConsumerState<AddBackupServiceSheet> {
   late final _name = TextEditingController(text: widget.initialName);
   final _codes = TextEditingController();
 
+  /// The custom fields, as the editor last gave them.
+  var _fields = <CustomField>[];
+
   /// Text recognition misreads now and then, so its codes get a reminder to check them.
   bool _imported = false;
 
@@ -52,7 +58,7 @@ class _AddBackupServiceSheetState extends ConsumerState<AddBackupServiceSheet> {
   void _save(List<String> parsed) {
     final name = _name.text.trim();
     if (name.isEmpty || parsed.isEmpty) return;
-    unawaited(ref.read(vaultControllerProvider.notifier).addBackupService(name, parsed));
+    unawaited(ref.read(vaultControllerProvider.notifier).addBackupService(name, parsed, fields: _fields));
     Navigator.of(context).pop();
   }
 
@@ -149,6 +155,8 @@ class _AddBackupServiceSheetState extends ConsumerState<AddBackupServiceSheet> {
                   const SizedBox(height: 16),
                   AppAlert(severity: AlertSeverity.warning, child: Text(context.t('addBackup.noDetected'))),
                 ],
+                const SizedBox(height: 16),
+                CustomFieldsEditor(kind: KmKind.backupCodes, fields: _fields, onChanged: (next) => _fields = next),
               ],
             ),
           ),

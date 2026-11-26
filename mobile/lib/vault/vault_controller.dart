@@ -22,6 +22,7 @@ import '../features/sync/sync_merge.dart';
 import '../i18n/messages.dart';
 import '../models/backup_service.dart';
 import '../models/contact.dart';
+import '../models/custom_field.dart';
 import '../models/generated_password.dart';
 import '../models/identity.dart';
 import '../models/json.dart';
@@ -653,14 +654,15 @@ class VaultController extends Notifier<VaultState> {
     }
   }
 
-  /// Adds a service with its codes, all unused.
-  Future<void> addBackupService(String serviceName, List<String> codes) async {
+  /// Adds a service with its codes, all unused, and the custom [fields] it was given.
+  Future<void> addBackupService(String serviceName, List<String> codes, {List<CustomField> fields = const []}) async {
     final session = state.session;
     if (session == null) return;
     final service = BackupService(
       id: newUuid(),
       serviceName: serviceName,
       codes: [for (final code in codes) BackupCode(code: code)],
+      fields: fields,
       addedAt: _now,
     );
     final next = _touchServices([...state.backupServices, service]);
