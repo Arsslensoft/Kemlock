@@ -7,6 +7,7 @@ import 'package:kemlock/crypto/attachment_format.dart';
 import 'package:kemlock/crypto/bytes.dart';
 import 'package:kemlock/models/secure_note.dart';
 import 'package:kemlock/platform/files.dart';
+import 'package:kemlock/vault/attachment_seal.dart' show sha256Hex;
 import 'package:kemlock/vault/vault_controller.dart';
 
 import '../../fakes/fake_files.dart';
@@ -60,6 +61,16 @@ void main() {
     expect(kma1DecryptSync(stored, unb64(file.key)), _pdf(2 * 1024 * 1024).bytes);
     // Nothing about the file is in the vault's storage in the clear either
     expect(storedText(app), isNot(contains('passport-scan')));
+  });
+
+  testWidgets('a new attachment carries the SHA-256 of its file, which the duplicate finder reads', (tester) async {
+    final app = await openNote(tester);
+    files.nextPick = _pdf(1500);
+
+    await attach(tester, 'notes.attach.file');
+    await save(tester);
+
+    expect(notes(app).single.files.single.sha256, sha256Hex(_pdf(1500).bytes));
   });
 
   testWidgets('attaches a photo from the library and one from the camera', (tester) async {
