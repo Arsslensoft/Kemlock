@@ -3401,7 +3401,7 @@
   "files.delete.title": "Delete this file?",
   "files.delete.body": "“{name}” is removed from the vault. You can undo this for a few seconds afterwards.",
   "files.delete.confirm": "Delete",
-  "files.vaultwarden.stay": "{count, select, 1 {Vaultwarden doesn’t carry File items: 1 File item stays on this phone and in Kemlock Server.} other {Vaultwarden doesn’t carry File items: {count} File items stay on this phone and in Kemlock Server.}}",
+  "files.vaultwarden.stay": "{count, select, 1 {Vaultwarden doesn’t carry File items: 1 File item stays on this phone.} other {Vaultwarden doesn’t carry File items: {count} File items stay on this phone.}}",
   "contacts.person.company": "Company",
   "contacts.person.email": "Email",
   "contacts.person.phone": "Phone",

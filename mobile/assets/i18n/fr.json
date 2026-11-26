@@ -3401,7 +3401,7 @@
   "files.delete.title": "Supprimer ce fichier ?",
   "files.delete.body": "«\u00a0{name}\u00a0» est retiré du coffre. Vous pouvez annuler pendant quelques secondes.",
   "files.delete.confirm": "Supprimer",
-  "files.vaultwarden.stay": "{count, select, 1 {Vaultwarden ne transporte pas les éléments Fichier : 1 élément Fichier reste sur ce téléphone et dans Kemlock Server.} other {Vaultwarden ne transporte pas les éléments Fichier : {count} éléments Fichier restent sur ce téléphone et dans Kemlock Server.}}",
+  "files.vaultwarden.stay": "{count, select, 1 {Vaultwarden ne transporte pas les éléments Fichier : 1 élément Fichier reste sur ce téléphone.} other {Vaultwarden ne transporte pas les éléments Fichier : {count} éléments Fichier restent sur ce téléphone.}}",
   "contacts.person.company": "Entreprise",
   "contacts.person.email": "E-mail",
   "contacts.person.phone": "Téléphone",
