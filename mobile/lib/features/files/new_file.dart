@@ -27,10 +27,8 @@ Future<NoteAttachment?> sealAndStoreFile(ProviderContainer container, PickedFile
     final sealed = await container.read(attachmentSealerProvider)(picked.bytes, name: picked.name, type: picked.mimeType, now: now);
     await container.read(attachmentStoreProvider).writeSealed(vaultId, sealed.entry.id, sealed.sealed);
     return sealed.entry;
-  } on ArgumentError {
-    toasts.show(messages.t('notes.attach.tooLarge', {'size': attachmentSizeLimit ~/ (1024 * 1024)}), severity: ToastSeverity.error);
-    return null;
   } catch (_) {
+    // The size was checked above, so an ArgumentError from the sealer is some other fault (a file with no name), not "too large"
     toasts.show(messages.t('files.add.failed'), severity: ToastSeverity.error);
     return null;
   }

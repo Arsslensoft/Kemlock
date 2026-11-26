@@ -14,6 +14,7 @@ import 'package:kemlock/models/secure_note.dart';
 import 'package:kemlock/models/vault_file.dart';
 import 'package:kemlock/platform/files.dart';
 import 'package:kemlock/vault/attachment_seal.dart';
+import 'package:kemlock/vault/attachment_sealer.dart';
 import 'package:kemlock/vault/vault_controller.dart';
 
 import '../../fakes/fake_files.dart';
@@ -80,6 +81,22 @@ void main() {
     expect(find.text(t('notes.attach.tooLarge', {'size': 50})), findsOneWidget);
     expect(items(app), isEmpty);
     expect(app.attachments.files.values.expand((vault) => vault.keys), isEmpty);
+  });
+
+  testWidgets('a file the sealer refuses for another reason than its size is not called too large', (tester) async {
+    final app = await open(
+      tester,
+      overrides: [
+        attachmentSealerProvider.overrideWithValue((plain, {required name, type, required now}) => throw ArgumentError.value(name, 'name')),
+      ],
+    );
+    files.nextPick = _pdf();
+
+    await addFile(tester, pastToast: false);
+
+    expect(find.text(t('files.add.failed')), findsOneWidget);
+    expect(find.text(t('notes.attach.tooLarge', {'size': 50})), findsNothing);
+    expect(items(app), isEmpty);
   });
 
   testWidgets('a failed write adds nothing and says so', (tester) async {
