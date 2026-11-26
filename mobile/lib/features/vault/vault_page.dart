@@ -172,7 +172,7 @@ class _VaultPageState extends ConsumerState<VaultPage> {
         if (card.isExpired(now)) card.id: messages.t('vault.card.expired'),
     };
     // A File item's line: its size and the day it was added
-    final fileLines = {for (final file in state.files) file.id: fileLine(context, file.file, locale)};
+    final fileLines = {for (final file in state.files) file.id: fileLine(context, file, locale)};
     final items = vaultListItems(
       state,
       filter: _filter,

@@ -11,6 +11,7 @@ import '../../models/vault_file.dart';
 import '../../models/vault_key.dart';
 import '../../ui/ui.dart' show StatusTone;
 import '../../vault/vault_controller.dart';
+import '../files/file_added.dart';
 import '../keys/key_bridge.dart';
 import '../keys/key_standing.dart';
 import '../keys/ssh_fingerprint.dart';
@@ -233,7 +234,7 @@ class VaultListItem {
     title: item.name,
     subtitle: line,
     pinned: item.pinned == true || item.favorite == true,
-    addedAt: item.addedAt,
+    addedAt: fileAddedAt(item),
     searchText: [item.name, ?item.notes, ...?item.tags, item.file.name, ?item.file.type],
   );
 

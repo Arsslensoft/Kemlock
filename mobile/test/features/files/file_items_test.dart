@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kemlock/app/tab_bar.dart';
 import 'package:kemlock/crypto/attachment_format.dart';
 import 'package:kemlock/crypto/bytes.dart';
+import 'package:kemlock/features/files/file_added.dart';
 import 'package:kemlock/features/files/file_sheet.dart';
 import 'package:kemlock/features/vault/add_to_vault_sheet.dart';
 import 'package:kemlock/features/vault/vault_items.dart';
@@ -162,6 +163,15 @@ void main() {
       notes: [SecureNote(id: 'n1', title: 'wi-fi', text: 'hunter2', addedAt: 3)],
       vault: VaultInfo(id: 'main'),
     );
+
+    test('a File item the web vault made with no date takes the day its file was attached', () {
+      const web = VaultFile(id: 'f3', name: 'Web made', file: entry, addedAt: 0);
+      const withDate = VaultFile(id: 'f1', name: 'Lease', file: entry, addedAt: 7);
+
+      expect(fileAddedAt(web), 2);
+      expect(fileAddedAt(withDate), 7);
+      expect(VaultListItem.file(web).addedAt, 2);
+    });
 
     test('lists File items under All and under the Files filter alone, a favourite first', () {
       final all = vaultListItems(state);

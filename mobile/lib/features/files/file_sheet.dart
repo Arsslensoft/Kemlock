@@ -18,6 +18,7 @@ import '../../vault/vault_controller.dart';
 import '../links/linked_items_section.dart';
 import '../notes/note_files.dart';
 import '../sync/attachment_downloads.dart';
+import 'file_added.dart';
 import 'file_edit_sheet.dart';
 import 'file_size.dart';
 
@@ -232,7 +233,7 @@ class _FileSheetState extends ConsumerState<FileSheet> {
                     GroupRow(
                       icon: const Icon(Icons.event_outlined),
                       primary: context.t('files.field.added'),
-                      secondary: fileDateText(item.addedAt, locale),
+                      secondary: fileDateText(fileAddedAt(item), locale),
                     ),
                   ],
                 ),
