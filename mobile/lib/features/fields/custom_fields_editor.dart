@@ -314,14 +314,18 @@ class _FieldRow extends StatelessWidget {
 
     final Widget control;
     if (field.kind == CustomFieldKind.boolean) {
-      control = CheckboxListTile(
-        key: ValueKey('field-tick-$index'),
-        contentPadding: EdgeInsets.zero,
-        controlAffinity: ListTileControlAffinity.leading,
-        dense: true,
-        title: Text(admin ? field.name : context.t('fields.checked'), style: AppType.body1.copyWith(color: p.text)),
-        value: field.isChecked,
-        onChanged: (ticked) => onTick(ticked ?? false),
+      // Its own Material, so the row's tinted box doesn't hide the tile's splash
+      control = Material(
+        type: MaterialType.transparency,
+        child: CheckboxListTile(
+          key: ValueKey('field-tick-$index'),
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
+          dense: true,
+          title: Text(admin ? field.name : context.t('fields.checked'), style: AppType.body1.copyWith(color: p.text)),
+          value: field.isChecked,
+          onChanged: (ticked) => onTick(ticked ?? false),
+        ),
       );
     } else if (field.kind == CustomFieldKind.hidden) {
       control = SecretSelection(
