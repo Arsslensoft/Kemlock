@@ -17,11 +17,12 @@ import 'custom_fields_provider.dart';
 /// What a hidden value shows.
 const _dots = '••••••••••';
 
-/// A field as the view shows it: the name and kind the admin has for it now, when it is the admin's and the definition
-/// still exists, else what the item holds.
+/// A field as the view shows it: its kind and value are what the item holds, always, so a type the admin changed later never
+/// reads a value of another type (a text read as a checkbox, a hidden value shown as text). The admin's definition, when it is
+/// the admin's and still exists, supplies only the name it has now and the Admin tag.
 ({String name, String kind, String value, bool admin}) _resolved(CustomField field, KmCustomFields? definitions) {
   final definition = field.adminField == null ? null : definitions?.definition(field.adminField!);
-  final kind = definition?.kind ?? field.kind;
+  final kind = field.kind;
   final value = kind == CustomFieldKind.boolean ? (field.value == 'true' ? 'true' : 'false') : field.value;
   return (name: definition?.name ?? field.name.trim(), kind: kind, value: value, admin: definition != null);
 }

@@ -135,4 +135,27 @@ void main() {
     expect(find.text('Old rule'), findsOneWidget);
     expect(find.text(t('fields.admin').toUpperCase()), findsNothing);
   });
+
+  testWidgets('the admin changing a definition\'s type does not change how a saved value reads', (tester) async {
+    const asText = CustomField(name: 'Badge', value: 'B-9', kind: CustomFieldKind.text, adminField: 'd1');
+    const asHidden = CustomField(name: 'Pin', value: '4321', kind: CustomFieldKind.hidden, adminField: 'd2');
+    await _pump(
+      tester,
+      [asText, asHidden],
+      definitions: const KmCustomFields(
+        fields: [
+          KmFieldDefinition(id: 'd1', name: 'Badge', kind: CustomFieldKind.boolean),
+          KmFieldDefinition(id: 'd2', name: 'Pin', kind: CustomFieldKind.text),
+        ],
+      ),
+    );
+
+    // The text is still the text, not read as a checkbox
+    expect(find.text('B-9'), findsOneWidget);
+    expect(find.text(t('fields.no')), findsNothing);
+    // The hidden value stays masked, whatever the definition says now
+    expect(find.text('4321'), findsNothing);
+    expect(find.text(_dots), findsOneWidget);
+    expect(find.text(t('fields.admin').toUpperCase()), findsNWidgets(2));
+  });
 }
