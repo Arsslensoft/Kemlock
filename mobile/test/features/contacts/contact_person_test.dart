@@ -100,8 +100,10 @@ void main() {
     await contacts.tap(find.text('Ada Lovelace'));
 
     expect(find.byType(ContactSheet), findsOneWidget);
-    expect(find.text('Analytical Engines'), findsOneWidget);
-    expect(find.text('ada@example.org'), findsOneWidget);
+    // The details are in the person's rows; the fields of the edit form below hold them too
+    final details = find.byKey(const ValueKey('contact-person'));
+    expect(find.descendant(of: details, matching: find.text('Analytical Engines')), findsOneWidget);
+    expect(find.descendant(of: details, matching: find.text('ada@example.org')), findsOneWidget);
     expect(find.byKey(const ValueKey('contact-no-key')), findsOneWidget);
     expect(find.text(t('contacts.person.addKey')), findsOneWidget);
     expect(find.text(t('contacts.person.removeKey')), findsNothing);
