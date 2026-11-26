@@ -27,6 +27,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/login.dart';
+import '../../models/vault_entry.dart';
 import '../sync/sync.dart' show SyncSettings;
 import '../sync/sync_store.dart' show syncProvider;
 import 'space_bridge.dart' show plainWebDavSpaceIds;
@@ -78,6 +79,26 @@ class HiddenPasswords {
       return true;
     }
     return mine.every((id) => hold.chain.accessOf(hold.account, id)?.hidePasswords ?? true);
+  }
+
+  /// Whether this account may change [entry]: an entry of the vault's own always, one of a WebDAV space that has not moved (it
+  /// has no roles), and one of a server space only when the verified chain gives the account edit access to its collection.
+  /// It fails closed like [hides]: a space whose chain isn't reported yet is not one the account may write.
+  bool canEdit(VaultEntry<dynamic> entry) {
+    final space = entry.spaceId;
+    if (space == null || space.isEmpty) {
+      return true;
+    }
+    final hold = spaces[space] ?? _heldUnderUuid(space);
+    if (hold == null) {
+      return webDavSpaces?.contains(space) ?? false;
+    }
+    final collection = hold.collections[entry.id];
+    if (collection != null) {
+      return hold.chain.accessOf(hold.account, collection)?.edit ?? false;
+    }
+    final mine = hold.chain.collectionsOf(hold.account);
+    return mine.isNotEmpty && mine.every((id) => hold.chain.accessOf(hold.account, id)?.edit ?? false);
   }
 
   /// The report of the server space that [space], a WebDAV space's id, has become when it moved: its chain is reported under
