@@ -6,6 +6,8 @@ import '../../../core/now.dart';
 import '../../../i18n/messages.dart';
 import '../../../models/otp_account.dart';
 import '../../../ui/ui.dart';
+import '../../fields/custom_fields_editor.dart';
+import '../../sync/kemlock/km_kinds.dart' show KmKind;
 import '../otp.dart';
 import '../service_tile.dart';
 import 'manual_form.dart';
@@ -110,6 +112,8 @@ class ManualEntry extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(height: 14),
+        CustomFieldsEditor(kind: KmKind.otp, fields: form.fields, onChanged: (next) => form.fields = next),
       ],
     );
   }

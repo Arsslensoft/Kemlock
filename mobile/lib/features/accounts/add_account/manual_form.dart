@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../../../models/custom_field.dart';
 import '../../../models/otp_account.dart';
 import '../otp.dart';
 
@@ -40,6 +41,10 @@ class ManualForm extends ChangeNotifier {
 
   /// HOTP only: the counter to start from, as typed.
   final counter = TextEditingController(text: '0');
+
+  /// The custom fields, as the editor last gave them. They are kept here, with the rest of the form, while the person
+  /// switches tabs, and set without telling listeners: the editor keeps the rows.
+  List<CustomField> fields = const [];
 
   OtpType _type = OtpType.totp;
   String _algorithm = 'SHA1';
@@ -111,9 +116,18 @@ class ManualForm extends ChangeNotifier {
         algorithm: _algorithm,
         digits: _digits,
         counter: _number(counter.text) ?? 0,
+        fields: fields,
         addedAt: 0,
       ),
-      OtpType.steam => OtpAccount(id: '', type: OtpType.steam, issuer: issuer, label: label, secret: secret.text, addedAt: 0),
+      OtpType.steam => OtpAccount(
+        id: '',
+        type: OtpType.steam,
+        issuer: issuer,
+        label: label,
+        secret: secret.text,
+        fields: fields,
+        addedAt: 0,
+      ),
       OtpType.totp => OtpAccount(
         id: '',
         type: OtpType.totp,
@@ -123,6 +137,7 @@ class ManualForm extends ChangeNotifier {
         algorithm: _algorithm,
         digits: _digits,
         period: _number(period.text) ?? 30,
+        fields: fields,
         addedAt: 0,
       ),
     };

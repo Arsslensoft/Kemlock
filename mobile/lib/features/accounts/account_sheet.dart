@@ -9,6 +9,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/now.dart';
 import '../../i18n/messages.dart';
+import '../../models/custom_field.dart';
 import '../../models/json.dart' show unset;
 import '../../models/otp_account.dart';
 import '../../platform/secret_clipboard.dart';
@@ -16,8 +17,11 @@ import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
 import '../backup/coverage.dart';
 import '../breaches/breach_widgets.dart';
+import '../fields/custom_fields_editor.dart';
+import '../fields/custom_fields_view.dart';
 import '../logins/account_login.dart';
 import '../settings/prefs.dart';
+import '../sync/kemlock/km_kinds.dart';
 import '../sync/space_picker.dart';
 import '../sync/sync_store.dart';
 import '../sync/vaultwarden/vaultwarden_login.dart';
@@ -366,6 +370,8 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
           VaultwardenLoginPanel(account: account),
 
           KeyTransferActions(account: account),
+
+          if (_panel != _Panel.edit) CustomFieldsView(fields: account.fields),
 
           Padding(
             padding: const EdgeInsets.only(top: 16),
@@ -974,6 +980,7 @@ class _EditPanelState extends ConsumerState<_EditPanel> {
   late var _tags = widget.account.tags ?? const <String>[];
   late String? _spaceId = widget.account.spaceId;
   late var _noCodes = widget.account.noBackupCodes ?? false;
+  late var _customFields = <CustomField>[...widget.account.fields];
   final _tagInput = GlobalKey<TagInputState>();
 
   @override
@@ -999,6 +1006,7 @@ class _EditPanelState extends ConsumerState<_EditPanel> {
         tags: tags.isNotEmpty ? tags : unset,
         spaceId: _spaceId ?? unset,
         noBackupCodes: _noCodes ? true : unset,
+        fields: _customFields,
       ),
     );
   }
@@ -1041,6 +1049,12 @@ class _EditPanelState extends ConsumerState<_EditPanel> {
                 hintText: context.t('accountSheet.notePlaceholder'),
                 alignLabelWithHint: true,
               ),
+            ),
+            const SizedBox(height: 14),
+            CustomFieldsEditor(
+              kind: itemKindOf(widget.account),
+              fields: _customFields,
+              onChanged: (next) => setState(() => _customFields = next),
             ),
             const SizedBox(height: 14),
             TagInput(key: _tagInput, value: _tags, onChanged: (next) => setState(() => _tags = next), suggestions: widget.allTags),
