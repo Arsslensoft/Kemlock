@@ -45,6 +45,10 @@ class _Row {
 
   var shown = false;
 
+  /// Whether the value may still hold what was saved, or some of it: until it is emptied, so one keystroke on a saved hidden value
+  /// does not make the rest of it show without the owner check. Typing into a value that was empty needs none.
+  late var holdsSaved = original.value.isNotEmpty;
+
   void dispose() {
     _name?.dispose();
     _value?.dispose();
@@ -132,7 +136,12 @@ class _CustomFieldsEditorState extends ConsumerState<CustomFieldsEditor> {
   /// then their own, so the link to the admin's definition is cleared; nothing changes for a field that has none.
   Object _ownOrAdmin(_Row row) => row.field.adminField == null ? keep : unset;
 
-  void _write(_Row row, String text) => _set(row, row.field.copyWith(value: text));
+  void _write(_Row row, String text) {
+    if (text.isEmpty) {
+      row.holdsSaved = false;
+    }
+    _set(row, row.field.copyWith(value: text));
+  }
 
   void _tick(_Row row, bool ticked) => _set(row, row.field.copyWith(value: ticked ? 'true' : 'false'));
 
@@ -148,14 +157,16 @@ class _CustomFieldsEditorState extends ConsumerState<CustomFieldsEditor> {
         ? ''
         : row.field.value;
     row.value.text = value;
+    if (value != row.field.value) {
+      row.holdsSaved = false;
+    }
     _set(row, row.field.copyWith(kind: kind, value: value, adminField: _ownOrAdmin(row)));
   }
 
   /// Shows or hides a hidden value. Showing what was saved asks first who it is when Settings says so, as the card's
   /// sheet does for its code; what was just typed shows at once.
   Future<void> _toggleShown(_Row row) async {
-    final saved = row.original.value;
-    if (!row.shown && saved.isNotEmpty && row.field.value == saved && ref.read(prefsProvider).askBeforeSecret) {
+    if (!row.shown && row.holdsSaved && ref.read(prefsProvider).askBeforeSecret) {
       final reason = context.t('fields.reveal.confirm');
       if (!await ref.read(ownerCheckProvider)(context, ref, reason) || !mounted) {
         return;

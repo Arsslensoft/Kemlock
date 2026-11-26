@@ -4,11 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kemlock/features/fields/custom_fields_editor.dart';
 import 'package:kemlock/features/fields/custom_fields_provider.dart';
 import 'package:kemlock/features/lock/gate_widgets.dart';
+import 'package:kemlock/features/settings/prefs.dart';
 import 'package:kemlock/features/sync/kemlock/km_custom_fields.dart';
 import 'package:kemlock/features/sync/kemlock/km_kinds.dart';
 import 'package:kemlock/models/custom_field.dart';
 
+import '../../fakes/fake_owner_check.dart';
 import '../../helpers/test_app.dart';
+
+/// The vault's settings with "Ask before showing a secret" on.
+class _AskingPrefs extends PrefsNotifier {
+  @override
+  Prefs build() => const Prefs(askBeforeSecret: true);
+}
 
 /// Holds the fields as an edit sheet does, and records every list the editor gives it.
 class _Harness extends StatefulWidget {
@@ -348,6 +356,36 @@ void main() {
       expect(_textField(tester, 'field-value-0').obscureText, isTrue);
       // Showing it changed nothing
       expect(changes, isEmpty);
+    });
+
+    testWidgets('a saved hidden value still asks who it is after one keystroke, until it is emptied', (tester) async {
+      final check = FakeOwnerCheck();
+      await _pump(
+        tester,
+        initial: const [CustomField(name: 'PIN', value: '9876', kind: CustomFieldKind.hidden)],
+        overrides: [check.asOverride, prefsProvider.overrideWith(_AskingPrefs.new)],
+      );
+
+      // The value is edited, and what is left of the saved one must not show without the check
+      await tester.enterText(find.byKey(const ValueKey('field-value-0')), '98765');
+      await tester.pump();
+      await tester.tap(find.byType(RevealPasswordButton));
+      await tester.pump();
+      expect(check.reasons, hasLength(1));
+      expect(_textField(tester, 'field-value-0').obscureText, isFalse);
+
+      await tester.tap(find.byType(RevealPasswordButton));
+      await tester.pump();
+
+      // Emptied, it holds nothing saved: what is typed next shows at once
+      await tester.enterText(find.byKey(const ValueKey('field-value-0')), '');
+      await tester.pump();
+      await tester.enterText(find.byKey(const ValueKey('field-value-0')), '1');
+      await tester.pump();
+      await tester.tap(find.byType(RevealPasswordButton));
+      await tester.pump();
+      expect(check.reasons, hasLength(1));
+      expect(_textField(tester, 'field-value-0').obscureText, isFalse);
     });
 
     testWidgets('a checkbox holds "true" or "false"', (tester) async {
