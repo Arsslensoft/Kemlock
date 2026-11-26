@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/messages.dart';
 import '../../models/custom_field.dart';
+import '../../models/json.dart' show keep, unset;
 import '../../platform/secret_selection.dart';
 import '../../ui/ui.dart';
 import '../lock/gate_widgets.dart';
@@ -124,7 +125,12 @@ class _CustomFieldsEditorState extends ConsumerState<CustomFieldsEditor> {
     _emit();
   }
 
-  void _rename(_Row row, String text) => _set(row, row.field.copyWith(name: text));
+  /// Renaming a field makes it the person's own, which an admin's field with a name the admin chose is not.
+  void _rename(_Row row, String text) => _set(row, row.field.copyWith(name: text, adminField: _ownOrAdmin(row)));
+
+  /// What [CustomField.copyWith] gets as `adminField` when the person changes the name or the kind of [row]'s field: the field is
+  /// then their own, so the link to the admin's definition is cleared; nothing changes for a field that has none.
+  Object _ownOrAdmin(_Row row) => row.field.adminField == null ? keep : unset;
 
   void _write(_Row row, String text) => _set(row, row.field.copyWith(value: text));
 
@@ -142,7 +148,7 @@ class _CustomFieldsEditorState extends ConsumerState<CustomFieldsEditor> {
         ? ''
         : row.field.value;
     row.value.text = value;
-    _set(row, row.field.copyWith(kind: kind, value: value));
+    _set(row, row.field.copyWith(kind: kind, value: value, adminField: _ownOrAdmin(row)));
   }
 
   /// Shows or hides a hidden value. Showing what was saved asks first who it is when Settings says so, as the card's
@@ -179,8 +185,8 @@ class _CustomFieldsEditorState extends ConsumerState<CustomFieldsEditor> {
             key: row.key,
             row: row,
             index: _rows.indexOf(row),
-            // A field whose definition is gone, or the admin's whose list was never read, is the person's own
-            admin: row.field.adminField != null && (definitions == null || definitions.definition(row.field.adminField!) != null),
+            // A field whose definition is gone, or the admin's whose list was never read, is the person's own, as in the view
+            admin: isAdminField(row.field, definitions),
             canMove: editable.length > 1,
             canMoveUp: editable.first != row,
             canMoveDown: editable.last != row,

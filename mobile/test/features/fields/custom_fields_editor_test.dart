@@ -45,7 +45,7 @@ Future<List<List<CustomField>>> _pump(
   WidgetTester tester, {
   String kind = KmKind.login,
   List<CustomField> initial = const [],
-  KmCustomFields definitions = KmCustomFields.none,
+  KmCustomFields? definitions = KmCustomFields.none,
   List<Override> overrides = const [],
 }) async {
   tester.view
@@ -218,6 +218,50 @@ void main() {
       expect(find.byKey(const ValueKey('field-kind-0-hidden')), findsOneWidget);
       expect(find.byKey(const ValueKey('field-name-1')), findsNothing);
       expect(find.byKey(const ValueKey('field-kind-1-hidden')), findsNothing);
+    });
+  });
+
+  group('an admin\'s field the person turns into their own', () {
+    const held = CustomField(name: 'Cost center', value: 'CC-7', kind: CustomFieldKind.text, adminField: 'd1');
+
+    testWidgets('is the person\'s own when no definitions were ever read, as in the view', (tester) async {
+      await _pump(tester, initial: const [held], definitions: null);
+
+      expect(find.byKey(const ValueKey('field-name-0')), findsOneWidget);
+      expect(find.byKey(const ValueKey('field-kind-0-hidden')), findsOneWidget);
+      expect(find.text(t('fields.admin').toUpperCase()), findsNothing);
+    });
+
+    testWidgets('loses the admin\'s id when the person renames it', (tester) async {
+      final changes = await _pump(tester, initial: const [held], definitions: null);
+
+      await tester.enterText(find.byKey(const ValueKey('field-name-0')), 'Cost centre');
+      await tester.pump();
+
+      expect(changes.last.single.name, 'Cost centre');
+      expect(changes.last.single.adminField, isNull);
+      expect(writeFields(changes.last), [
+        {'name': 'Cost centre', 'value': 'CC-7', 'kind': 'text'},
+      ]);
+    });
+
+    testWidgets('loses the admin\'s id when the person changes its type', (tester) async {
+      final changes = await _pump(tester, initial: const [held], definitions: const KmCustomFields());
+
+      await tester.tap(find.byKey(const ValueKey('field-kind-0-hidden')));
+      await tester.pump();
+
+      expect(changes.last.single.kind, CustomFieldKind.hidden);
+      expect(changes.last.single.adminField, isNull);
+    });
+
+    testWidgets('keeps the admin\'s id while the person only writes the value', (tester) async {
+      final changes = await _pump(tester, initial: const [held], definitions: null);
+
+      await tester.enterText(find.byKey(const ValueKey('field-value-0')), 'CC-8');
+      await tester.pump();
+
+      expect(changes.last.single.adminField, 'd1');
     });
   });
 

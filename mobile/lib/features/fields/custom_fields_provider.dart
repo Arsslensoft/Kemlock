@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../models/custom_field.dart';
 import '../sync/kemlock/km_custom_fields.dart';
 import '../sync/sync_store.dart';
 
@@ -45,3 +46,10 @@ final kmCustomFieldsProvider = FutureProvider<KmCustomFields?>((ref) async {
     return last.of(account);
   }
 });
+
+/// Whether [field] is the admin's: it was made from a definition [definitions] still has. A field whose definition is not
+/// known (it was deleted, or the answer was never read) is the person's own, in the editor and in the view alike.
+bool isAdminField(CustomField field, KmCustomFields? definitions) {
+  final id = field.adminField;
+  return id != null && definitions?.definition(id) != null;
+}
