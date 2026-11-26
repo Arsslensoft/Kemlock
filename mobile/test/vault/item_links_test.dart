@@ -353,6 +353,40 @@ void main() {
       expect(note().links.ids, {_otherLoginId});
     });
 
+    test('Undo puts the links of the items that were linked to the removed one back', () async {
+      await openNew();
+      await controller().addLogin(_login(_loginId, name: 'proton.me'));
+      await controller().addNote(_note(_noteId));
+      await controller().linkItems(login(), note());
+      later(const Duration(minutes: 1));
+      await controller().addLogin(_login(_otherLoginId, name: 'Proton Mail'));
+      await controller().mergeDuplicates(MergeChoices(dedupItems(logins: state().logins)));
+      expect(note().links.ids, {_otherLoginId});
+
+      toast()!.onAction!();
+      await pumpEventQueue();
+
+      expect(state().logins.map((login) => login.id).toSet(), {_loginId, _otherLoginId});
+      expect(note().links.ids, {_loginId});
+      expect(linksOfLogin(), {_noteId});
+      expect(login(_otherLoginId).links, isEmpty);
+    });
+
+    test('a code tied to the login that goes by its linkedLoginId is tied to the one that stays', () async {
+      await openNew();
+      await controller().addLogin(_login(_loginId, name: 'proton.me'));
+      await controller().addAccount(OtpAccount(id: 'code', issuer: 'Proton', label: 'sam', secret: 'JBSWY3DPEHPK3PXP', addedAt: 0));
+      await controller().updateAccount(state().accounts.single.copyWith(linkedLoginId: _loginId));
+      later(const Duration(minutes: 1));
+      await controller().addLogin(_login(_otherLoginId, name: 'Proton Mail'));
+
+      expect(await controller().mergeDuplicates(MergeChoices(dedupItems(logins: state().logins))), isTrue);
+
+      final survivor = state().logins.single;
+      expect(survivor.id, _otherLoginId);
+      expect([for (final item in linkedItemsOf(state().lists, survivor)) item.entry?.id], [state().accounts.single.id]);
+    });
+
     test('leaves the links of a vault that has none alone', () async {
       await openNew();
       await controller().addLogin(_login(_loginId, name: 'proton.me'));

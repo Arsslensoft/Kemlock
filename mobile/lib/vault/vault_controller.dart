@@ -1666,53 +1666,6 @@ class VaultController extends Notifier<VaultState> {
     await _saveEdits(edits);
   }
 
-  /// What a merge does to the items linked to the ones it removes: the item that stays takes over their links, and each item
-  /// that named one of them names it instead (relink.ts of the web vault). Null when nothing is linked to the removed items. A
-  /// link no item of the vault answers to is taken over too, and an item the person may not change is left as it is.
-  ({VaultEntry<Object?> survivor, List<VaultEntry<Object?>> others})? _mergeLinks(Object kept, List<Object> gone) {
-    final going = [
-      for (final item in gone)
-        if (item is VaultEntry<Object?>) item,
-    ];
-    if (kept is! VaultEntry<Object?> || going.isEmpty) return null;
-    // A vault with no link at all has nothing to move
-    if (!entriesOf(state.lists).any((entry) => entry.links.isNotEmpty)) return null;
-    final account = _linkAccount;
-    final lists = state.lists;
-    final members = {for (final entry in [kept, ...going]) (entry.runtimeType, entry.id)};
-    final goneNames = {
-      for (final entry in going) ...{entry.id.toLowerCase(), linkIdOf(entry, account: account).toLowerCase()},
-    };
-    final ownName = linkIdOf(kept, account: account).toLowerCase();
-    final taken = <ItemLink>[];
-    final others = <(Type, String), VaultEntry<Object?>>{};
-    for (final entry in going) {
-      for (final linked in linkedItemsOf(lists, entry, account: account)) {
-        final other = linked.entry;
-        if (linked.viaLinkedLogin || (other != null && members.contains((other.runtimeType, other.id)))) continue;
-        taken.add(entry.links.firstWhereOrNull((link) => link.key == linked.id) ?? ItemLink(linked.id));
-        if (other != null && _mayWrite(other)) others[(other.runtimeType, other.id)] = other;
-      }
-    }
-    final links = [
-      for (final link in [...kept.links, ...taken])
-        if (!link.isReadable || !(goneNames.contains(link.key) || link.key == ownName)) link,
-    ];
-    final survivor = kept.withLinks(links) as VaultEntry<Object?>;
-    final rewritten = [for (final other in others.values) _namingInstead(other, goneNames, ownName)];
-    if (rewritten.isEmpty && const ListEquality<ItemLink>().equals(survivor.links, kept.links)) return null;
-    return (survivor: survivor, others: rewritten);
-  }
-
-  /// [other] with the [gone] names out of its links and [name] in.
-  VaultEntry<Object?> _namingInstead(VaultEntry<Object?> other, Set<String> gone, String name) {
-    var links = other.links;
-    for (final id in gone) {
-      links = links.removing(id);
-    }
-    return other.withLinks(links.adding(name, ownIds: [other.id])) as VaultEntry<Object?>;
-  }
-
   // Duplicate cleaner (the add-duplicate-cleaner plan, tasks group 6)
 
   late final _accounts = _ItemList<OtpAccount>(
@@ -1848,9 +1801,23 @@ class VaultController extends Notifier<VaultState> {
   Future<bool> mergeDuplicates(MergeChoices choices) async {
     final session = state.session;
     if (session == null) return false;
-    final result = choices.merged(_now);
+    final merged = choices.merged(_now);
     final gone = [for (final item in choices.removed) item.item];
     final goneIds = {for (final item in choices.removed) item.id};
+    // The item that stays keeps the links the vault holds for it now, whatever the merge sheet was opened with
+    final current = _held(merged as VaultEntry<Object?>);
+    final result = current.links.isEmpty && merged.links.isEmpty ? merged : merged.withLinks(current.links) as VaultEntry<Object?>;
+    final removedEntries = [for (final item in gone) item as VaultEntry<Object?>];
+    // The items linked to the ones that go are linked to the one that stays, and a code's login too (the core's relinkForMerge)
+    MergeRelink relinkOf() => relinkForMerge(
+      state.lists,
+      kept: result,
+      removed: removedEntries,
+      now: _now,
+      account: _linkAccount,
+      keptWritable: _mayWrite(result),
+    );
+    final relinked = relinkOf();
     // A login linked to a code that goes is linked to the code that stays
     final relink = result is OtpAccount
         ? [
@@ -1865,6 +1832,7 @@ class VaultController extends Notifier<VaultState> {
       kept: mergeJsonOf(choices.kept.item),
       removed: [for (final item in gone) mergeJsonOf(item)],
       relinked: [for (final login in relink) mergeJsonOf(login)],
+      relinkUndo: [for (final undo in relinked.undo) undo.toJson()],
     );
     final store = DedupStore(_store);
     final undo = <Future<void> Function()>[];
@@ -1873,14 +1841,35 @@ class VaultController extends Notifier<VaultState> {
       await store.saveAnswers(answers.pruned(_now).withMerge(record), session);
       undo.add(() => store.saveAnswers(answers, session));
       if (relink.isNotEmpty) {
-        undo.add(await _applyMerge(_logins, session, put: [for (final login in relink) login.copyWith(accountId: choices.keptId)]));
+        undo.add(
+          await _applyEntries(
+            session,
+            edits: [for (final login in relink) _Edit(login, (held) => (held as Login).copyWith(accountId: choices.keptId))],
+          ),
+        );
       }
-      // The item that stays takes over the links of the ones that go, and the items linked to them link to it
-      final linked = _mergeLinks(result, gone);
-      if (linked != null && linked.others.isNotEmpty) {
-        undo.add(await _applyEntries(session, put: linked.others));
+      // The items linked to the ones that go are linked to the item that stays, each as the vault holds it when its list is saved;
+      // one the person may not change is left as it is
+      final others = [
+        for (final other in relinked.others)
+          if (_mayWrite(other)) other,
+      ];
+      if (others.isNotEmpty) {
+        undo.add(
+          await _applyEntries(
+            session,
+            edits: [
+              for (final other in others)
+                _Edit(
+                  other,
+                  (held) =>
+                      relinkOf().others.firstWhereOrNull((next) => next.runtimeType == held.runtimeType && next.id == held.id) ?? held,
+                ),
+            ],
+          ),
+        );
       }
-      undo.add(await _applyKind(session, put: [linked?.survivor ?? result], remove: gone));
+      undo.add(await _applyKind(session, put: [relinked.kept], remove: gone));
       _bump();
       ref
           .read(toastsProvider.notifier)
@@ -1929,6 +1918,25 @@ class VaultController extends Notifier<VaultState> {
         undo.add(await _applyKind(session, put: relinked));
       }
       undo.add(await _applyKind(session, put: [kept, ...removed]));
+      // The links the merge moved go back to the items they were taken from
+      final relinkUndo = [for (final json in record.relinkUndo) RelinkUndo.fromJson(json)];
+      if (relinkUndo.isNotEmpty) {
+        final members = {for (final item in [kept, ...removed]) if (item is VaultEntry<Object?>) (item.runtimeType, item.id)};
+        List<VaultEntry<Object?>> undone() => [
+          for (final other in undoRelink(state.lists, relinkUndo, now: _now))
+            if (!members.contains((other.runtimeType, other.id)) && _mayWrite(other)) other,
+        ];
+        final edits = [
+          for (final other in undone())
+            _Edit(
+              other,
+              (held) => undone().firstWhereOrNull((next) => next.runtimeType == held.runtimeType && next.id == held.id) ?? held,
+            ),
+        ];
+        if (edits.isNotEmpty) {
+          undo.add(await _applyEntries(session, edits: edits));
+        }
+      }
       await store.saveAnswers(answers.withoutMerge(recordId), session);
       _bump();
       _toast('vault.snack.duplicatesUndone');
