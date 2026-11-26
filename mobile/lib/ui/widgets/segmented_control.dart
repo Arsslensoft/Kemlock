@@ -227,12 +227,15 @@ class _ScrollingState extends State<_Scrolling> {
         : widget.left + widget.selectedWidth > end
         ? widget.left + widget.selectedWidth - position.viewportDimension
         : null;
-    if (target != null) {
-      _controller.animateTo(
-        target.clamp(position.minScrollExtent, position.maxScrollExtent),
-        duration: Motion.reduced(context) ? Duration.zero : Motion.thumb,
-        curve: Ease.sheet,
-      );
+    if (target == null) {
+      return;
+    }
+    final offset = target.clamp(position.minScrollExtent, position.maxScrollExtent);
+    // animateTo refuses a zero duration, so reduced motion jumps
+    if (Motion.reduced(context)) {
+      _controller.jumpTo(offset);
+    } else {
+      _controller.animateTo(offset, duration: Motion.thumb, curve: Ease.sheet);
     }
   }
 
