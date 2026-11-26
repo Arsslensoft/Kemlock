@@ -1278,6 +1278,7 @@ class VaultController extends Notifier<VaultState> {
           addedAt: before?.addedAt ?? now,
           updatedAt: before?.updatedAt,
           links: before?.links ?? const [],
+          fields: seen.fields ?? before?.fields ?? const [],
           extra: before?.extra ?? const {},
         ),
       );

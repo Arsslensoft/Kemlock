@@ -19,6 +19,7 @@ import 'package:kemlock/features/sync/sync_merge.dart';
 import 'package:kemlock/i18n/messages.dart';
 import 'package:kemlock/models/backup_service.dart';
 import 'package:kemlock/models/contact.dart';
+import 'package:kemlock/models/custom_field.dart';
 import 'package:kemlock/models/key_account.dart';
 import 'package:kemlock/models/otp_account.dart';
 import 'package:kemlock/models/vault_key.dart';
@@ -1291,6 +1292,23 @@ void main() {
       ]);
 
       expect(state().keyAccounts.single.touch, isTrue);
+    });
+
+    test('a name on both keeps its custom fields, and one moved from the vault brings its own', () async {
+      const field = CustomField(name: 'Seed owner', value: 'ada', kind: CustomFieldKind.text);
+      await openNew();
+      await controller().reconcileKey(yubi, null, listed);
+      final alice = named('Example:alice@example.org');
+      expect(await controller().updateKeyAccount(alice.copyWith(fields: const [field])), isTrue);
+
+      now = now.add(const Duration(minutes: 5));
+      await controller().reconcileKey(yubi, null, [
+        listed[0],
+        const KeyAccountSeen(name: 'New:carol', type: KeyAccountType.totp, fields: [field]),
+      ]);
+
+      expect(named('Example:alice@example.org').fields, [field]);
+      expect(named('New:carol').fields, [field]);
     });
 
     test('an account moved from the vault brings its tags and note', () async {
