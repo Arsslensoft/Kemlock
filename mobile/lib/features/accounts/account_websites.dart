@@ -10,10 +10,13 @@ import '../../models/json.dart' show unset;
 import '../../models/otp_account.dart';
 import '../../models/website_rule.dart';
 import '../../ui/ui.dart';
+import '../../vault/vault_controller.dart';
 import '../autofill/autofill_copy.dart';
 import '../autofill/website_dialog.dart';
 import '../autofill/website_hints.dart';
 import '../backup/two_factor_directory.dart';
+import '../links/link_account.dart';
+import 'websites_editor.dart';
 
 /// The websites AutoFill suggests an account's code on (openspec:
 /// account-websites): those Kemlock's 2FA directory gives the account, which
@@ -57,6 +60,18 @@ class AccountWebsites extends ConsumerWidget {
     final b = context.bmc;
     final directory = ref.watch(twoFactorDirectoryProvider).value;
     final suffixes = ref.watch(publicSuffixListProvider).value;
+    // A code linked to an item with websites shows those, read-only, and writes none of its own
+    final inherited = inheritedWebsites(
+      ref.watch(vaultControllerProvider.select((state) => state.lists)),
+      account,
+      account: ref.watch(linkAccountProvider),
+    );
+    if (inherited.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 16),
+        child: InheritedWebsites(rules: inherited),
+      );
+    }
     final own = account.rules;
     // What Kemlock found by itself, as people read hosts: without the mark for exact hosts
     final found = [

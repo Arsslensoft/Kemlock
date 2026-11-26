@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kemlock/features/accounts/account_websites.dart';
+import 'package:kemlock/models/login.dart';
 import 'package:kemlock/models/otp_account.dart';
 import 'package:kemlock/models/website_rule.dart';
+import 'package:kemlock/vault/vault_controller.dart';
+import 'package:kemlock_core/models/item_link.dart';
 
 import '../../helpers/test_app.dart';
 import '../backup/backup_test_kit.dart';
+import 'codes_fakes.dart';
 
 void main() {
   const nextcloud = OtpAccount(id: 'n1', issuer: 'Nextcloud', label: 'alice', secret: 'JBSWY3DPEHPK3PXP', addedAt: 1);
   const github = OtpAccount(id: 'g1', issuer: 'GitHub', label: 'octocat', secret: 'JBSWY3DPEHPK3PXP', addedAt: 1);
 
   /// The section for [account], and what it last handed on as the changed account.
-  Future<List<OtpAccount>> pump(WidgetTester tester, OtpAccount account) async {
+  Future<List<OtpAccount>> pump(WidgetTester tester, OtpAccount account, {List<Override> overrides = const []}) async {
     final updates = <OtpAccount>[];
     await pumpOnPage(
       tester,
@@ -20,7 +24,7 @@ void main() {
         child: AccountWebsites(account: account, onUpdate: updates.add),
       ),
       center: false,
-      overrides: [realDirectory],
+      overrides: [realDirectory, ...overrides],
     );
     await tester.pumpAndSettle();
     return updates;
@@ -62,6 +66,21 @@ void main() {
 
     expect(updates.single.websites, isNull);
     expect(updates.single.toJson().containsKey('websites'), isFalse);
+  });
+
+  testWidgets('a code linked to an item with websites shows those, read-only, and offers to write none', (tester) async {
+    const login = Login(id: '11111111-1111-4111-8111-111111111111', name: 'Proton', websites: ['proton.me'], addedAt: 1);
+    final linked = github.copyWith(websites: ['own.example.org']).withLinks([ItemLink(login.id)]);
+    final vault = FakeVaultController(
+      VaultState(phase: VaultPhase.unlocked, accounts: [linked], logins: const [login], vault: const VaultInfo(id: 'vault')),
+    );
+    await pump(tester, linked, overrides: [fakeVault(vault)]);
+
+    expect(find.byKey(const ValueKey('inherited-websites')), findsOneWidget);
+    expect(find.text('proton.me'), findsOneWidget);
+    expect(find.text('own.example.org'), findsNothing);
+    expect(find.text(t('accountWebsites.add')), findsNothing);
+    expect(find.text(t('accountWebsites.remove')), findsNothing);
   });
 
   testWidgets('lists what the directory gives as found by Kemlock, with no Remove', (tester) async {

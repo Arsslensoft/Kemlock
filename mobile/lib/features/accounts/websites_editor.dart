@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/public_suffixes.dart';
 import '../../core/website_rules.dart';
+import '../../crypto/account/encoding.dart' show Owner;
 import '../../i18n/messages.dart';
 import '../../models/backup_service.dart';
 import '../../models/login.dart';
@@ -99,9 +100,10 @@ class WebsitesEditor extends ConsumerWidget {
 }
 
 /// The websites of the first item that [entry] is linked to and that has some, which the code shows as its own and doesn't write:
-/// empty when it is linked to none or to items with no websites. A link we can't resolve has none.
-List<WebsiteRule> inheritedWebsites(Lists lists, VaultEntry<Object?> entry) {
-  for (final linked in linkedItemsOf(lists, entry)) {
+/// empty when it is linked to none or to items with no websites. A link we can't resolve has none. [account] is the vault's Kemlock
+/// Server account owner, which an entry whose id is not a UUID needs to be named by a link.
+List<WebsiteRule> inheritedWebsites(Lists lists, VaultEntry<Object?> entry, {Owner? account}) {
+  for (final linked in linkedItemsOf(lists, entry, account: account)) {
     final rules = switch (linked.entry) {
       Login(:final rules) => rules,
       OtpAccount(:final rules) => rules,

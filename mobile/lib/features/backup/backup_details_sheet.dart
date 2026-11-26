@@ -8,6 +8,7 @@ import '../../models/website_rule.dart' show websitesOf;
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
 import '../accounts/websites_editor.dart';
+import '../links/link_account.dart';
 
 /// What a backup-code service is called, which is its name when it has one and its service name otherwise.
 String backupTitle(BackupService service) {
@@ -66,7 +67,11 @@ class _BackupDetailsSheetState extends ConsumerState<BackupDetailsSheet> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final inherited = inheritedWebsites(ref.watch(vaultControllerProvider.select((state) => state.lists)), widget.service);
+    final inherited = inheritedWebsites(
+      ref.watch(vaultControllerProvider.select((state) => state.lists)),
+      widget.service,
+      account: ref.watch(linkAccountProvider),
+    );
     final linked = inherited.isNotEmpty;
     return Column(
       mainAxisSize: MainAxisSize.min,
