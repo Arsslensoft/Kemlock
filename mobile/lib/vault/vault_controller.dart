@@ -1271,7 +1271,7 @@ class VaultController extends Notifier<VaultState> {
           addedAt: before?.addedAt ?? now,
           updatedAt: before?.updatedAt,
           links: before?.links ?? const [],
-          fields: seen.fields ?? before?.fields ?? const [],
+          fields: seen.fields.isNotEmpty ? seen.fields : before?.fields ?? const [],
           extra: before?.extra ?? const {},
         ),
       );
@@ -1828,38 +1828,19 @@ class VaultController extends Notifier<VaultState> {
   Future<bool> mergeDuplicates(MergeChoices choices) async {
     final session = state.session;
     if (session == null) return false;
-    final merged = choices.merged(_now);
     final gone = [for (final item in choices.removed) item.item];
-    final goneIds = {for (final item in choices.removed) item.id};
-    // The item that stays keeps the links the vault holds for it now, whatever the merge sheet was opened with
-    final current = _held(merged as VaultEntry<Object?>);
-    final result = current.links.isEmpty && merged.links.isEmpty ? merged : merged.withLinks(current.links) as VaultEntry<Object?>;
-    final removedEntries = [for (final item in gone) item as VaultEntry<Object?>];
-    // The items linked to the ones that go are linked to the one that stays, and a code's login too (the core's relinkForMerge)
-    MergeRelink relinkOf() => relinkForMerge(
-      state.lists,
-      kept: result,
-      removed: removedEntries,
-      now: _now,
-      account: _linkAccount,
-      keptWritable: _mayWrite(result),
-    );
+    // What the merge does to the links and the custom fields: the item that stays takes over those of the ones that go, and the items
+    // linked to them, a code's login too, are linked to it (the core's relinkForMerge, through the choices)
+    MergeRelink relinkOf() => choices.relink(state.lists, now: _now, account: _linkAccount);
     final relinked = relinkOf();
-    // A login linked to a code that goes is linked to the code that stays
-    final relink = result is OtpAccount
-        ? [
-            for (final login in state.logins)
-              if (goneIds.contains(login.accountId)) login,
-          ]
-        : const <Login>[];
+    final result = relinked.kept;
     final record = MergeRecord(
       id: newUuid(),
       at: _now,
       kind: mergeKindOf(result),
       kept: mergeJsonOf(choices.kept.item),
       removed: [for (final item in gone) mergeJsonOf(item)],
-      relinked: [for (final login in relink) mergeJsonOf(login)],
-      relinkUndo: [for (final undo in relinked.undo) undo.toJson()],
+      relinkUndo: relinked.undo,
     );
     final store = DedupStore(_store);
     final undo = <Future<void> Function()>[];
@@ -1867,14 +1848,6 @@ class VaultController extends Notifier<VaultState> {
       final answers = await store.loadAnswers(session);
       await store.saveAnswers(answers.pruned(_now).withMerge(record), session);
       undo.add(() => store.saveAnswers(answers, session));
-      if (relink.isNotEmpty) {
-        undo.add(
-          await _applyEntries(
-            session,
-            edits: [for (final login in relink) _Edit(login, (held) => (held as Login).copyWith(accountId: choices.keptId))],
-          ),
-        );
-      }
       // The items linked to the ones that go are linked to the item that stays, each as the vault holds it when its list is saved;
       // one the person may not change is left as it is
       final others = [
@@ -1946,7 +1919,7 @@ class VaultController extends Notifier<VaultState> {
       }
       undo.add(await _applyKind(session, put: [kept, ...removed]));
       // The links the merge moved go back to the items they were taken from
-      final relinkUndo = [for (final json in record.relinkUndo) RelinkUndo.fromJson(json)];
+      final relinkUndo = record.relinkUndo;
       if (relinkUndo.isNotEmpty) {
         final members = {for (final item in [kept, ...removed]) if (item is VaultEntry<Object?>) (item.runtimeType, item.id)};
         List<VaultEntry<Object?>> undone() => [
