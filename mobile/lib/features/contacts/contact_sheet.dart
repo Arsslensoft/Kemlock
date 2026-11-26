@@ -12,13 +12,16 @@ import '../../crypto/bytes.dart';
 import '../../crypto/keys/keys.dart' as crypto;
 import '../../i18n/messages.dart';
 import '../../models/contact.dart';
+import '../../models/custom_field.dart';
 import '../../models/json.dart';
 import '../../platform/files.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
+import '../fields/custom_fields_editor.dart';
 import '../keys/key_bridge.dart';
 import '../keys/key_standing.dart';
 import '../keys/key_widgets.dart';
+import '../sync/kemlock/km_kinds.dart';
 import 'add_contact_sheet.dart';
 import 'contact_check.dart';
 import 'contact_keys.dart';
@@ -55,6 +58,9 @@ class _ContactSheetState extends ConsumerState<ContactSheet> {
   late final _name = TextEditingController(text: _initial?.name ?? '');
   late final _note = TextEditingController(text: _initial?.note ?? '');
 
+  /// The custom fields, as the editor last gave them.
+  late var _customFields = <CustomField>[...?_initial?.fields];
+
   @override
   void initState() {
     super.initState();
@@ -72,7 +78,7 @@ class _ContactSheetState extends ConsumerState<ContactSheet> {
   Contact _edited(Contact contact) {
     final name = _name.text.trim();
     final note = _note.text.trim();
-    return contact.copyWith(name: name.isEmpty ? contact.name : name, note: note.isEmpty ? unset : note);
+    return contact.copyWith(name: name.isEmpty ? contact.name : name, note: note.isEmpty ? unset : note, fields: _customFields);
   }
 
   Future<void> _copy(String text) async {
@@ -320,6 +326,12 @@ class _ContactSheetState extends ConsumerState<ContactSheet> {
                   maxLines: 6,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(labelText: context.t('passkeys.note'), alignLabelWithHint: true),
+                ),
+                const SizedBox(height: 14),
+                CustomFieldsEditor(
+                  kind: itemKindOf(contact),
+                  fields: _customFields,
+                  onChanged: (next) => setState(() => _customFields = next),
                 ),
                 const SizedBox(height: 8),
                 Group(
