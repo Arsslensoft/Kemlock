@@ -166,6 +166,15 @@ class _AddSomeoneSheetState extends ConsumerState<AddSomeoneSheet> with ClosesOn
           Group(label: context.t('pgp.people.yourKeys'), children: [for (final (i, person) in own.indexed) row(i, person)]),
         if (contacts.isNotEmpty)
           Group(label: context.t('vault.section.contacts'), children: [for (final (i, person) in contacts.indexed) row(i, person)]),
+        if (ref.watch(keylessContactCountProvider) case final keyless when keyless > 0)
+          Padding(
+            key: const ValueKey('keyless-contacts'),
+            padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
+            child: Text(
+              context.t(widget.forSigner ? 'contacts.person.skipped.signer' : 'contacts.person.skipped', {'count': keyless}),
+              style: AppType.caption.copyWith(color: p.textSecondary),
+            ),
+          ),
         const SizedBox(height: 16),
         if (_error != null) PgpErrorLine(_error!),
         if (_pasting) ...[

@@ -233,7 +233,7 @@ class _ContactReviewSheetState extends ConsumerState<ContactReviewSheet> {
     final many = widget.keys.length > 1;
     final title = switch (plan) {
       _Update() => 'contacts.update.title',
-      _Replace() => 'contacts.replace.title',
+      _Replace(:final contact) => contact.hasKey ? 'contacts.replace.title' : 'contacts.person.addKey.title',
       _ => 'contacts.review.title',
     };
     return Column(
@@ -414,7 +414,10 @@ class _ContactReviewSheetState extends ConsumerState<ContactReviewSheet> {
           ...userIds(info.userIds),
           if (current != null) fingerprint(current, label: context.t('contacts.replace.current'), key: 'replace-current'),
           fingerprint(_fingerprint, label: context.t('contacts.replace.next'), key: 'replace-next'),
-          alert(AlertSeverity.error, context.t('contacts.replace.warning', {'name': contact.name}), key: 'replace-warning'),
+          if (contact.hasKey)
+            alert(AlertSeverity.error, context.t('contacts.replace.warning', {'name': contact.name}), key: 'replace-warning')
+          else
+            alert(AlertSeverity.info, context.t('contacts.person.addKey.review', {'name': contact.name}), key: 'add-key-info'),
           ?over,
           advice,
           ...answers(

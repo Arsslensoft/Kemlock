@@ -26,6 +26,7 @@ import '../links/linked_items_section.dart';
 import 'add_contact_sheet.dart';
 import 'contact_check.dart';
 import 'contact_keys.dart';
+import 'contact_person.dart';
 import 'contact_standing.dart';
 import 'contact_widgets.dart';
 import 'lookup/key_search_sheet.dart';
@@ -58,6 +59,7 @@ class _ContactSheetState extends ConsumerState<ContactSheet> {
   late final Contact? _initial = ref.read(vaultControllerProvider).contacts.firstWhereOrNull((c) => c.id == widget.contactId);
   late final _name = TextEditingController(text: _initial?.name ?? '');
   late final _note = TextEditingController(text: _initial?.note ?? '');
+  late final _person = PersonFields(_initial);
 
   /// The custom fields, as the editor last gave them.
   late var _customFields = <CustomField>[...?_initial?.fields];
@@ -67,19 +69,23 @@ class _ContactSheetState extends ConsumerState<ContactSheet> {
     super.initState();
     _name.addListener(() => setState(() {}));
     _note.addListener(() => setState(() {}));
+    _person.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
     _name.dispose();
     _note.dispose();
+    _person.dispose();
     super.dispose();
   }
 
   Contact _edited(Contact contact) {
     final name = _name.text.trim();
     final note = _note.text.trim();
-    return contact.copyWith(name: name.isEmpty ? contact.name : name, note: note.isEmpty ? unset : note, fields: _customFields);
+    return _person
+        .applyTo(contact)
+        .copyWith(name: name.isEmpty ? contact.name : name, note: note.isEmpty ? unset : note, fields: _customFields);
   }
 
   Future<void> _copy(String text) async {
@@ -98,6 +104,31 @@ class _ContactSheetState extends ConsumerState<ContactSheet> {
 
   Future<void> _save(Contact contact) async {
     if (await ref.read(vaultControllerProvider.notifier).updateContact(_edited(contact)) && mounted) Navigator.of(context).pop();
+  }
+
+  /// Takes the key off the person, who stays with their details; the check goes with the key. Asks first.
+  Future<void> _removeKey(Contact contact) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      icon: const Icon(Icons.key_off_outlined),
+      title: context.t('contacts.person.removeKey.title'),
+      body: Text(context.t('contacts.person.removeKey.confirmBody', {'name': contact.name})),
+      confirmLabel: context.t('contacts.person.removeKey.confirm'),
+      cancelLabel: context.t('export.cancel'),
+    );
+    if (!confirmed || !mounted) return;
+    await ref
+        .read(vaultControllerProvider.notifier)
+        .updateContact(
+          contact.copyWith(
+            publicKey: '',
+            source: ContactSource.manual,
+            sourceEmail: unset,
+            checkedAt: unset,
+            checkedFingerprint: unset,
+            checkedAddresses: unset,
+          ),
+        );
   }
 
   Future<void> _delete(Contact contact) async {
@@ -148,7 +179,14 @@ class _ContactSheetState extends ConsumerState<ContactSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (info == null)
+                PersonRows(contact: contact),
+                if (!contact.hasKey)
+                  AppAlert(
+                    key: const ValueKey('contact-no-key'),
+                    severity: AlertSeverity.info,
+                    child: Text(context.t('contacts.person.noKey')),
+                  )
+                else if (info == null)
                   AppAlert(severity: AlertSeverity.error, child: Text(context.t('contacts.sheet.unreadable')))
                 else ...[
                   if (standing.key.standing.isOver || !standing.canEncrypt) ...[
@@ -313,12 +351,37 @@ class _ContactSheetState extends ConsumerState<ContactSheet> {
                     ],
                   ),
                 ],
+                const SizedBox(height: 12),
+                Group(
+                  key: const ValueKey('contact-key-actions'),
+                  children: [
+                    if (!contact.hasKey)
+                      GroupRow(
+                        first: true,
+                        icon: const Icon(Icons.vpn_key_outlined),
+                        primary: context.t('contacts.person.addKey'),
+                        secondary: context.t('contacts.person.addKey.body'),
+                        onTap: () =>
+                            unawaited(showAddContactSheet(context, replacingId: contact.id, title: context.t('contacts.person.addKey'))),
+                      )
+                    else
+                      GroupRow(
+                        first: true,
+                        icon: const Icon(Icons.key_off_outlined),
+                        primary: context.t('contacts.person.removeKey'),
+                        secondary: context.t('contacts.person.removeKey.body'),
+                        onTap: () => unawaited(_removeKey(contact)),
+                      ),
+                  ],
+                ),
                 const SizedBox(height: 18),
                 TextField(
                   enableIMEPersonalizedLearning: false,
                   controller: _name,
                   decoration: InputDecoration(labelText: context.t('keys.field.name')),
                 ),
+                const SizedBox(height: 14),
+                _person.form(context),
                 const SizedBox(height: 14),
                 TextField(
                   enableIMEPersonalizedLearning: false,
@@ -341,7 +404,7 @@ class _ContactSheetState extends ConsumerState<ContactSheet> {
                     GroupRow(
                       first: true,
                       icon: const Icon(Icons.delete_outline_rounded),
-                      primary: context.t('contacts.sheet.delete'),
+                      primary: context.t(contact.hasKey ? 'contacts.sheet.delete' : 'contacts.person.delete'),
                       danger: true,
                       onTap: () => unawaited(_delete(contact)),
                     ),

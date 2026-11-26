@@ -62,8 +62,10 @@ class ContactStanding {
   String? get fingerprint => info?.primary.fingerprintHex;
 }
 
-/// What the key of [contact] holds, or null when it can't be read.
+/// What the key of [contact] holds, or null when it can't be read or it has no key.
 crypto.PgpKeyInfo? contactKeyInfo(Contact contact) {
+  // A person with no key has nothing to read
+  if (!contact.hasKey) return null;
   try {
     return crypto.readPgpKeyInfo(unb64(contact.publicKey));
   } on crypto.KeyFormatException {
@@ -106,7 +108,7 @@ ContactStanding contactStanding(Contact contact, DateTime now, {crypto.PgpKeyInf
 /// is gone or whose key can't be read.
 final contactKeyInfoProvider = Provider.family<crypto.PgpKeyInfo?, String>((ref, id) {
   final public = ref.watch(vaultControllerProvider.select((state) => state.contacts.firstWhereOrNull((c) => c.id == id)?.publicKey));
-  if (public == null) return null;
+  if (public == null || public.isEmpty) return null;
   try {
     return crypto.readPgpKeyInfo(unb64(public));
   } on crypto.KeyFormatException {

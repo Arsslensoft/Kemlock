@@ -9,6 +9,7 @@ import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
 import '../fields/custom_fields_editor.dart';
 import '../sync/kemlock/km_kinds.dart' show KmKind;
+import '../accounts/websites_editor.dart';
 import 'backup_codes.dart';
 import 'code_import_button.dart';
 import 'code_readers.dart';
@@ -36,6 +37,8 @@ class AddBackupServiceSheet extends ConsumerStatefulWidget {
 class _AddBackupServiceSheetState extends ConsumerState<AddBackupServiceSheet> {
   late final _name = TextEditingController(text: widget.initialName);
   final _codes = TextEditingController();
+  final _displayName = TextEditingController();
+  final _websites = WebsitesDraft();
 
   /// The custom fields, as the editor last gave them.
   var _fields = <CustomField>[];
@@ -44,8 +47,16 @@ class _AddBackupServiceSheetState extends ConsumerState<AddBackupServiceSheet> {
   bool _imported = false;
 
   @override
+  void initState() {
+    super.initState();
+    _websites.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _name.dispose();
+    _displayName.dispose();
+    _websites.dispose();
     _codes.dispose();
     super.dispose();
   }
@@ -57,8 +68,12 @@ class _AddBackupServiceSheetState extends ConsumerState<AddBackupServiceSheet> {
 
   void _save(List<String> parsed) {
     final name = _name.text.trim();
-    if (name.isEmpty || parsed.isEmpty) return;
-    unawaited(ref.read(vaultControllerProvider.notifier).addBackupService(name, parsed, fields: _fields));
+    if (name.isEmpty || parsed.isEmpty || !_websites.isValid) return;
+    unawaited(
+      ref
+          .read(vaultControllerProvider.notifier)
+          .addBackupService(name, parsed, name: _displayName.text.trim(), websites: _websites.rules, fields: _fields),
+    );
     Navigator.of(context).pop();
   }
 
@@ -67,7 +82,7 @@ class _AddBackupServiceSheetState extends ConsumerState<AddBackupServiceSheet> {
     final p = context.palette;
     final b = context.bmc;
     final parsed = parseCodes(_codes.text);
-    final canSave = _name.text.trim().isNotEmpty && parsed.isNotEmpty;
+    final canSave = _name.text.trim().isNotEmpty && parsed.isNotEmpty && _websites.isValid;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -94,6 +109,20 @@ class _AddBackupServiceSheetState extends ConsumerState<AddBackupServiceSheet> {
                     hintText: context.t('addBackup.field.serviceNamePlaceholder'),
                   ),
                 ),
+                const SizedBox(height: 16),
+                TextField(
+                  enableIMEPersonalizedLearning: false,
+                  controller: _displayName,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: context.t('accounts.field.name'),
+                    hintText: context.t('accounts.field.nameBackupPlaceholder'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SectionLabel(context.t('accounts.websites.title'), padding: const EdgeInsets.fromLTRB(4, 0, 4, 8)),
+                WebsitesEditor(draft: _websites),
                 const SizedBox(height: 16),
                 TextField(
                   enableIMEPersonalizedLearning: false,

@@ -16,6 +16,7 @@ import '../../models/otp_account.dart';
 import '../../models/passkey.dart';
 import '../../models/payment_card.dart';
 import '../../models/secure_note.dart';
+import '../../models/vault_file.dart';
 import '../../models/vault_key.dart';
 import '../../platform/credential_exchange.dart';
 import '../../vault/vault_controller.dart';
@@ -57,7 +58,7 @@ final serverSpaceItemProvider = Provider<bool Function(String spaceId)>((ref) {
   return (spaceId) => spaceId.isNotEmpty && !webDav.contains(spaceId);
 });
 
-/// The kinds of item the person picks among. Backup codes, contacts and security-key accounts have
+/// The kinds of item the person picks among. Backup codes, contacts, File items and security-key accounts have
 /// no Credential Exchange type and are never offered (they are listed as left out).
 enum ExportKind {
   logins('basic-auth'),
@@ -82,7 +83,7 @@ enum ExportKind {
 }
 
 /// What the vault holds that has no Credential Exchange type, by how it is told to the person.
-enum ExportNotCarried { backupServices, contacts, onKey }
+enum ExportNotCarried { backupServices, contacts, onKey, files }
 
 /// What an export of the open vault could hold, and what it could not.
 class CredentialExportPlan {
@@ -207,6 +208,7 @@ CredentialExportPlan planCredentialExport(
       ExportNotCarried.backupServices: vault.backupServices.length,
       ExportNotCarried.contacts: vault.contacts.length,
       ExportNotCarried.onKey: vault.keyAccounts.length,
+      ExportNotCarried.files: allowed<VaultFile>(vault.files, (item) => item.spaceId).length,
     },
   );
 }

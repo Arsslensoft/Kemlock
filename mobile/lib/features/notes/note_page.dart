@@ -19,6 +19,7 @@ import '../../models/secure_note.dart';
 import '../../platform/files.dart';
 import '../../platform/network.dart';
 import '../../ui/ui.dart';
+import '../../vault/attachment_seal.dart';
 import '../../vault/attachment_store.dart';
 import '../../vault/vault_controller.dart';
 import '../accounts/tag_input.dart';
@@ -168,11 +169,14 @@ class _NotePageState extends ConsumerState<NotePage> {
     if (picked == null || !mounted) return;
     if (picked.bytes.length > attachmentSizeLimit) return _error('notes.attach.tooLarge', {'size': attachmentSizeLimit ~/ (1024 * 1024)});
     final vaultId = ref.read(vaultControllerProvider).vault.id;
-    final id = newAttachmentId();
-    final key = randomBytes(32);
+    final now = ref.read(clockProvider)().millisecondsSinceEpoch;
+    final NoteAttachment file;
     setState(() => _attaching = true);
     try {
-      await ref.read(attachmentStoreProvider).write(vaultId, id, picked.bytes, key);
+      // Sealed as a File item's file is, so the entry carries the SHA-256 the duplicate finder reads
+      final sealed = await sealAttachment(picked.bytes, name: picked.name, type: picked.mimeType, now: now);
+      await ref.read(attachmentStoreProvider).writeSealed(vaultId, sealed.entry.id, sealed.sealed);
+      file = sealed.entry;
     } catch (_) {
       if (mounted) _error('notes.attach.failed');
       return;
@@ -180,14 +184,6 @@ class _NotePageState extends ConsumerState<NotePage> {
       if (mounted) setState(() => _attaching = false);
     }
     if (!mounted) return;
-    final file = NoteAttachment(
-      id: id,
-      name: picked.name,
-      size: picked.bytes.length,
-      type: picked.mimeType,
-      key: b64(key),
-      addedAt: ref.read(clockProvider)().millisecondsSinceEpoch,
-    );
     setState(() => _files = [..._files, file]);
   }
 

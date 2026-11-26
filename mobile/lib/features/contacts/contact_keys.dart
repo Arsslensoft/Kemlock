@@ -92,7 +92,7 @@ Set<String> keyAddresses(crypto.PgpKeyInfo? info) => {
 /// as checked. Any other contact comes back as it is, the same object.
 Contact withCheckedAddresses(Contact contact) {
   final fingerprint = contact.checkedFingerprint;
-  if (fingerprint == null || contact.checkedAddresses != null) return contact;
+  if (fingerprint == null || !contact.hasKey || contact.checkedAddresses != null) return contact;
   final crypto.PgpKeyInfo info;
   try {
     info = crypto.readPgpKeyInfo(unb64(contact.publicKey));
@@ -147,10 +147,15 @@ String contactSourceText(Messages messages, String source, String? sourceEmail) 
 /// The contacts of [contacts] whose key passes the checks a key is read
 /// with, each holding its key as that reading gives it: a file is outside
 /// input, so what an import brings is read again with [read] before it is
-/// kept. One whose key fails, or holds anything but one key, is left out.
+/// kept. One whose key fails, or holds anything but one key, is left out. A contact with no key is kept as it is.
 Future<List<Contact>> soundContacts(List<Contact> contacts, Future<List<crypto.PgpPublicKey>> Function(Object input) read) async {
   final sound = <Contact>[];
   for (final contact in contacts) {
+    // A person with no key has none to check, and stays
+    if (!contact.hasKey) {
+      sound.add(contact);
+      continue;
+    }
     try {
       final keys = await read(unb64(contact.publicKey));
       if (keys.length == 1) sound.add(contact.copyWith(publicKey: b64(keys.single.bytes)));
