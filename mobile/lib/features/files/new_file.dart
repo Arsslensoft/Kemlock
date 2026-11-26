@@ -8,7 +8,7 @@ import '../../i18n/messages.dart';
 import '../../models/secure_note.dart';
 import '../../models/vault_file.dart';
 import '../../platform/files.dart';
-import '../../vault/attachment_seal.dart';
+import '../../vault/attachment_sealer.dart';
 import '../../vault/attachment_store.dart';
 import '../../vault/vault_controller.dart';
 
@@ -24,7 +24,7 @@ Future<NoteAttachment?> sealAndStoreFile(ProviderContainer container, PickedFile
   final now = container.read(clockProvider)().millisecondsSinceEpoch;
   final vaultId = container.read(vaultControllerProvider).vault.id;
   try {
-    final sealed = await sealAttachment(picked.bytes, name: picked.name, type: picked.mimeType, now: now);
+    final sealed = await container.read(attachmentSealerProvider)(picked.bytes, name: picked.name, type: picked.mimeType, now: now);
     await container.read(attachmentStoreProvider).writeSealed(vaultId, sealed.entry.id, sealed.sealed);
     return sealed.entry;
   } on ArgumentError {

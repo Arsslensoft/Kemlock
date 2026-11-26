@@ -11,6 +11,7 @@ import 'package:kemlock/vault/attachment_seal.dart' show sha256Hex;
 import 'package:kemlock/vault/vault_controller.dart';
 
 import '../../fakes/fake_files.dart';
+import '../../fakes/fake_sealer.dart';
 import '../../flows/flow_kit.dart';
 import '../../helpers/app_harness.dart';
 import '../../helpers/test_app.dart';
@@ -26,7 +27,7 @@ void main() {
   Future<TestApp> openNote(WidgetTester tester, {SecureNote note = _note}) async {
     files = FakeFiles();
     final app = TestApp();
-    await startApp(tester, app, overrides: [files.asOverride]);
+    await startApp(tester, app, overrides: [files.asOverride, sealsOnTheSpot]);
     await createVault(tester);
     await app.container.read(vaultControllerProvider.notifier).addNote(note);
     await goTo(tester, app, '/vault/notes/${note.id}');

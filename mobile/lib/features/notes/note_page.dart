@@ -19,7 +19,7 @@ import '../../models/secure_note.dart';
 import '../../platform/files.dart';
 import '../../platform/network.dart';
 import '../../ui/ui.dart';
-import '../../vault/attachment_seal.dart';
+import '../../vault/attachment_sealer.dart';
 import '../../vault/attachment_store.dart';
 import '../../vault/vault_controller.dart';
 import '../accounts/tag_input.dart';
@@ -175,7 +175,7 @@ class _NotePageState extends ConsumerState<NotePage> {
     setState(() => _attaching = true);
     try {
       // Sealed as a File item's file is, so the entry carries the SHA-256 the duplicate finder reads
-      final sealed = await sealAttachment(picked.bytes, name: picked.name, type: picked.mimeType, now: now);
+      final sealed = await ref.read(attachmentSealerProvider)(picked.bytes, name: picked.name, type: picked.mimeType, now: now);
       await ref.read(attachmentStoreProvider).writeSealed(vaultId, sealed.entry.id, sealed.sealed);
       file = sealed.entry;
     } catch (_) {

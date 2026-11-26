@@ -16,6 +16,7 @@ import 'package:kemlock/vault/attachment_seal.dart';
 import 'package:kemlock/vault/vault_controller.dart';
 
 import '../../fakes/fake_files.dart';
+import '../../fakes/fake_sealer.dart';
 import '../../flows/flow_kit.dart';
 import '../../helpers/app_harness.dart';
 import '../../helpers/test_app.dart';
@@ -29,7 +30,7 @@ void main() {
   Future<TestApp> open(WidgetTester tester, {List<Override> overrides = const []}) async {
     files = FakeFiles();
     final app = TestApp();
-    await startApp(tester, app, overrides: [files.asOverride, ...overrides]);
+    await startApp(tester, app, overrides: [files.asOverride, sealsOnTheSpot, ...overrides]);
     await createVault(tester);
     await tester.pump(const Duration(seconds: 10));
     await tapOn(tester, tab('nav.vault'));
