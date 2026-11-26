@@ -40,11 +40,14 @@ void main() {
   List<VaultFile> items(TestApp app) => app.container.read(vaultControllerProvider).files;
   Finder addButton() => find.descendant(of: find.byType(AppTabBar), matching: find.bySemanticsLabel(t('nav.addToVault')));
 
-  Future<void> addFile(WidgetTester tester) async {
+  /// Picks the next file from the add menu. Past the saved toast, which covers the sheet's buttons, unless [pastToast] is false:
+  /// a toast that says why nothing was added is what the test then looks for.
+  Future<void> addFile(WidgetTester tester, {bool pastToast = true}) async {
     await tapOn(tester, addButton());
     await tapOn(tester, find.text(t('files.add')));
-    // Past the saved toast, which covers the sheet's buttons
-    await tester.pump(const Duration(seconds: 10));
+    if (pastToast) {
+      await tester.pump(const Duration(seconds: 10));
+    }
   }
 
   testWidgets('New file picks a file, seals and stores it, and saves an item named after it', (tester) async {
@@ -72,7 +75,7 @@ void main() {
     expect(items(app), isEmpty);
 
     files.nextPick = _pdf(size: attachmentSizeLimit + 1, name: 'huge.bin');
-    await addFile(tester);
+    await addFile(tester, pastToast: false);
     expect(find.text(t('notes.attach.tooLarge', {'size': 50})), findsOneWidget);
     expect(items(app), isEmpty);
     expect(app.attachments.files.values.expand((vault) => vault.keys), isEmpty);
@@ -83,7 +86,7 @@ void main() {
     app.attachments.failWrites = true;
     files.nextPick = _pdf();
 
-    await addFile(tester);
+    await addFile(tester, pastToast: false);
 
     expect(find.text(t('files.add.failed')), findsOneWidget);
     expect(items(app), isEmpty);
@@ -138,6 +141,9 @@ void main() {
     await addFile(tester);
     final vaultId = app.container.read(vaultControllerProvider).vault.id;
     final named = items(app).single.file.id;
+    // Both are older than the sweep's cutoff, so only being named keeps the first
+    final stored = app.attachments.files[vaultId]![named]!;
+    app.attachments.files[vaultId]![named] = (sealed: stored.sealed, modified: DateTime.utc(2020));
     app.attachments.files[vaultId]!['orphan'] = (sealed: Uint8List(4), modified: DateTime.utc(2020));
 
     await app.container.read(vaultControllerProvider.notifier).sweepAttachments();
