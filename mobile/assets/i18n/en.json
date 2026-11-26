@@ -3373,5 +3373,16 @@
   "contacts.person.removeKey.confirmBody": "{name} stays in the vault with their details. Kemlock can no longer encrypt to them or check their signatures, and the fingerprint check is forgotten.",
   "contacts.person.removeKey.confirm": "Remove the key",
   "contacts.person.skipped": "{count, select, 1 {1 person with no key isn’t listed: there is nothing to encrypt to.} other {{count} people with no key aren’t listed: there is nothing to encrypt to.}}",
-  "contacts.person.skipped.signer": "{count, select, 1 {1 person with no key isn’t listed: there is no key to check a signature with.} other {{count} people with no key aren’t listed: there is no key to check a signature with.}}"
+  "contacts.person.skipped.signer": "{count, select, 1 {1 person with no key isn’t listed: there is no key to check a signature with.} other {{count} people with no key aren’t listed: there is no key to check a signature with.}}",
+  "accounts.field.name": "Name (optional)",
+  "accounts.field.namePlaceholder": "What this MFA code is called, if not its service",
+  "accounts.field.nameBackupPlaceholder": "Leave empty to use the service name",
+  "accounts.websites.title": "Websites",
+  "accounts.websites.field": "Website",
+  "accounts.websites.add": "Add a website",
+  "accounts.websites.addMore": "Add another website",
+  "accounts.websites.hint": "Where this MFA code is used. Optional.",
+  "accounts.websites.error": "One of the websites isn’t an address or a pattern Kemlock can read.",
+  "accounts.websites.fromLink": "These come from the item this MFA code is linked to. Unlink the two to give the code websites of its own.",
+  "accounts.backup.details": "Name and websites"
 }

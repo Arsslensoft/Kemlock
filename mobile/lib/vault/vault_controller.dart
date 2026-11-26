@@ -34,6 +34,7 @@ import '../models/secure_note.dart';
 import '../models/vault_entry.dart';
 import '../models/vault_file.dart';
 import '../models/vault_key.dart';
+import '../models/website_rule.dart';
 import '../platform/autofill.dart';
 import '../platform/shared_items.dart';
 import '../platform/unlock_keys.dart';
@@ -212,7 +213,7 @@ final vaultControllerProvider = NotifierProvider<VaultController, VaultState>(Va
 /// Two entries are the same account when issuer and secret match.
 String _accountKey(OtpAccount a) => '${a.issuer}::${a.secret}';
 
-String _displayName(OtpAccount a) => a.issuer.isNotEmpty ? a.issuer : a.label;
+String _displayName(OtpAccount a) => (a.name?.trim().isNotEmpty ?? false) ? a.name!.trim() : a.issuer.isNotEmpty ? a.issuer : a.label;
 
 /// The vault's state machine and every change to its contents, as `App.tsx`
 /// kept them: open, lock and switch vaults; add, edit, reorder and remove
@@ -671,15 +672,21 @@ class VaultController extends Notifier<VaultState> {
   }
 
   /// Adds a service with its codes, all unused.
-  Future<void> addBackupService(String serviceName, List<String> codes) async {
+  Future<void> addBackupService(
+    String serviceName,
+    List<String> codes, {
+    String? name,
+    List<WebsiteRule> websites = const [],
+  }) async {
     final session = state.session;
     if (session == null) return;
+    final made = websitesOf(websites);
     final service = BackupService(
       id: newUuid(),
       serviceName: serviceName,
       codes: [for (final code in codes) BackupCode(code: code)],
       addedAt: _now,
-    );
+    ).copyWith(name: name == null || name.isEmpty ? unset : name, websites: made.websites ?? unset, uris: made.uris ?? unset);
     final next = _touchServices([...state.backupServices, service]);
     try {
       await _store.saveBackupServices(next, session);

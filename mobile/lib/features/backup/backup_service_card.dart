@@ -14,6 +14,7 @@ import '../accounts/service_tile.dart';
 import '../sync/space_picker.dart';
 import '../sync/sync_store.dart';
 import 'backup_codes.dart';
+import 'backup_details_sheet.dart';
 import 'code_import_button.dart';
 import 'two_factor_directory.dart';
 
@@ -121,7 +122,7 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
         child: Semantics(
           container: true,
           explicitChildNodes: true,
-          label: _service.serviceName,
+          label: backupTitle(_service),
           child: Material(
             color: p.paper,
             shape: RoundedRectangleBorder(
@@ -176,7 +177,7 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _service.serviceName,
+                        backupTitle(_service),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -546,6 +547,14 @@ class _BackupServiceCardState extends ConsumerState<BackupServiceCard> {
               _noteDraft.text = _service.note ?? '';
               setState(() => _editingNote = true);
             },
+          ),
+          const SizedBox(width: 8),
+          _SquareButton(
+            icon: Icons.edit_outlined,
+            tooltip: context.t('accounts.backup.details'),
+            background: b.raised,
+            foreground: (_service.name?.isNotEmpty ?? false) || (_service.websites?.isNotEmpty ?? false) ? b.accentText : p.text,
+            onPressed: () => unawaited(showBackupDetailsSheet(context, _service, widget.onUpdate)),
           ),
           const SizedBox(width: 8),
           _SquareButton(

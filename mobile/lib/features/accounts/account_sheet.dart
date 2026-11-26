@@ -29,8 +29,21 @@ import 'otpauth.dart';
 import 'service_tile.dart';
 import 'tag_input.dart';
 
-/// What the list calls an account: its issuer, else its label.
-String displayName(OtpAccount account) => account.issuer.isNotEmpty ? account.issuer : account.label;
+/// What the list calls an account: its name when it has one, else its issuer, else its label.
+String displayName(OtpAccount account) {
+  final name = account.name?.trim() ?? '';
+  if (name.isNotEmpty) return name;
+  return account.issuer.isNotEmpty ? account.issuer : account.label;
+}
+
+/// The line under [displayName]: an account's label under its issuer, and for one that has a name, its issuer and label.
+String accountSubLabel(OtpAccount account) {
+  if (account.name?.trim().isNotEmpty ?? false) return [account.issuer, account.label].where((part) => part.isNotEmpty).join(' · ');
+  return account.issuer.isNotEmpty ? account.label : '';
+}
+
+/// What an account's tile is drawn from: its issuer, which names the service, else what it is called.
+String accountTileName(OtpAccount account) => account.issuer.isNotEmpty ? account.issuer : displayName(account);
 
 /// [displayName], or "Unknown" for an account with neither.
 String accountTitle(BuildContext context, OtpAccount account) {
@@ -102,7 +115,7 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
         ref.watch(vaultControllerProvider.select((s) => s.accounts.firstWhereOrNull((a) => a.id == widget.account.id))) ?? widget.account;
     final nowSec = ref.watch(nowSecondsProvider);
     final name = accountTitle(context, account);
-    final subLabel = account.issuer.isNotEmpty ? account.label : '';
+    final subLabel = accountSubLabel(account);
     final timeBased = isTimeBased(account);
     final remaining = remainingIn(nowSec, account.period);
     final urgent = timeBased && remaining <= 5;
@@ -123,7 +136,7 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
           // Header
           Row(
             children: [
-              ServiceTile(name: name, size: 54),
+              ServiceTile(name: accountTileName(account), size: 54),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -968,6 +981,7 @@ class _EditPanel extends ConsumerStatefulWidget {
 }
 
 class _EditPanelState extends ConsumerState<_EditPanel> {
+  late final _name = TextEditingController(text: widget.account.name ?? '');
   late final _issuer = TextEditingController(text: widget.account.issuer);
   late final _label = TextEditingController(text: widget.account.label);
   late final _note = TextEditingController(text: widget.account.note ?? '');
@@ -978,6 +992,7 @@ class _EditPanelState extends ConsumerState<_EditPanel> {
 
   @override
   void dispose() {
+    _name.dispose();
     _issuer.dispose();
     _label.dispose();
     _note.dispose();
@@ -993,6 +1008,7 @@ class _EditPanelState extends ConsumerState<_EditPanel> {
     final note = _note.text.trim();
     widget.onSave(
       widget.account.copyWith(
+        name: _name.text.trim().isNotEmpty ? _name.text.trim() : unset,
         issuer: _issuer.text.trim(),
         label: _label.text.trim(),
         note: note.isNotEmpty ? note : unset,
@@ -1015,6 +1031,16 @@ class _EditPanelState extends ConsumerState<_EditPanel> {
         builder: (context, _) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            TextField(
+              enableIMEPersonalizedLearning: false,
+              controller: _name,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                labelText: context.t('accounts.field.name'),
+                hintText: context.t('accounts.field.namePlaceholder'),
+              ),
+            ),
+            const SizedBox(height: 14),
             TextField(
               enableIMEPersonalizedLearning: false,
               controller: _issuer,

@@ -1,8 +1,11 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../../../models/json.dart' show unset;
 import '../../../models/otp_account.dart';
+import '../../../models/website_rule.dart' show websitesOf;
 import '../otp.dart';
+import '../websites_editor.dart';
 
 /// The algorithms and code lengths the manual form offers.
 const manualAlgorithms = ['SHA1', 'SHA256', 'SHA512'];
@@ -24,13 +27,20 @@ String algorithmName(String algorithm) => algorithm.replaceFirst('SHA', 'SHA-');
 /// the live preview up to date.
 class ManualForm extends ChangeNotifier {
   ManualForm() {
-    for (final field in [issuer, label, secret, period, counter]) {
+    for (final field in [issuer, label, name, secret, period, counter]) {
       field.addListener(notifyListeners);
     }
+    websites.addListener(notifyListeners);
   }
 
   final issuer = TextEditingController();
   final label = TextEditingController();
+
+  /// What the code is called, when it is called anything but its issuer and account.
+  final name = TextEditingController();
+
+  /// The websites the code is used on, typed as a login's are.
+  final websites = WebsitesDraft();
 
   /// Kept as normalised Base32 as it is typed (see [SecretFormatter]).
   final secret = TextEditingController();
@@ -90,6 +100,7 @@ class ManualForm extends ChangeNotifier {
     if (secret.text.isEmpty) return 'addAccount.manual.error.secret';
     if (!secretOk) return 'addAccount.manual.error.secretInvalid';
     if (issuer.text.trim().isEmpty && label.text.trim().isEmpty) return 'addAccount.manual.error.name';
+    if (!websites.isValid) return 'accounts.websites.error';
     if (_type == OtpType.totp && !_periodOk) return 'addAccount.manual.error.period';
     if (_type == OtpType.hotp && !_counterOk) return 'addAccount.manual.error.counter';
     return null;
@@ -101,7 +112,7 @@ class ManualForm extends ChangeNotifier {
   OtpAccount toAccount() {
     final issuer = this.issuer.text.trim();
     final label = this.label.text.trim();
-    return switch (_type) {
+    final account = switch (_type) {
       OtpType.hotp => OtpAccount(
         id: '',
         type: OtpType.hotp,
@@ -126,13 +137,17 @@ class ManualForm extends ChangeNotifier {
         addedAt: 0,
       ),
     };
+    final name = this.name.text.trim();
+    final made = websitesOf(websites.rules);
+    return account.copyWith(name: name.isEmpty ? unset : name, websites: made.websites ?? unset, uris: made.uris ?? unset);
   }
 
   @override
   void dispose() {
-    for (final field in [issuer, label, secret, period, counter]) {
+    for (final field in [issuer, label, name, secret, period, counter]) {
       field.dispose();
     }
+    websites.dispose();
     super.dispose();
   }
 }

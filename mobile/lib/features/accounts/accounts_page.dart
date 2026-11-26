@@ -215,7 +215,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
     final q = _query.text.trim().toLowerCase();
     final matches = q.isEmpty
         ? const <OtpAccount>[]
-        : _sorted(tagged.where((a) => '${a.issuer} ${a.label}'.toLowerCase().contains(q)), _byName);
+        : _sorted(tagged.where((a) => '${a.name ?? ''} ${a.issuer} ${a.label}'.toLowerCase().contains(q)), _byName);
     final pinned = q.isNotEmpty ? const <OtpAccount>[] : _sorted(tagged.where((a) => a.pinned == true), compare);
     final rest = q.isNotEmpty ? matches : _sorted(tagged.where((a) => a.pinned != true), compare);
 
@@ -633,9 +633,9 @@ class _ReorderRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontFamily: fontSans, fontSize: 15, fontWeight: FontWeight.w600, height: 1.4, color: p.text),
                     ),
-                    if (account.issuer.isNotEmpty && account.label.isNotEmpty)
+                    if (accountSubLabel(account).isNotEmpty)
                       Text(
-                        account.label,
+                        accountSubLabel(account),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontFamily: fontSans, fontSize: 13, height: 1.4, color: p.textSecondary),

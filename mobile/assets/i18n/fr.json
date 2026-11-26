@@ -3373,5 +3373,16 @@
   "contacts.person.removeKey.confirmBody": "{name} reste dans le coffre avec ses informations. Kemlock ne pourra plus chiffrer pour cette personne ni vérifier ses signatures, et la vérification de l’empreinte est oubliée.",
   "contacts.person.removeKey.confirm": "Retirer la clé",
   "contacts.person.skipped": "{count, select, 1 {1 personne sans clé n’est pas listée : il n’y a rien pour chiffrer.} other {{count} personnes sans clé ne sont pas listées : il n’y a rien pour chiffrer.}}",
-  "contacts.person.skipped.signer": "{count, select, 1 {1 personne sans clé n’est pas listée : il n’y a pas de clé pour vérifier une signature.} other {{count} personnes sans clé ne sont pas listées : il n’y a pas de clé pour vérifier une signature.}}"
+  "contacts.person.skipped.signer": "{count, select, 1 {1 personne sans clé n’est pas listée : il n’y a pas de clé pour vérifier une signature.} other {{count} personnes sans clé ne sont pas listées : il n’y a pas de clé pour vérifier une signature.}}",
+  "accounts.field.name": "Nom (facultatif)",
+  "accounts.field.namePlaceholder": "Comment s’appelle ce code MFA, s’il ne porte pas le nom de son service",
+  "accounts.field.nameBackupPlaceholder": "Laissez vide pour garder le nom du service",
+  "accounts.websites.title": "Sites web",
+  "accounts.websites.field": "Site web",
+  "accounts.websites.add": "Ajouter un site web",
+  "accounts.websites.addMore": "Ajouter un autre site web",
+  "accounts.websites.hint": "Où ce code MFA est utilisé. Facultatif.",
+  "accounts.websites.error": "Un des sites web n’est pas une adresse ou un motif que Kemlock sait lire.",
+  "accounts.websites.fromLink": "Ils viennent de l’élément auquel ce code MFA est lié. Déliez les deux pour donner au code ses propres sites web.",
+  "accounts.backup.details": "Nom et sites web"
 }

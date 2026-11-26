@@ -77,7 +77,7 @@ class _AccountCardState extends ConsumerState<AccountCard> {
     final urgent = timeBased && remaining <= 5;
     final code = codeAt(account, nowSec);
     final name = accountTitle(context, account);
-    final subLabel = account.issuer.isNotEmpty ? account.label : '';
+    final subLabel = accountSubLabel(account);
 
     Future<void> copy() async {
       if (!await ref.read(secretClipboardProvider).copy(code)) return;
@@ -120,7 +120,7 @@ class _AccountCardState extends ConsumerState<AccountCard> {
                                 padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
                                 child: Row(
                                   children: [
-                                    ServiceTile(name: name),
+                                    ServiceTile(name: accountTileName(account)),
                                     const SizedBox(width: 14),
                                     Expanded(
                                       child: Column(

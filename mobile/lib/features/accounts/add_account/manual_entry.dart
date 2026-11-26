@@ -8,6 +8,7 @@ import '../../../models/otp_account.dart';
 import '../../../ui/ui.dart';
 import '../otp.dart';
 import '../service_tile.dart';
+import '../websites_editor.dart';
 import 'manual_form.dart';
 
 /// The Manual tab: a live preview of the account and its code, the service,
@@ -76,6 +77,17 @@ class ManualEntry extends StatelessWidget {
         const SizedBox(height: 14),
         TextField(
           enableIMEPersonalizedLearning: false,
+          controller: form.name,
+          textInputAction: TextInputAction.next,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(
+            labelText: context.t('accounts.field.name'),
+            hintText: context.t('accounts.field.namePlaceholder'),
+          ),
+        ),
+        const SizedBox(height: 14),
+        TextField(
+          enableIMEPersonalizedLearning: false,
           controller: form.secret,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => onSubmit(),
@@ -97,6 +109,10 @@ class ManualEntry extends StatelessWidget {
             helperText: context.t('addAccount.field.secretHelper'),
           ),
         ),
+        const SizedBox(height: 18),
+        SectionLabel(context.t('accounts.websites.title'), padding: const EdgeInsets.fromLTRB(4, 0, 4, 8)),
+        WebsitesEditor(draft: form.websites),
+        const SizedBox(height: 12),
         const SizedBox(height: 12),
         _AdvancedToggle(open: advanced, onPressed: onToggleAdvanced),
         _Collapsible(
@@ -129,7 +145,7 @@ class _Preview extends ConsumerWidget {
     return ListenableBuilder(
       listenable: form,
       builder: (context, _) {
-        final name = form.issuer.text.trim();
+        final name = form.name.text.trim().isNotEmpty ? form.name.text.trim() : form.issuer.text.trim();
         final label = form.label.text.trim();
         final ready = form.secretOk && form.paramsOk;
         final String code;
