@@ -5,14 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ids.dart';
 import '../../i18n/messages.dart';
+import '../../models/custom_field.dart';
 import '../../models/identity.dart';
 import '../../models/json.dart';
 import '../../platform/secret_selection.dart';
 import '../../ui/ui.dart';
 import '../../vault/vault_controller.dart';
 import '../accounts/tag_input.dart';
+import '../fields/custom_fields_editor.dart';
 import '../lock/gate_widgets.dart';
 import '../settings/prefs.dart';
+import '../sync/kemlock/km_kinds.dart';
 import '../vault/owner_check.dart';
 import 'countries.dart';
 import 'identity_sheet.dart' show documentTypeId;
@@ -118,6 +121,9 @@ class _IdentityEditSheetState extends ConsumerState<IdentityEditSheet> {
   };
   late final _documents = [for (final document in widget.identity?.documents ?? const <IdentityDocument>[]) _DocumentDraft(document)];
   late var _tags = <String>[...?widget.identity?.tags];
+
+  /// The custom fields, as the editor last gave them.
+  late var _customFields = <CustomField>[...?widget.identity?.fields];
   var _saving = false;
   var _countryReady = false;
 
@@ -200,6 +206,7 @@ class _IdentityEditSheetState extends ConsumerState<IdentityEditSheet> {
       documents: documents.isEmpty ? unset : documents,
       note: text('note') ?? unset,
       tags: _tags.isEmpty ? unset : [..._tags],
+      fields: _customFields,
     );
   }
 
@@ -431,6 +438,11 @@ class _IdentityEditSheetState extends ConsumerState<IdentityEditSheet> {
                   maxLines: 6,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(labelText: context.t('identities.field.note'), alignLabelWithHint: true),
+                ),
+                CustomFieldsEditor(
+                  kind: itemKindOf(draft),
+                  fields: _customFields,
+                  onChanged: (next) => setState(() => _customFields = next),
                 ),
                 TagInput(value: _tags, onChanged: (tags) => setState(() => _tags = tags), suggestions: allTags),
                 FilledButton(
