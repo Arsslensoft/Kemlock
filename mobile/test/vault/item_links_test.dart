@@ -143,7 +143,8 @@ void main() {
       await controller().addNote(_note(_noteId));
 
       final dangling = linkedItemsOf(state().lists, login()).single;
-      expect((dangling.id, dangling.entry), (_goneId, isNull));
+      expect(dangling.id, _goneId);
+      expect(dangling.entry, isNull);
 
       await controller().linkItems(login(), note());
       await controller().unlinkItems(login(), note());
