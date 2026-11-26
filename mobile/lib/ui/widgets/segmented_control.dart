@@ -43,6 +43,7 @@ class SegmentedControl<T> extends StatelessWidget {
     this.semantics = SegmentSemantics.radio,
     this.size = SegmentSize.medium,
     this.mono = false,
+    this.scrollable = false,
   });
 
   final List<SegmentOption<T>> options;
@@ -52,6 +53,41 @@ class SegmentedControl<T> extends StatelessWidget {
   final SegmentSemantics semantics;
   final SegmentSize size;
   final bool mono;
+
+  /// For many options: each is as wide as its label needs, and the row scrolls sideways when they don't all fit (the thumb follows the
+  /// choice into view). Without it the options are of equal width and share the width given.
+  final bool scrollable;
+
+  /// The widths of the options in [available] pixels: equal, or, when [scrollable], as wide as each label needs (and no narrower than
+  /// an equal share when they all fit).
+  List<double> _widths(BuildContext context, double available, bool small) {
+    if (!scrollable) {
+      return List.filled(options.length, available / options.length);
+    }
+    final direction = Directionality.of(context);
+    final scaler = MediaQuery.textScalerOf(context);
+    final natural = [
+      for (final option in options)
+        (TextPainter(
+              text: TextSpan(
+                text: option.label,
+                style: TextStyle(fontFamily: mono ? fontMono : fontSans, fontSize: small ? 12.5 : 13.5, fontWeight: FontWeight.w600),
+              ),
+              maxLines: 1,
+              textDirection: direction,
+              textScaler: scaler,
+            )..layout())
+                .width +
+            (option.icon != null ? 23 : 0) +
+            24,
+    ];
+    final total = natural.fold(0.0, (sum, width) => sum + width);
+    if (total >= available) {
+      return natural;
+    }
+    final extra = (available - total) / options.length;
+    return [for (final width in natural) width + extra];
+  }
 
   int get _index => options.indexWhere((o) => o.value == value).clamp(0, options.length - 1);
 
@@ -94,16 +130,17 @@ class SegmentedControl<T> extends StatelessWidget {
           decoration: BoxDecoration(color: b.raised, borderRadius: BorderRadius.circular(small ? 11 : 14)),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final width = constraints.maxWidth / options.length;
-              return Stack(
+              final widths = _widths(context, constraints.maxWidth, small);
+              final left = widths.take(index).fold(0.0, (sum, width) => sum + width);
+              final stack = Stack(
                 children: [
                   AnimatedPositioned(
                     duration: reduced ? Duration.zero : Motion.thumb,
                     curve: Ease.sheet,
-                    left: index * width,
+                    left: left,
                     top: 0,
                     bottom: 0,
-                    width: width,
+                    width: widths[index],
                     child: ExcludeSemantics(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
@@ -119,7 +156,8 @@ class SegmentedControl<T> extends StatelessWidget {
                     child: Row(
                       children: [
                         for (final (i, option) in options.indexed)
-                          Expanded(
+                          SizedBox(
+                            width: widths[i],
                             child: _Segment(
                               option: option,
                               selected: i == index,
@@ -136,12 +174,75 @@ class SegmentedControl<T> extends StatelessWidget {
                   ),
                 ],
               );
+              if (!scrollable) {
+                return stack;
+              }
+              return _Scrolling(
+                width: widths.fold(0.0, (sum, width) => sum + width),
+                left: left,
+                selectedWidth: widths[index],
+                child: stack,
+              );
             },
           ),
         ),
       ),
     );
   }
+}
+
+/// The options of a scrollable [SegmentedControl]: a row as wide as they are, scrolled sideways, which brings the chosen one into
+/// view when the choice moves.
+class _Scrolling extends StatefulWidget {
+  const _Scrolling({required this.width, required this.left, required this.selectedWidth, required this.child});
+
+  final double width;
+  final double left;
+  final double selectedWidth;
+  final Widget child;
+
+  @override
+  State<_Scrolling> createState() => _ScrollingState();
+}
+
+class _ScrollingState extends State<_Scrolling> {
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_Scrolling oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.left == oldWidget.left || !_controller.hasClients) {
+      return;
+    }
+    final position = _controller.position;
+    final start = position.pixels;
+    final end = start + position.viewportDimension;
+    final target = widget.left < start
+        ? widget.left
+        : widget.left + widget.selectedWidth > end
+        ? widget.left + widget.selectedWidth - position.viewportDimension
+        : null;
+    if (target != null) {
+      _controller.animateTo(
+        target.clamp(position.minScrollExtent, position.maxScrollExtent),
+        duration: Motion.reduced(context) ? Duration.zero : Motion.thumb,
+        curve: Ease.sheet,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    controller: _controller,
+    scrollDirection: Axis.horizontal,
+    child: SizedBox(width: widget.width, child: widget.child),
+  );
 }
 
 class _Segment<T> extends StatelessWidget {

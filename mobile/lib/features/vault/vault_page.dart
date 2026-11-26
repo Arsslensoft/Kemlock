@@ -226,6 +226,8 @@ class _VaultPageState extends ConsumerState<VaultPage> {
             onChanged: (filter) => setState(() => _filter = filter),
             semanticLabel: context.t('vault.filter.label'),
             size: SegmentSize.small,
+            // Nine kinds don't share a phone's width: each takes what its label needs, and the row scrolls
+            scrollable: true,
           ),
           if (_filter == VaultFilter.keys) const PgpActionsRow(),
           if (_filter == VaultFilter.logins && !searching) const PasswordHealthRow(),
